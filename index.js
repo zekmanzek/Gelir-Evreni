@@ -12,7 +12,9 @@ const bot = new TelegramBot(token, { polling: true });
 
 let users = {}; 
 
+// Statik dosyalar için ana dizini ve public klasörünü tanıtıyoruz
 app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/user/:id', (req, res) => {
     const userId = req.params.id;
@@ -22,7 +24,7 @@ app.get('/api/user/:id', (req, res) => {
         if (referrerId && users[referrerId] && referrerId !== userId) {
             users[referrerId].balance += 500;
             users[referrerId].refCount += 1;
-            users[referrerId].refs.push(userId); // Referans listesine ekle
+            users[referrerId].refs.push(userId);
         }
     }
     res.json(users[userId]);
@@ -39,19 +41,27 @@ app.post('/api/save', (req, res) => {
     }
 });
 
-app.get('/', (req, res) => { res.sendFile(path.resolve(__dirname, 'index.html')); });
+// ANA SAYFA ÇAĞIRMA (Not Found hatasını çözen kısım)
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 bot.on('message', (msg) => {
     if (msg.text && msg.text.startsWith('/start')) {
         const userId = msg.from.id;
         const parts = msg.text.split(' ');
         const referrerId = parts.length > 1 ? parts[1] : null;
+        
+        // Linkin sonuna mutlaka "/" ekledik
         const webAppUrl = `https://gelir-evreni.onrender.com/?userid=${userId}${referrerId ? '&ref=' + referrerId : ''}`;
+        
         bot.sendMessage(msg.chat.id, `🦅 Gelir Evreni'ne Hoş Geldin Avcı!\n\nRef Linkin: https://t.me/gelir_evreni_bot?start=${userId}\n\nHer ref: 500 GEP +10 Hız!`, {
-            reply_markup: { inline_keyboard: [[{ text: "🚀 Madenciliği Aç", web_app: { url: webAppUrl } }]] }
+            reply_markup: { 
+                inline_keyboard: [[{ text: "🚀 Madenciliği Aç", web_app: { url: webAppUrl } }]] 
+            }
         });
     }
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
