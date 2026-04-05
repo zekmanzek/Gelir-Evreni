@@ -6,6 +6,12 @@
     <title>Gelir Evreni</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* Mavi yansımayı kaldıran ve tıklamayı pürüzsüzleştiren kod */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
         body { background-color: #0a0f1e; color: white; font-family: Arial; text-align: center; margin: 0; }
         .header { padding: 15px; background: #16213e; border-bottom: 1px solid #ffd700; }
         .logo-text { font-size: 22px; font-weight: bold; color: #ffd700; }
@@ -21,13 +27,17 @@
         .footer-menu { position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; background: #16213e; border-top: 2px solid #ffd700; }
         .menu-item { color: #b0bec5; font-size: 10px; cursor: pointer; }
         .menu-item.active { color: #00e676; font-weight: bold; }
+        
+        .lang-btn { cursor: pointer; display: inline-block; transition: transform 0.2s; }
+        .lang-btn:active { transform: scale(1.2); }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="logo-text">GELİR EVRENİ</div>
-        <div style="font-size: 20px; margin-top:5px; cursor: pointer;">
-            <span onclick="setLanguage('tr')">🇹🇷</span> <span onclick="setLanguage('az')">🇦🇿</span>
+        <div style="font-size: 24px; margin-top:5px;">
+            <span class="lang-btn" onclick="setLanguage('tr')">🇹🇷</span> 
+            <span class="lang-btn" onclick="setLanguage('az')">🇦🇿</span>
         </div>
     </div>
 
@@ -37,7 +47,7 @@
         <div id="lbl-rate" style="color:#00e676; font-weight:bold;">+50 GEP / Saat</div>
         <div class="main-button"><img src="https://img.icons8.com/emoji/256/money-bag-emoji.png"></div><br>
         <button class="action-btn" id="action-btn" onclick="handleAction()">Madenciliği Başlat</button>
-        <div id="timer-text" style="color:#ffd700; margin-top:10px; font-weight:bold;"></div>
+        <div id="timer-text" style="color:#ffd700; margin-top:10px; font-weight:bold; font-size: 18px;"></div>
     </div>
 
     <div id="tasks" class="page">
@@ -66,6 +76,7 @@
     <script>
         const tele = window.Telegram.WebApp; tele.expand();
         let balance = 0; let refCount = 0; let completedTasks = [];
+        let countdownInterval; // Sayacı kontrol etmek için değişken
         const EIGHT_HOURS = 8 * 60 * 60 * 1000;
 
         const translations = {
@@ -126,17 +137,50 @@
             const startTime = localStorage.getItem('miningStartTime');
             const btn = document.getElementById('action-btn');
             const t = translations[currentLang];
-            if (!startTime) { btn.innerText = t.start; btn.disabled = false; }
+            if (!startTime) { 
+                btn.innerText = t.start; 
+                btn.disabled = false; 
+                document.getElementById('timer-text').innerText = "";
+                clearInterval(countdownInterval);
+            }
             else {
                 const elapsed = new Date().getTime() - parseInt(startTime);
-                if (elapsed < EIGHT_HOURS) { btn.disabled = true; startCountdown(EIGHT_HOURS - elapsed); }
-                else { btn.innerText = t.collect; btn.disabled = false; }
+                if (elapsed < EIGHT_HOURS) { 
+                    btn.disabled = true; 
+                    startCountdown(EIGHT_HOURS - elapsed); 
+                }
+                else { 
+                    btn.innerText = t.collect; 
+                    btn.disabled = false; 
+                    document.getElementById('timer-text').innerText = "00:00:00";
+                    clearInterval(countdownInterval);
+                }
             }
+        }
+
+        function startCountdown(t) {
+            clearInterval(countdownInterval); // Mevcut sayacı temizle
+            countdownInterval = setInterval(() => {
+                t -= 1000;
+                if(t <= 0) {
+                    clearInterval(countdownInterval);
+                    updateUI();
+                    return;
+                }
+                const h = Math.floor(t/3600000); 
+                const m = Math.floor((t%3600000)/60000); 
+                const s = Math.floor((t%60000)/1000);
+                document.getElementById('timer-text').innerText = 
+                    `${h.toString().padStart(2, '0')}s ${m.toString().padStart(2, '0')}d ${s.toString().padStart(2, '0')}s`;
+            }, 1000);
         }
 
         async function handleAction() {
             const startTime = localStorage.getItem('miningStartTime');
-            if (!startTime) { localStorage.setItem('miningStartTime', new Date().getTime()); updateUI(); }
+            if (!startTime) { 
+                localStorage.setItem('miningStartTime', new Date().getTime()); 
+                updateUI(); 
+            }
             else {
                 balance += (50 + (refCount * 10)) * 8;
                 const userId = new URLSearchParams(window.location.search).get('userid');
@@ -144,15 +188,6 @@
                 localStorage.removeItem('miningStartTime');
                 init();
             }
-        }
-
-        function startCountdown(t) {
-            const int = setInterval(() => {
-                t -= 1000;
-                const h = Math.floor(t/3600000); const m = Math.floor((t%3600000)/60000); const s = Math.floor((t%60000)/1000);
-                document.getElementById('timer-text').innerText = `${h}s ${m}d ${s}s`;
-                if(t<=0) { clearInterval(int); updateUI(); }
-            }, 1000);
         }
         init();
     </script>
