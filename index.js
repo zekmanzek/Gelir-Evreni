@@ -7,18 +7,20 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Bot Token'ın
+// Statik dosyaların yerini kesinleştiriyoruz
+app.use(express.static(path.join(__dirname)));
+
 const token = '8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s';
 const bot = new TelegramBot(token, { polling: true });
-
-// Senin Telegram ID'n - Bildirimler buraya gelecek
 const ADMIN_ID = 1469411131; 
 
 let users = {}; 
 
-app.use(express.static(__dirname));
+// Ana sayfa rotasını garantiye alıyoruz
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-// Kullanıcı verilerini çekme
 app.get('/api/user/:id', (req, res) => {
     const userId = req.params.id;
     const referrerId = req.query.ref;
@@ -33,26 +35,20 @@ app.get('/api/user/:id', (req, res) => {
     res.json(users[userId]);
 });
 
-// Veri kaydetme ve Ödeme Talebi
 app.post('/api/save', (req, res) => {
     const { userId, amount, tasks, wallet, isRequest } = req.body;
     if (users[userId]) {
         if (amount !== undefined) users[userId].balance = amount;
         if (tasks !== undefined) users[userId].tasks = tasks;
         if (wallet !== undefined) users[userId].wallet = wallet;
-
-        // Ödeme talebi geldiyse sana mesaj atar
         if (isRequest) {
-            bot.sendMessage(ADMIN_ID, `💰 **YENİ ÖDEME TALEBİ!**\n\n👤 **Kullanıcı:** ${userId}\n💎 **Bakiye:** ${users[userId].balance.toLocaleString()} GEP\n💳 **Cüzdan (BEP20):** \`${wallet}\``, { parse_mode: 'Markdown' });
+            bot.sendMessage(ADMIN_ID, `💰 **YENİ ÖDEME TALEBİ!**\n\n👤 **Kullanıcı:** ${userId}\n💎 **Bakiye:** ${users[userId].balance.toLocaleString()} GEP\n💳 **Cüzdan:** \`${wallet}\``, { parse_mode: 'Markdown' });
         }
-
         res.json({ success: true });
     } else {
-        res.status(404).send();
+        res.status(404).send("User not found");
     }
 });
-
-app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
 
 bot.on('message', (msg) => {
     if (msg.text && msg.text.startsWith('/start')) {
@@ -60,11 +56,8 @@ bot.on('message', (msg) => {
         const parts = msg.text.split(' ');
         const referrerId = parts.length > 1 ? parts[1] : null;
         const webAppUrl = `https://gelir-evreni.onrender.com/?userid=${userId}${referrerId ? '&ref=' + referrerId : ''}`;
-        
-        bot.sendMessage(msg.chat.id, `🦅 Gelir Evreni'ne Hoş Geldin Avcı!\n\nRef Linkin: https://t.me/gelir_evreni_bot?start=${userId}\n\nHer ref: 500 GEP +10 Hız!`, {
-            reply_markup: { 
-                inline_keyboard: [[{ text: "🚀 Madenciliği Aç", web_app: { url: webAppUrl } }]] 
-            }
+        bot.sendMessage(msg.chat.id, `🦅 Gelir Evreni'ne Hoş Geldin!\n\nRef Linkin: https://t.me/gelir_evreni_bot?start=${userId}`, {
+            reply_markup: { inline_keyboard: [[{ text: "🚀 Madenciliği Aç", web_app: { url: webAppUrl } }]] }
         });
     }
 });
