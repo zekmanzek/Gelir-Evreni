@@ -54,7 +54,7 @@
     <div class="balance-container">
         <div class="balance-label" id="lbl-total">TOPLAM KAZANÇ</div>
         <div class="balance-amount" id="balance">0.90</div>
-        <div style="color: #00e676;" id="lbl-rate">+12.5 GE / Saat</div>
+        <div style="color: #00e676;" id="lbl-rate">+12.5 GEP / Saat</div>
     </div>
 
     <div class="mining-section">
@@ -78,8 +78,30 @@
         tele.expand();
 
         const translations = {
-            tr: { welcome: "Hoş geldin Avcı!", total: "TOPLAM KAZANÇ", rate: "+12.5 GE / Saat", start: "Madenciliği Başlat", collect: "Kazancı Topla", home: "ANA SAYFA", tasks: "GÖREVLER", team: "AVCI EKİBİ", market: "BORSA", alert: "100 GE Toplandı!" },
-            az: { welcome: "Xoş gəldin Ovçu!", total: "ÜMUMİ QAZANC", rate: "+12.5 GE / Saat", start: "Mədənçiliyi Başlat", collect: "Qazancı Topla", home: "ANA SƏHİFƏ", tasks: "TAPŞIRIQLAR", team: "OVÇU KOMANDASI", market: "BİRJA", alert: "100 GE Toplandı!" }
+            tr: { 
+                welcome: "Hoş geldin Avcı!", 
+                total: "TOPLAM KAZANÇ", 
+                rate: "+12.5 GEP / Saat", 
+                start: "Madenciliği Başlat", 
+                collect: "Kazancı Topla", 
+                home: "ANA SAYFA", 
+                tasks: "GÖREVLER", 
+                team: "AVCI EKİBİ", 
+                market: "BORSA", 
+                alert: "100 GEP Toplandı!" 
+            },
+            az: { 
+                welcome: "Xoş gəldin Ovçu!", 
+                total: "ÜMUMİ QAZANC", 
+                rate: "+12.5 GEP / Saat", 
+                start: "Mədənçiliyi Başlat", 
+                collect: "Qazancı Topla", 
+                home: "ANA SƏHİFƏ", 
+                tasks: "TAPŞIRIQLAR", 
+                team: "OVÇU KOMANDASI", 
+                market: "BİRJA", 
+                alert: "100 GEP Toplandı!" 
+            }
         };
 
         let currentLang = localStorage.getItem('lang') || 'tr';
@@ -96,6 +118,7 @@
             const t = translations[currentLang];
             document.querySelector('.welcome-text').innerText = t.welcome;
             document.getElementById('lbl-total').innerText = t.total;
+            document.getElementById('lbl-rate').innerText = t.rate;
             document.getElementById('m-home').innerText = t.home;
             document.getElementById('m-tasks').innerText = t.tasks;
             document.getElementById('m-team').innerText = t.team;
@@ -113,7 +136,6 @@
                 const elapsed = now - parseInt(startTime);
                 if (elapsed < EIGHT_HOURS) {
                     actionBtn.disabled = true;
-                    // Sayaç startCountdown fonksiyonu ile güncelleniyor
                 } else {
                     actionBtn.innerText = t.collect;
                     actionBtn.disabled = false;
@@ -152,7 +174,6 @@
             }, 1000);
         }
 
-        // Sayfa yüklendiğinde çalıştır
         const savedStart = localStorage.getItem('miningStartTime');
         if (savedStart) {
             const elapsed = new Date().getTime() - parseInt(savedStart);
