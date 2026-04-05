@@ -9,7 +9,6 @@
         body { background-color: #0a0f1e; color: white; font-family: 'Arial', sans-serif; text-align: center; margin: 0; overflow: hidden; }
         .header { padding: 15px; background: linear-gradient(180deg, #16213e 0%, rgba(10,15,30,0) 100%); }
         .logo-text { font-size: 24px; font-weight: bold; color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
-        
         .lang-btns { margin-top: 10px; display: flex; justify-content: center; gap: 15px; }
         .lang-btn { cursor: pointer; font-size: 22px; transition: transform 0.2s; }
         .lang-btn:active { transform: scale(1.2); }
@@ -53,8 +52,8 @@
 
     <div class="balance-container">
         <div class="balance-label" id="lbl-total">TOPLAM KAZANÇ</div>
-        <div class="balance-amount" id="balance">0.90</div>
-        <div style="color: #00e676;" id="lbl-rate">+12.5 GEP / Saat</div>
+        <div class="balance-amount" id="balance">0.00</div>
+        <div style="color: #00e676;" id="lbl-rate">+50 GEP / Saat</div>
     </div>
 
     <div class="mining-section">
@@ -77,36 +76,21 @@
         const tele = window.Telegram.WebApp;
         tele.expand();
 
+        // EKONOMİ AYARLARI
+        const BASE_RATE = 50; 
+        const REF_RATE_BONUS = 10; 
+        const REF_INSTANT_REWARD = 500; // İstediğin gibi her ref artık 500 GEP
+        const EIGHT_HOURS = 8 * 60 * 60 * 1000;
+
+        let balance = parseFloat(localStorage.getItem('gepBalance')) || 0.00;
+        let refCount = parseInt(localStorage.getItem('refCount')) || 0;
+
         const translations = {
-            tr: { 
-                welcome: "Hoş geldin Avcı!", 
-                total: "TOPLAM KAZANÇ", 
-                rate: "+12.5 GEP / Saat", 
-                start: "Madenciliği Başlat", 
-                collect: "Kazancı Topla", 
-                home: "ANA SAYFA", 
-                tasks: "GÖREVLER", 
-                team: "AVCI EKİBİ", 
-                market: "BORSA", 
-                alert: "100 GEP Toplandı!" 
-            },
-            az: { 
-                welcome: "Xoş gəldin Ovçu!", 
-                total: "ÜMUMİ QAZANC", 
-                rate: "+12.5 GEP / Saat", 
-                start: "Mədənçiliyi Başlat", 
-                collect: "Qazancı Topla", 
-                home: "ANA SƏHİFƏ", 
-                tasks: "TAPŞIRIQLAR", 
-                team: "OVÇU KOMANDASI", 
-                market: "BİRJA", 
-                alert: "100 GEP Toplandı!" 
-            }
+            tr: { welcome: "Hoş geldin Avcı!", total: "TOPLAM KAZANÇ", start: "Madenciliği Başlat", collect: "Kazancı Topla", home: "ANA SAYFA", tasks: "GÖREVLER", team: "AVCI EKİBİ", market: "BORSA", alert: "GEP Toplandı!" },
+            az: { welcome: "Xoş gəldin Ovçu!", total: "ÜMUMİ QAZANC", start: "Mədənçiliyi Başlat", collect: "Qazancı Topla", home: "ANA SƏHİFƏ", tasks: "TAPŞIRIQLAR", team: "OVÇU KOMANDASI", market: "BİRJA", alert: "GEP Toplandı!" }
         };
 
         let currentLang = localStorage.getItem('lang') || 'tr';
-        let balance = 0.90;
-        const EIGHT_HOURS = 8 * 60 * 60 * 1000;
 
         function setLanguage(lang) {
             currentLang = lang;
@@ -116,9 +100,12 @@
 
         function updateUI() {
             const t = translations[currentLang];
+            const currentRate = BASE_RATE + (refCount * REF_RATE_BONUS);
+            
             document.querySelector('.welcome-text').innerText = t.welcome;
             document.getElementById('lbl-total').innerText = t.total;
-            document.getElementById('lbl-rate').innerText = t.rate;
+            document.getElementById('balance').innerText = balance.toFixed(2);
+            document.getElementById('lbl-rate').innerText = `+${currentRate} GEP / Saat`;
             document.getElementById('m-home').innerText = t.home;
             document.getElementById('m-tasks').innerText = t.tasks;
             document.getElementById('m-team').innerText = t.team;
@@ -146,6 +133,9 @@
 
         function handleAction() {
             const startTime = localStorage.getItem('miningStartTime');
+            const currentRate = BASE_RATE + (refCount * REF_RATE_BONUS);
+            const totalReward = currentRate * 8;
+
             if (!startTime) {
                 localStorage.setItem('miningStartTime', new Date().getTime());
                 startCountdown(EIGHT_HOURS);
@@ -153,11 +143,11 @@
             } else {
                 const now = new Date().getTime();
                 if (now - parseInt(startTime) >= EIGHT_HOURS) {
-                    balance += 100;
-                    document.getElementById('balance').innerText = balance.toFixed(2);
+                    balance += totalReward;
+                    localStorage.setItem('gepBalance', balance);
                     localStorage.removeItem('miningStartTime');
                     updateUI();
-                    if(tele.showAlert) tele.showAlert(translations[currentLang].alert);
+                    if(tele.showAlert) tele.showAlert(`${totalReward} ${translations[currentLang].alert}`);
                 }
             }
         }
