@@ -2,8 +2,9 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gelir Evreni - Market Hunter</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { background-color: #0a0f1e; color: white; font-family: 'Arial', sans-serif; text-align: center; margin: 0; overflow: hidden; }
         .header { padding: 20px; background: linear-gradient(180deg, #16213e 0%, rgba(10,15,30,0) 100%); }
@@ -11,14 +12,31 @@
         .balance-container { margin-top: 30px; }
         .balance-amount { font-size: 48px; font-weight: bold; color: #ffffff; }
         .balance-label { color: #00e676; font-size: 14px; letter-spacing: 2px; }
+        
         .mining-section { margin-top: 50px; position: relative; }
+        
+        /* Para Çuvalı ve Çember Alanı */
         .main-button {
-            width: 200px; height: 200px; border-radius: 50%;
+            width: 220px; height: 220px; border-radius: 50%;
             background: radial-gradient(circle, #1e3a8a 0%, #0a0f1e 100%);
-            border: 4px solid #ffd700; box-shadow: 0 0 30px rgba(0,230,118,0.3);
-            cursor: pointer; transition: transform 0.1s; display: inline-block;
+            border: 4px solid #ffd700; 
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+            cursor: pointer; transition: transform 0.1s; 
+            display: inline-flex; align-items: center; justify-content: center;
         }
+        .main-button img { width: 140px; height: 140px; }
         .main-button:active { transform: scale(0.95); }
+        .main-button.disabled { cursor: not-allowed; opacity: 0.8; box-shadow: none; }
+
+        /* Buton ve Zamanlayıcı */
+        .action-btn {
+            margin-top: 25px; background: #ffd700; color: #000;
+            border: none; padding: 12px 30px; border-radius: 20px;
+            font-weight: bold; font-size: 16px; cursor: pointer;
+        }
+        .action-btn:disabled { background: #444; color: #888; }
+        #timer-text { margin-top: 10px; color: #ffd700; font-size: 18px; font-weight: bold; }
+
         .footer-menu { position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; background: #16213e; border-top: 2px solid #ffd700; }
         .menu-item { color: #b0bec5; font-size: 12px; text-decoration: none; }
         .active { color: #00e676; }
@@ -32,14 +50,17 @@
 
     <div class="balance-container">
         <div class="balance-label">TOPLAM KAZANÇ</div>
-        <div class="balance-amount" id="balance">0.00</div>
+        <div class="balance-amount" id="balance">0.90</div>
         <div style="color: #00e676;">+12.5 GE / Saat</div>
     </div>
 
     <div class="mining-section">
-        <div class="main-button" onclick="mine()">
-            <img src="https://img.icons8.com/fluency/240/gold-bars.png" alt="Gelir Evreni Madencilik">
+        <div class="main-button" id="mining-circle" onclick="handleAction()">
+            <img src="https://img.icons8.com/emoji/256/money-bag-emoji.png" alt="Para Çuvalı">
         </div>
+        <br>
+        <button class="action-btn" id="action-btn" onclick="handleAction()">Madenciliği Başlat</button>
+        <div id="timer-text"></div>
     </div>
 
     <div class="footer-menu">
@@ -50,11 +71,84 @@
     </div>
 
     <script>
-        let score = 0;
-        function mine() {
-            score += 0.1;
-            document.getElementById('balance').innerText = score.toFixed(2);
+        const tele = window.Telegram.WebApp;
+        tele.expand();
+
+        let balance = 0.90;
+        const EIGHT_HOURS = 8 * 60 * 60 * 1000; // 8 Saat
+        const actionBtn = document.getElementById('action-btn');
+        const timerText = document.getElementById('timer-text');
+        const balanceDisplay = document.getElementById('balance');
+        const miningCircle = document.getElementById('mining-circle');
+
+        function updateUI() {
+            const startTime = localStorage.getItem('miningStartTime');
+            
+            if (!startTime) {
+                actionBtn.innerText = "Madenciliği Başlat";
+                actionBtn.disabled = false;
+                miningCircle.classList.remove('disabled');
+                timerText.innerText = "";
+            } else {
+                const now = new Date().getTime();
+                const elapsed = now - parseInt(startTime);
+                
+                if (elapsed < EIGHT_HOURS) {
+                    // Madencilik sürüyor
+                    actionBtn.disabled = true;
+                    miningCircle.classList.add('disabled');
+                    startCountdown(EIGHT_HOURS - elapsed);
+                } else {
+                    // 8 saat doldu
+                    actionBtn.innerText = "Kazancı Topla";
+                    actionBtn.disabled = false;
+                    miningCircle.classList.remove('disabled');
+                    timerText.innerText = "Süre Doldu!";
+                }
+            }
         }
+
+        function handleAction() {
+            const startTime = localStorage.getItem('miningStartTime');
+            
+            if (!startTime) {
+                // BAŞLAT
+                localStorage.setItem('miningStartTime', new Date().getTime());
+                updateUI();
+            } else {
+                const now = new Date().getTime();
+                const elapsed = now - parseInt(startTime);
+                
+                if (elapsed >= EIGHT_HOURS) {
+                    // TOPLA
+                    balance += 100; // 8 saatlik sabit ödül
+                    balanceDisplay.innerText = balance.toFixed(2);
+                    localStorage.removeItem('miningStartTime');
+                    updateUI();
+                    if(tele.showAlert) tele.showAlert("100 GE Toplandı!");
+                }
+            }
+        }
+
+        function startCountdown(duration) {
+            let timer = duration;
+            const interval = setInterval(() => {
+                const hours = Math.floor(timer / (1000 * 60 * 60));
+                const minutes = Math.floor((timer % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timer % (1000 * 60)) / 1000);
+
+                timerText.innerText = `${hours}s ${minutes}d ${seconds}s`;
+                timer -= 1000;
+
+                if (timer < 0) {
+                    clearInterval(interval);
+                    updateUI();
+                }
+            }, 1000);
+        }
+
+        // Sayfa açıldığında durumu kontrol et
+        updateUI();
     </script>
 </body>
 </html>
