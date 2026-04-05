@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 
 const app = express();
-const token = '7911663080:AAH805W-H3mZ_fBscL0m_uS869BUn0vQ-yA';
+const token = '8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s';
 const bot = new TelegramBot(token, { polling: true });
 
 // Web Arayüzü - Dosya nerede olursa olsun bulur
