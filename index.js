@@ -12,7 +12,9 @@ const bot = new TelegramBot(token, { polling: true });
 
 let users = {}; 
 
-app.use(express.static(path.join(__dirname)));
+// DOSYA YOLLARINI KESİNLEŞTİRDİK
+app.use(express.static(__dirname)); 
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/user/:id', (req, res) => {
     const userId = req.params.id;
@@ -37,8 +39,9 @@ app.post('/api/save', (req, res) => {
     }
 });
 
+// ANA SAYFAYI ÇAĞIRIRKEN HATA PAYINI SIFIRLADIK
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.resolve(__dirname, 'index.html'));
 });
 
 bot.on('message', (msg) => {
@@ -46,9 +49,14 @@ bot.on('message', (msg) => {
         const userId = msg.from.id;
         const parts = msg.text.split(' ');
         const referrerId = parts.length > 1 ? parts[1] : null;
-        const webAppUrl = `https://gelir-evreni.onrender.com?userid=${userId}${referrerId ? '&ref=' + referrerId : ''}`;
+        
+        // Render URL'ini sonundaki '/' işaretine dikkat ederek güncelledik
+        const webAppUrl = `https://gelir-evreni.onrender.com/?userid=${userId}${referrerId ? '&ref=' + referrerId : ''}`;
+        
         bot.sendMessage(msg.chat.id, `🦅 Hoş Geldin Avcı!\n\nRef Linkin: https://t.me/gelir_evreni_bot?start=${userId}\n\nHer ref: 500 GEP +10 Hız!`, {
-            reply_markup: { inline_keyboard: [[{ text: "🚀 Madenciliği Aç", web_app: { url: webAppUrl } }]] }
+            reply_markup: { 
+                inline_keyboard: [[{ text: "🚀 Madenciliği Aç", web_app: { url: webAppUrl } }]] 
+            }
         });
     }
 });
