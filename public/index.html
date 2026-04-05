@@ -14,7 +14,8 @@
         .balance-amount { font-size: 40px; font-weight: bold; margin: 10px 0; }
         .main-button { width: 180px; height: 180px; border-radius: 50%; border: 4px solid #ffd700; display: inline-flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1e3a8a, #0a0f1e); margin: 20px 0; }
         .main-button img { width: 110px; }
-        .action-btn { background: #ffd700; border: none; padding: 12px 30px; border-radius: 20px; font-weight: bold; width: 80%; font-size: 16px; }
+        .action-btn { background: #ffd700; border: none; padding: 12px 30px; border-radius: 20px; font-weight: bold; width: 80%; font-size: 16px; color: black; }
+        .action-btn:disabled { background: #444; color: #888; }
         .task-card { background: #16213e; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
         .task-btn { background: #00e676; color: black; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; }
         .footer-menu { position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; background: #16213e; border-top: 2px solid #ffd700; }
@@ -25,7 +26,7 @@
 <body>
     <div class="header">
         <div class="logo-text">GELİR EVRENİ</div>
-        <div style="font-size: 20px; margin-top:5px;">
+        <div style="font-size: 20px; margin-top:5px; cursor: pointer;">
             <span onclick="setLanguage('tr')">🇹🇷</span> <span onclick="setLanguage('az')">🇦🇿</span>
         </div>
     </div>
@@ -34,25 +35,25 @@
         <div id="lbl-total" style="color:#00e676; font-size:12px;">TOPLAM KAZANÇ</div>
         <div class="balance-amount" id="balance">0.00</div>
         <div id="lbl-rate" style="color:#00e676; font-weight:bold;">+50 GEP / Saat</div>
-        <div class="main-button"><img src="https://img.icons8.com/emoji/256/money-bag-emoji.png"></div>
+        <div class="main-button"><img src="https://img.icons8.com/emoji/256/money-bag-emoji.png"></div><br>
         <button class="action-btn" id="action-btn" onclick="handleAction()">Madenciliği Başlat</button>
         <div id="timer-text" style="color:#ffd700; margin-top:10px; font-weight:bold;"></div>
     </div>
 
     <div id="tasks" class="page">
-        <h2 id="t-tasks">GÖREVLER</h2>
+        <h2 id="t-tasks-title">GÖREVLER</h2>
         <div class="task-card">
-            <div style="text-align:left;"><b>Telegram Kanalına Katıl</b><br><small>+1000 GEP</small></div>
-            <button class="task-btn" onclick="doTask('tg_join', 1000, 'https://t.me/gelir_evreni')">Yap</button>
+            <div style="text-align:left;"><b id="t-tg-task">Telegram Kanalına Katıl</b><br><small>+1000 GEP</small></div>
+            <button class="task-btn" id="t-do" onclick="doTask('tg_join', 1000, 'https://t.me/gelir_evreni')">Yap</button>
         </div>
     </div>
 
     <div id="team" class="page">
-        <h2 id="t-team">AVCI EKİBİ</h2>
+        <h2 id="t-team-title">AVCI EKİBİ</h2>
         <div style="background:#16213e; padding:20px; border-radius:15px; border:1px solid #ffd700;">
             <div style="font-size:14px;" id="t-refcount">Toplam Referans</div>
             <div style="font-size:36px; font-weight:bold; color:#ffd700;" id="ref-count-val">0</div>
-            <p style="font-size:12px;">Her referans için 500 GEP kazandın!</p>
+            <p style="font-size:12px;" id="t-ref-info">Her referans için 500 GEP kazandın!</p>
         </div>
     </div>
 
@@ -66,6 +67,28 @@
         const tele = window.Telegram.WebApp; tele.expand();
         let balance = 0; let refCount = 0; let completedTasks = [];
         const EIGHT_HOURS = 8 * 60 * 60 * 1000;
+
+        const translations = {
+            tr: { total: "TOPLAM KAZANÇ", start: "Madenciliği Başlat", collect: "Kazancı Topla", home: "ANA SAYFA", tasks: "GÖREVLER", team: "AVCI EKİBİ", tg_task: "Telegram Kanalına Katıl", do: "Yap", ref_title: "Toplam Referans", ref_info: "Her referans için 500 GEP kazandın!" },
+            az: { total: "ÜMUMİ QAZANC", start: "Mədənçiliyi Başlat", collect: "Qazancı Topla", home: "ANA SƏHİFƏ", tasks: "TAPŞIRIQLAR", team: "OVÇU KOMANDASI", tg_task: "Telegram Kanalına Qatıl", do: "Et", ref_title: "Ümumi Referans", ref_info: "Hər referans üçün 500 GEP qazandın!" }
+        };
+        let currentLang = 'tr';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            const t = translations[lang];
+            document.getElementById('lbl-total').innerText = t.total;
+            document.getElementById('m-home').innerText = t.home;
+            document.getElementById('m-tasks').innerText = t.tasks;
+            document.getElementById('m-team').innerText = t.team;
+            document.getElementById('t-tasks-title').innerText = t.tasks;
+            document.getElementById('t-team-title').innerText = t.team;
+            document.getElementById('t-tg-task').innerText = t.tg_task;
+            document.getElementById('t-do').innerText = t.do;
+            document.getElementById('t-refcount').innerText = t.ref_title;
+            document.getElementById('t-ref-info').innerText = t.ref_info;
+            updateUI();
+        }
 
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
@@ -95,18 +118,19 @@
                 const userId = new URLSearchParams(window.location.search).get('userid');
                 await fetch('/api/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({userId, amount: balance, tasks: completedTasks}) });
                 init();
-                alert(reward + " GEP Hesabına Eklendi!");
+                alert(reward + " GEP Eklendi!");
             }, 2000);
         }
 
         function updateUI() {
             const startTime = localStorage.getItem('miningStartTime');
             const btn = document.getElementById('action-btn');
-            if (!startTime) { btn.innerText = "Madenciliği Başlat"; btn.disabled = false; }
+            const t = translations[currentLang];
+            if (!startTime) { btn.innerText = t.start; btn.disabled = false; }
             else {
                 const elapsed = new Date().getTime() - parseInt(startTime);
                 if (elapsed < EIGHT_HOURS) { btn.disabled = true; startCountdown(EIGHT_HOURS - elapsed); }
-                else { btn.innerText = "Kazancı Topla"; btn.disabled = false; }
+                else { btn.innerText = t.collect; btn.disabled = false; }
             }
         }
 
