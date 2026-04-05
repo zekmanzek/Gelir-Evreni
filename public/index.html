@@ -3,173 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gelir Evreni - Market Hunter</title>
+    <title>Gelir Evreni</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background-color: #0a0f1e; color: white; font-family: 'Arial', sans-serif; text-align: center; margin: 0; overflow: hidden; }
-        .header { padding: 15px; background: linear-gradient(180deg, #16213e 0%, rgba(10,15,30,0) 100%); }
-        .logo-text { font-size: 24px; font-weight: bold; color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
-        .lang-btns { margin-top: 10px; display: flex; justify-content: center; gap: 15px; }
-        .lang-btn { cursor: pointer; font-size: 22px; transition: transform 0.2s; }
-        .lang-btn:active { transform: scale(1.2); }
-
-        .balance-container { margin-top: 20px; }
-        .balance-amount { font-size: 44px; font-weight: bold; color: #ffffff; }
-        .balance-label { color: #00e676; font-size: 13px; letter-spacing: 1px; }
-        
-        .mining-section { margin-top: 40px; position: relative; }
-        .main-button {
-            width: 210px; height: 210px; border-radius: 50%;
-            background: radial-gradient(circle, #1e3a8a 0%, #0a0f1e 100%);
-            border: 4px solid #ffd700; 
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
-            display: inline-flex; align-items: center; justify-content: center;
-        }
-        .main-button img { width: 130px; height: 130px; }
-
-        .action-btn {
-            margin-top: 20px; background: #ffd700; color: #000;
-            border: none; padding: 12px 30px; border-radius: 20px;
-            font-weight: bold; font-size: 16px; cursor: pointer; min-width: 200px;
-        }
-        .action-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
-        #timer-text { margin-top: 8px; color: #ffd700; font-size: 18px; font-weight: bold; }
-
-        .footer-menu { position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; background: #16213e; border-top: 2px solid #ffd700; }
-        .menu-item { color: #b0bec5; font-size: 11px; text-decoration: none; text-transform: uppercase; }
-        .active { color: #00e676; }
+        body { background-color: #0a0f1e; color: white; font-family: Arial; text-align: center; margin: 0; overflow: hidden; }
+        .header { padding: 15px; background: #16213e; }
+        .logo-text { font-size: 24px; font-weight: bold; color: #ffd700; }
+        .balance-amount { font-size: 44px; font-weight: bold; }
+        .mining-section { margin-top: 40px; }
+        .main-button { width: 210px; height: 210px; border-radius: 50%; border: 4px solid #ffd700; display: inline-flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1e3a8a, #0a0f1e); }
+        .main-button img { width: 130px; }
+        .action-btn { margin-top: 20px; background: #ffd700; border: none; padding: 12px 30px; border-radius: 20px; font-weight: bold; min-width: 200px; }
+        .footer-menu { position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; background: #16213e; border-top: 2px solid #ffd700; font-size: 11px; }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="logo-text">GELİR EVRENİ</div>
-        <p class="welcome-text">Hoş geldin Avcı!</p>
-        <div class="lang-btns">
-            <span class="lang-btn" onclick="setLanguage('tr')">🇹🇷</span>
-            <span class="lang-btn" onclick="setLanguage('az')">🇦🇿</span>
-        </div>
+        <div onclick="setLanguage('tr')">🇹🇷</div> <div onclick="setLanguage('az')">🇦🇿</div>
     </div>
-
     <div class="balance-container">
-        <div class="balance-label" id="lbl-total">TOPLAM KAZANÇ</div>
+        <div id="lbl-total">TOPLAM KAZANÇ</div>
         <div class="balance-amount" id="balance">0.00</div>
         <div style="color: #00e676;" id="lbl-rate">+50 GEP / Saat</div>
     </div>
-
     <div class="mining-section">
-        <div class="main-button">
-            <img src="https://img.icons8.com/emoji/256/money-bag-emoji.png" alt="Para Çuvalı">
-        </div>
-        <br>
+        <div class="main-button"><img src="https://img.icons8.com/emoji/256/money-bag-emoji.png"></div><br>
         <button class="action-btn" id="action-btn" onclick="handleAction()">Madenciliği Başlat</button>
-        <div id="timer-text"></div>
+        <div id="timer-text" style="color: #ffd700; font-weight: bold; margin-top: 10px;"></div>
     </div>
-
     <div class="footer-menu">
-        <a href="#" class="menu-item active" id="m-home">ANA SAYFA</a>
-        <a href="#" class="menu-item" id="m-tasks">GÖREVLER</a>
-        <a href="#" class="menu-item" id="m-team">AVCI EKİBİ</a>
-        <a href="#" class="menu-item" id="m-market">BORSA</a>
+        <span style="color:#00e676">ANA SAYFA</span><span>GÖREVLER</span><span>AVCI EKİBİ</span><span>BORSA</span>
     </div>
-
     <script>
-        const tele = window.Telegram.WebApp;
-        tele.expand();
-
-        // EKONOMİ AYARLARI
-        const BASE_RATE = 50; 
-        const REF_RATE_BONUS = 10; 
-        const REF_INSTANT_REWARD = 500; // İstediğin gibi her ref artık 500 GEP
+        const tele = window.Telegram.WebApp; tele.expand();
+        let balance = 0; let refCount = 0;
         const EIGHT_HOURS = 8 * 60 * 60 * 1000;
 
-        let balance = parseFloat(localStorage.getItem('gepBalance')) || 0.00;
-        let refCount = parseInt(localStorage.getItem('refCount')) || 0;
-
-        const translations = {
-            tr: { welcome: "Hoş geldin Avcı!", total: "TOPLAM KAZANÇ", start: "Madenciliği Başlat", collect: "Kazancı Topla", home: "ANA SAYFA", tasks: "GÖREVLER", team: "AVCI EKİBİ", market: "BORSA", alert: "GEP Toplandı!" },
-            az: { welcome: "Xoş gəldin Ovçu!", total: "ÜMUMİ QAZANC", start: "Mədənçiliyi Başlat", collect: "Qazancı Topla", home: "ANA SƏHİFƏ", tasks: "TAPŞIRIQLAR", team: "OVÇU KOMANDASI", market: "BİRJA", alert: "GEP Toplandı!" }
-        };
-
-        let currentLang = localStorage.getItem('lang') || 'tr';
-
-        function setLanguage(lang) {
-            currentLang = lang;
-            localStorage.setItem('lang', lang);
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('userid');
+            const ref = urlParams.get('ref');
+            if(userId) {
+                const res = await fetch(`/api/user/${userId}?ref=${ref || ''}`);
+                const data = await res.json();
+                balance = data.balance; refCount = data.refCount;
+                document.getElementById('balance').innerText = balance.toFixed(2);
+                document.getElementById('lbl-rate').innerText = `+${50 + (refCount * 10)} GEP / Saat`;
+            }
             updateUI();
         }
 
         function updateUI() {
-            const t = translations[currentLang];
-            const currentRate = BASE_RATE + (refCount * REF_RATE_BONUS);
-            
-            document.querySelector('.welcome-text').innerText = t.welcome;
-            document.getElementById('lbl-total').innerText = t.total;
-            document.getElementById('balance').innerText = balance.toFixed(2);
-            document.getElementById('lbl-rate').innerText = `+${currentRate} GEP / Saat`;
-            document.getElementById('m-home').innerText = t.home;
-            document.getElementById('m-tasks').innerText = t.tasks;
-            document.getElementById('m-team').innerText = t.team;
-            document.getElementById('m-market').innerText = t.market;
-
             const startTime = localStorage.getItem('miningStartTime');
-            const actionBtn = document.getElementById('action-btn');
-            
-            if (!startTime) {
-                actionBtn.innerText = t.start;
-                actionBtn.disabled = false;
-                document.getElementById('timer-text').innerText = "";
-            } else {
-                const now = new Date().getTime();
-                const elapsed = now - parseInt(startTime);
-                if (elapsed < EIGHT_HOURS) {
-                    actionBtn.disabled = true;
-                } else {
-                    actionBtn.innerText = t.collect;
-                    actionBtn.disabled = false;
-                    document.getElementById('timer-text').innerText = "00:00:00";
-                }
+            const btn = document.getElementById('action-btn');
+            if (!startTime) { btn.innerText = "Madenciliği Başlat"; btn.disabled = false; }
+            else {
+                const elapsed = new Date().getTime() - parseInt(startTime);
+                if (elapsed < EIGHT_HOURS) { btn.disabled = true; startCountdown(EIGHT_HOURS - elapsed); }
+                else { btn.innerText = "Kazancı Topla"; btn.disabled = false; document.getElementById('timer-text').innerText = "00:00:00"; }
             }
         }
 
-        function handleAction() {
+        async function handleAction() {
             const startTime = localStorage.getItem('miningStartTime');
-            const currentRate = BASE_RATE + (refCount * REF_RATE_BONUS);
-            const totalReward = currentRate * 8;
-
-            if (!startTime) {
-                localStorage.setItem('miningStartTime', new Date().getTime());
-                startCountdown(EIGHT_HOURS);
-                updateUI();
-            } else {
-                const now = new Date().getTime();
-                if (now - parseInt(startTime) >= EIGHT_HOURS) {
-                    balance += totalReward;
-                    localStorage.setItem('gepBalance', balance);
-                    localStorage.removeItem('miningStartTime');
-                    updateUI();
-                    if(tele.showAlert) tele.showAlert(`${totalReward} ${translations[currentLang].alert}`);
-                }
+            if (!startTime) { localStorage.setItem('miningStartTime', new Date().getTime()); updateUI(); }
+            else {
+                const reward = (50 + (refCount * 10)) * 8;
+                balance += reward;
+                const userId = new URLSearchParams(window.location.search).get('userid');
+                await fetch('/api/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({userId, amount: balance}) });
+                localStorage.removeItem('miningStartTime');
+                init();
             }
         }
 
-        function startCountdown(duration) {
-            let timer = duration;
-            const interval = setInterval(() => {
-                const hours = Math.floor(timer / (1000 * 60 * 60));
-                const minutes = Math.floor((timer % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timer % (1000 * 60)) / 1000);
-                document.getElementById('timer-text').innerText = `${hours}s ${minutes}d ${seconds}s`;
-                timer -= 1000;
-                if (timer < 0) { clearInterval(interval); updateUI(); }
+        function startCountdown(t) {
+            const int = setInterval(() => {
+                t -= 1000;
+                const h = Math.floor(t/3600000); const m = Math.floor((t%3600000)/60000); const s = Math.floor((t%60000)/1000);
+                document.getElementById('timer-text').innerText = `${h}s ${m}d ${s}s`;
+                if(t<=0) { clearInterval(int); updateUI(); }
             }, 1000);
         }
-
-        const savedStart = localStorage.getItem('miningStartTime');
-        if (savedStart) {
-            const elapsed = new Date().getTime() - parseInt(savedStart);
-            if (elapsed < EIGHT_HOURS) startCountdown(EIGHT_HOURS - elapsed);
-        }
-        updateUI();
+        init();
     </script>
 </body>
 </html>
