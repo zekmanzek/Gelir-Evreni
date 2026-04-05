@@ -7,55 +7,58 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { background-color: #0a0f1e; color: white; font-family: 'Arial', sans-serif; text-align: center; margin: 0; overflow: hidden; }
-        .header { padding: 20px; background: linear-gradient(180deg, #16213e 0%, rgba(10,15,30,0) 100%); }
+        .header { padding: 15px; background: linear-gradient(180deg, #16213e 0%, rgba(10,15,30,0) 100%); }
         .logo-text { font-size: 24px; font-weight: bold; color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
-        .balance-container { margin-top: 30px; }
-        .balance-amount { font-size: 48px; font-weight: bold; color: #ffffff; }
-        .balance-label { color: #00e676; font-size: 14px; letter-spacing: 2px; }
         
-        .mining-section { margin-top: 50px; position: relative; }
+        .lang-btns { margin-top: 10px; display: flex; justify-content: center; gap: 15px; }
+        .lang-btn { cursor: pointer; font-size: 22px; transition: transform 0.2s; }
+        .lang-btn:active { transform: scale(1.2); }
+
+        .balance-container { margin-top: 20px; }
+        .balance-amount { font-size: 44px; font-weight: bold; color: #ffffff; }
+        .balance-label { color: #00e676; font-size: 13px; letter-spacing: 1px; }
         
-        /* Para Çuvalı ve Çember Alanı */
+        .mining-section { margin-top: 40px; position: relative; }
         .main-button {
-            width: 220px; height: 220px; border-radius: 50%;
+            width: 210px; height: 210px; border-radius: 50%;
             background: radial-gradient(circle, #1e3a8a 0%, #0a0f1e 100%);
             border: 4px solid #ffd700; 
             box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
-            cursor: pointer; transition: transform 0.1s; 
             display: inline-flex; align-items: center; justify-content: center;
         }
-        .main-button img { width: 140px; height: 140px; }
-        .main-button:active { transform: scale(0.95); }
-        .main-button.disabled { cursor: not-allowed; opacity: 0.8; box-shadow: none; }
+        .main-button img { width: 130px; height: 130px; }
 
-        /* Buton ve Zamanlayıcı */
         .action-btn {
-            margin-top: 25px; background: #ffd700; color: #000;
+            margin-top: 20px; background: #ffd700; color: #000;
             border: none; padding: 12px 30px; border-radius: 20px;
-            font-weight: bold; font-size: 16px; cursor: pointer;
+            font-weight: bold; font-size: 16px; cursor: pointer; min-width: 200px;
         }
-        .action-btn:disabled { background: #444; color: #888; }
-        #timer-text { margin-top: 10px; color: #ffd700; font-size: 18px; font-weight: bold; }
+        .action-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
+        #timer-text { margin-top: 8px; color: #ffd700; font-size: 18px; font-weight: bold; }
 
         .footer-menu { position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; background: #16213e; border-top: 2px solid #ffd700; }
-        .menu-item { color: #b0bec5; font-size: 12px; text-decoration: none; }
+        .menu-item { color: #b0bec5; font-size: 11px; text-decoration: none; text-transform: uppercase; }
         .active { color: #00e676; }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="logo-text">GELİR EVRENİ</div>
-        <p>Hoş geldin Avcı!</p>
+        <p class="welcome-text">Hoş geldin Avcı!</p>
+        <div class="lang-btns">
+            <span class="lang-btn" onclick="setLanguage('tr')">🇹🇷</span>
+            <span class="lang-btn" onclick="setLanguage('az')">🇦🇿</span>
+        </div>
     </div>
 
     <div class="balance-container">
-        <div class="balance-label">TOPLAM KAZANÇ</div>
+        <div class="balance-label" id="lbl-total">TOPLAM KAZANÇ</div>
         <div class="balance-amount" id="balance">0.90</div>
-        <div style="color: #00e676;">+12.5 GE / Saat</div>
+        <div style="color: #00e676;" id="lbl-rate">+12.5 GE / Saat</div>
     </div>
 
     <div class="mining-section">
-        <div class="main-button" id="mining-circle" onclick="handleAction()">
+        <div class="main-button">
             <img src="https://img.icons8.com/emoji/256/money-bag-emoji.png" alt="Para Çuvalı">
         </div>
         <br>
@@ -64,68 +67,75 @@
     </div>
 
     <div class="footer-menu">
-        <a href="#" class="menu-item active">ANA SAYFA</a>
-        <a href="#" class="menu-item">GÖREVLER</a>
-        <a href="#" class="menu-item">AVCI EKİBİ</a>
-        <a href="#" class="menu-item">BORSA</a>
+        <a href="#" class="menu-item active" id="m-home">ANA SAYFA</a>
+        <a href="#" class="menu-item" id="m-tasks">GÖREVLER</a>
+        <a href="#" class="menu-item" id="m-team">AVCI EKİBİ</a>
+        <a href="#" class="menu-item" id="m-market">BORSA</a>
     </div>
 
     <script>
         const tele = window.Telegram.WebApp;
         tele.expand();
 
+        const translations = {
+            tr: { welcome: "Hoş geldin Avcı!", total: "TOPLAM KAZANÇ", rate: "+12.5 GE / Saat", start: "Madenciliği Başlat", collect: "Kazancı Topla", home: "ANA SAYFA", tasks: "GÖREVLER", team: "AVCI EKİBİ", market: "BORSA", alert: "100 GE Toplandı!" },
+            az: { welcome: "Xoş gəldin Ovçu!", total: "ÜMUMİ QAZANC", rate: "+12.5 GE / Saat", start: "Mədənçiliyi Başlat", collect: "Qazancı Topla", home: "ANA SƏHİFƏ", tasks: "TAPŞIRIQLAR", team: "OVÇU KOMANDASI", market: "BİRJA", alert: "100 GE Toplandı!" }
+        };
+
+        let currentLang = localStorage.getItem('lang') || 'tr';
         let balance = 0.90;
-        const EIGHT_HOURS = 8 * 60 * 60 * 1000; // 8 Saat
-        const actionBtn = document.getElementById('action-btn');
-        const timerText = document.getElementById('timer-text');
-        const balanceDisplay = document.getElementById('balance');
-        const miningCircle = document.getElementById('mining-circle');
+        const EIGHT_HOURS = 8 * 60 * 60 * 1000;
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('lang', lang);
+            updateUI();
+        }
 
         function updateUI() {
+            const t = translations[currentLang];
+            document.querySelector('.welcome-text').innerText = t.welcome;
+            document.getElementById('lbl-total').innerText = t.total;
+            document.getElementById('m-home').innerText = t.home;
+            document.getElementById('m-tasks').innerText = t.tasks;
+            document.getElementById('m-team').innerText = t.team;
+            document.getElementById('m-market').innerText = t.market;
+
             const startTime = localStorage.getItem('miningStartTime');
+            const actionBtn = document.getElementById('action-btn');
             
             if (!startTime) {
-                actionBtn.innerText = "Madenciliği Başlat";
+                actionBtn.innerText = t.start;
                 actionBtn.disabled = false;
-                miningCircle.classList.remove('disabled');
-                timerText.innerText = "";
+                document.getElementById('timer-text').innerText = "";
             } else {
                 const now = new Date().getTime();
                 const elapsed = now - parseInt(startTime);
-                
                 if (elapsed < EIGHT_HOURS) {
-                    // Madencilik sürüyor
                     actionBtn.disabled = true;
-                    miningCircle.classList.add('disabled');
-                    startCountdown(EIGHT_HOURS - elapsed);
+                    // Sayaç startCountdown fonksiyonu ile güncelleniyor
                 } else {
-                    // 8 saat doldu
-                    actionBtn.innerText = "Kazancı Topla";
+                    actionBtn.innerText = t.collect;
                     actionBtn.disabled = false;
-                    miningCircle.classList.remove('disabled');
-                    timerText.innerText = "Süre Doldu!";
+                    document.getElementById('timer-text').innerText = "00:00:00";
                 }
             }
         }
 
         function handleAction() {
             const startTime = localStorage.getItem('miningStartTime');
-            
             if (!startTime) {
-                // BAŞLAT
                 localStorage.setItem('miningStartTime', new Date().getTime());
+                startCountdown(EIGHT_HOURS);
                 updateUI();
             } else {
                 const now = new Date().getTime();
-                const elapsed = now - parseInt(startTime);
-                
-                if (elapsed >= EIGHT_HOURS) {
-                    // TOPLA
-                    balance += 100; // 8 saatlik sabit ödül
-                    balanceDisplay.innerText = balance.toFixed(2);
+                if (now - parseInt(startTime) >= EIGHT_HOURS) {
+                    balance += 100;
+                    document.getElementById('balance').innerText = balance.toFixed(2);
                     localStorage.removeItem('miningStartTime');
                     updateUI();
-                    if(tele.showAlert) tele.showAlert("100 GE Toplandı!");
+                    if(tele.showAlert) tele.showAlert(translations[currentLang].alert);
                 }
             }
         }
@@ -136,18 +146,18 @@
                 const hours = Math.floor(timer / (1000 * 60 * 60));
                 const minutes = Math.floor((timer % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((timer % (1000 * 60)) / 1000);
-
-                timerText.innerText = `${hours}s ${minutes}d ${seconds}s`;
+                document.getElementById('timer-text').innerText = `${hours}s ${minutes}d ${seconds}s`;
                 timer -= 1000;
-
-                if (timer < 0) {
-                    clearInterval(interval);
-                    updateUI();
-                }
+                if (timer < 0) { clearInterval(interval); updateUI(); }
             }, 1000);
         }
 
-        // Sayfa açıldığında durumu kontrol et
+        // Sayfa yüklendiğinde çalıştır
+        const savedStart = localStorage.getItem('miningStartTime');
+        if (savedStart) {
+            const elapsed = new Date().getTime() - parseInt(savedStart);
+            if (elapsed < EIGHT_HOURS) startCountdown(EIGHT_HOURS - elapsed);
+        }
         updateUI();
     </script>
 </body>
