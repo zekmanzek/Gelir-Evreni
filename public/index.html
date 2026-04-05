@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gelir Evreni Mining</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background-color: #000; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        .score-container { font-size: 48px; font-weight: bold; margin-bottom: 20px; color: #f39c12; }
+        .circle { width: 250px; height: 250px; border-radius: 50%; background: radial-gradient(circle, #f39c12 0%, #d35400 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 50px rgba(243, 156, 18, 0.5); cursor: pointer; transition: transform 0.1s; }
+        .circle:active { transform: scale(0.95); }
+        .circle img { width: 150px; }
+        .status { margin-top: 30px; font-size: 18px; color: #bdc3c7; }
+    </style>
+</head>
+<body>
+    <div class="score-container" id="score">0 GEP</div>
+    <div class="circle" onclick="mine()">
+        <img src="https://img.icons8.com/fluency/144/mining.png" alt="Mining">
+    </div>
+    <div class="status">Gelir Evreni: Madencilik Aktif</div>
+
+    <script>
+        let score = 0;
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        function mine() {
+            score += 1;
+            document.getElementById('score').innerText = score + " GEP";
+            // Haptic feedback (titreşim) ekleyelim
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+        }
+    </script>
+</body>
+</html>
