@@ -2,37 +2,58 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gelir Evreni Mining</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gelir Evreni - Market Hunter</title>
     <style>
-        body { background-color: #000; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        .score-container { font-size: 48px; font-weight: bold; margin-bottom: 20px; color: #f39c12; }
-        .circle { width: 250px; height: 250px; border-radius: 50%; background: radial-gradient(circle, #f39c12 0%, #d35400 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 50px rgba(243, 156, 18, 0.5); cursor: pointer; transition: transform 0.1s; }
-        .circle:active { transform: scale(0.95); }
-        .circle img { width: 150px; }
-        .status { margin-top: 30px; font-size: 18px; color: #bdc3c7; }
+        body { background-color: #0a0f1e; color: white; font-family: 'Arial', sans-serif; text-align: center; margin: 0; overflow: hidden; }
+        .header { padding: 20px; background: linear-gradient(180deg, #16213e 0%, rgba(10,15,30,0) 100%); }
+        .logo-text { font-size: 24px; font-weight: bold; color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+        .balance-container { margin-top: 30px; }
+        .balance-amount { font-size: 48px; font-weight: bold; color: #ffffff; }
+        .balance-label { color: #00e676; font-size: 14px; letter-spacing: 2px; }
+        .mining-section { margin-top: 50px; position: relative; }
+        .main-button {
+            width: 200px; height: 200px; border-radius: 50%;
+            background: radial-gradient(circle, #1e3a8a 0%, #0a0f1e 100%);
+            border: 4px solid #ffd700; box-shadow: 0 0 30px rgba(0,230,118,0.3);
+            cursor: pointer; transition: transform 0.1s; display: inline-block;
+        }
+        .main-button:active { transform: scale(0.95); }
+        .footer-menu { position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 15px 0; background: #16213e; border-top: 2px solid #ffd700; }
+        .menu-item { color: #b0bec5; font-size: 12px; text-decoration: none; }
+        .active { color: #00e676; }
     </style>
 </head>
 <body>
-    <div class="score-container" id="score">0 GEP</div>
-    <div class="circle" onclick="mine()">
-        <img src="https://img.icons8.com/fluency/144/mining.png" alt="Mining">
+    <div class="header">
+        <div class="logo-text">GELİR EVRENİ</div>
+        <p>Hoş geldin Avcı!</p>
     </div>
-    <div class="status">Gelir Evreni: Madencilik Aktif</div>
+
+    <div class="balance-container">
+        <div class="balance-label">TOPLAM KAZANÇ</div>
+        <div class="balance-amount" id="balance">0.00</div>
+        <div style="color: #00e676;">+12.5 GE / Saat</div>
+    </div>
+
+    <div class="mining-section">
+        <div class="main-button" onclick="mine()">
+            <img src="https://img.icons8.com/fluency/96/gem.png" style="margin-top: 50px;">
+        </div>
+    </div>
+
+    <div class="footer-menu">
+        <a href="#" class="menu-item active">ANA SAYFA</a>
+        <a href="#" class="menu-item">GÖREVLER</a>
+        <a href="#" class="menu-item">AVCI EKİBİ</a>
+        <a href="#" class="menu-item">BORSA</a>
+    </div>
 
     <script>
         let score = 0;
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
         function mine() {
-            score += 1;
-            document.getElementById('score').innerText = score + " GEP";
-            // Haptic feedback (titreşim) ekleyelim
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
+            score += 0.1;
+            document.getElementById('balance').innerText = score.toFixed(2);
         }
     </script>
 </body>
