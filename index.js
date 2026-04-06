@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(cors());
 
 // Statik dosyaların yerini kesinleştiriyoruz
-app.use(express.static(path.join(__dirname)));
+app.use(express.static('./'));
 
 const token = '8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s';
 const bot = new TelegramBot(token, { polling: true });
