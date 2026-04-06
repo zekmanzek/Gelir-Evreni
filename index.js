@@ -2,64 +2,107 @@ const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const mongoose = require('mongoose');
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// --- VERİ TABANI BAĞLANTISI (HAFIZA MERKEZİ) ---
+const MONGO_URI = "mongodb+srv://mzybro_db_user:RrdTszJxirbFhHfm@zekman.bi8ty3t.mongodb.net/GelirEvreni?retryWrites=true&w=majority";
+
+mongoose.connect(MONGO_URI)
+    .then(() => console.log("Hafıza merkezi bağlandı!"))
+    .catch(err => console.log("Bağlantı hatası:", err));
+
+// Kullanıcı Şeması (Verilerin nasıl saklanacağı)
+const UserSchema = new mongoose.Schema({
+    userId: { type: String, unique: true },
+    balance: { type: Number, default: 0 },
+    refCount: { type: Number, default: 0 },
+    tasks: [String],
+    wallet: { type: String, default: '' },
+    baseSpeed: { type: Number, default: 50 },
+    lastMined: { type: Number, default: null }
+});
+
+const User = mongoose.model('User', UserSchema);
+
+// --- BOT VE SUNUCU AYARLARI ---
 const token = '8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s';
 const bot = new TelegramBot(token, { polling: true });
-const ADMIN_ID = 1469411131;
 
-let users = {}; 
-
-app.get('/api/user/:id', (req, res) => {
+app.get('/api/user/:id', async (req, res) => {
     const userId = req.params.id;
     const referrerId = req.query.ref;
-    if (!users[userId]) {
-        users[userId] = { balance: 0, refCount: 0, tasks: [], wallet: '', baseSpeed: 50, lastMined: null, refs: [] };
-        if (referrerId && users[referrerId] && referrerId !== userId) {
-            users[referrerId].balance += 500;
-            users[referrerId].refCount += 1;
-            users[referrerId].refs.push(userId);
+    
+    let user = await User.findOne({ userId });
+    
+    if (!user) {
+        user = new User({ userId });
+        await user.save();
+        
+        if (referrerId && referrerId !== userId) {
+            const referrer = await User.findOne({ userId: referrerId });
+            if (referrer) {
+                referrer.balance += 500;
+                referrer.refCount += 1;
+                await referrer.save();
+            }
         }
     }
-    users[userId].currentSpeed = users[userId].baseSpeed + (users[userId].refCount * 50);
-    res.json(users[userId]);
+    
+    const currentSpeed = user.baseSpeed + (user.refCount * 50);
+    res.json({ ...user._doc, currentSpeed });
 });
 
 app.post('/api/check-task', async (req, res) => {
     const { userId, channelId } = req.body;
+    let user = await User.findOne({ userId });
+    
+    if (!user) return res.status(404).json({ success: false });
+
     try {
-        if(channelId.startsWith('x_')) { // X görevleri için manuel onay
-            if(!users[userId].tasks.includes(channelId)) {
-                users[userId].balance += 500;
-                users[userId].tasks.push(channelId);
+        if (channelId.startsWith('x_')) {
+            if (!user.tasks.includes(channelId)) {
+                user.balance += 500;
+                user.tasks.push(channelId);
+                await user.save();
+                return res.json({ success: true });
+            }
+        } else {
+            const member = await bot.getChatMember(channelId, userId);
+            const isMember = ['member', 'administrator', 'creator'].includes(member.status);
+            if (isMember && !user.tasks.includes(channelId)) {
+                user.balance += 500;
+                user.tasks.push(channelId);
+                await user.save();
                 return res.json({ success: true });
             }
         }
-        const member = await bot.getChatMember(channelId, userId);
-        const isMember = ['member', 'administrator', 'creator'].includes(member.status);
-        if (isMember && !users[userId].tasks.includes(channelId)) {
-            users[userId].balance += 500;
-            users[userId].tasks.push(channelId);
-            res.json({ success: true });
-        } else { res.json({ success: false }); }
+        res.json({ success: false });
     } catch (e) { res.json({ success: false }); }
 });
 
-app.post('/api/mine', (req, res) => {
+app.post('/api/mine', async (req, res) => {
     const { userId } = req.body;
     const now = Date.now();
-    users[userId].balance += (users[userId].baseSpeed + (users[userId].refCount * 50)) * 8; // 8 saatlik kazancı ekle
-    users[userId].lastMined = now;
-    res.json({ success: true, balance: users[userId].balance, lastMined: now });
+    let user = await User.findOne({ userId });
+    
+    if (user) {
+        const speed = user.baseSpeed + (user.refCount * 50);
+        user.balance += speed * 8; // 8 saatlik kazanç
+        user.lastMined = now;
+        await user.save();
+        res.json({ success: true, balance: user.balance, lastMined: now });
+    }
 });
 
-app.post('/api/save-wallet', (req, res) => {
+app.post('/api/save-wallet', async (req, res) => {
     const { userId, wallet } = req.body;
-    if(users[userId]) { users[userId].wallet = wallet; res.json({success:true}); }
+    await User.findOneAndUpdate({ userId }, { wallet });
+    res.json({ success: true });
 });
 
 bot.on('message', (msg) => {
