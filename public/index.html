@@ -3,213 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gelir Evreni - Pro</title>
-
+    <title>Gelir Evreni V3</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-    <!-- CACHE FIX -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
-
     <style>
-        :root { --bg: #050a14; --card: #101926; --gold: #fbc02d; --green: #00e676; --blue: #2979ff; --gray: #94a3b8; }
-        body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; user-select: none; overflow-x: hidden; }
-        .container { padding: 20px; padding-bottom: 100px; }
+        :root { --gold: #FFD700; --green: #00FF88; --dark: #050A14; --card: #0F1722; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; text-align: center; }
+        .container { padding: 20px; }
+        
+        /* Bakiye Kartı - Görseldeki Gibi */
+        .header { background: radial-gradient(circle at top, #1A2635, #0F1722); padding: 30px 10px; border-radius: 0 0 40px 40px; border-bottom: 2px solid var(--gold); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .bal-title { font-size: 12px; color: #888; letter-spacing: 2px; }
+        .bal-val { font-size: 45px; font-weight: 900; margin: 10px 0; text-shadow: 0 0 15px rgba(255,255,255,0.2); }
+        .bal-usd { color: var(--green); font-weight: bold; }
 
-        .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
-        .user-pill { background: var(--card); padding: 8px 15px; border-radius: 50px; display: flex; align-items: center; border: 1px solid #1e293b; }
-        .user-pill .avatar { width: 30px; height: 30px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 16px; }
-        .user-pill span { font-weight: 600; font-size: 14px; }
-        .level-badge { background: linear-gradient(90deg, #2979ff, #00e676); padding: 5px 12px; border-radius: 10px; font-size: 12px; font-weight: bold; font-family: 'Orbitron'; }
+        /* İstatistikler */
+        .stats { display: flex; justify-content: space-around; margin: 25px 0; }
+        .s-box { background: var(--card); padding: 15px; border-radius: 20px; width: 40%; border: 1px solid #1E293B; }
+        .s-box small { font-size: 10px; color: #666; display: block; }
+        .s-box b { color: var(--gold); font-size: 18px; }
 
-        .balance-main { background: radial-gradient(circle at top right, #1e293b, #0f172a); border-radius: 30px; padding: 35px 20px; text-align: center; border: 1px solid #334155; position: relative; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-        .balance-main::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(from 180deg at 50% 50%, transparent 0deg, rgba(251, 192, 45, 0.05) 360deg); pointer-events: none; }
+        /* 3D Yeşil Buton */
+        .mine-btn { 
+            background: linear-gradient(180deg, #00FF88 0%, #009955 100%); 
+            color: #000; border: none; width: 100%; padding: 22px; border-radius: 25px; 
+            font-size: 20px; font-weight: 900; cursor: pointer;
+            box-shadow: 0 8px 0 #006633, 0 15px 25px rgba(0,255,136,0.2);
+            transition: 0.1s; text-transform: uppercase;
+        }
+        .mine-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 #006633; }
+        .mine-btn:disabled { background: #333; box-shadow: 0 8px 0 #111; color: #666; }
 
-        .bal-label { color: var(--gray); font-size: 12px; font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; }
-        .bal-value { font-family: 'Orbitron', sans-serif; font-size: 44px; font-weight: 900; color: white; margin: 5px 0; }
-        .bal-usd { color: var(--green); font-weight: 600; font-size: 16px; opacity: 0.9; }
-
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-        .stat-item { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid #1e293b; text-align: center; }
-        .stat-item small { color: var(--gray); font-size: 11px; display: block; margin-bottom: 5px; }
-        .stat-item b { font-family: 'Orbitron'; color: var(--gold); }
-
-        .mine-btn { background: linear-gradient(180deg, #00e676 0%, #00a052 100%); color: #000; border: none; width: 100%; padding: 22px; border-radius: 20px; font-size: 18px; font-weight: 900; font-family: 'Orbitron'; cursor: pointer; box-shadow: 0 6px 0 #007039, 0 15px 30px rgba(0,230,118,0.2); transition: 0.1s; text-transform: uppercase; margin-top: 10px; }
-        .mine-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #007039; }
-        .mine-btn:disabled { background: #1e293b; box-shadow: 0 6px 0 #0f172a; color: var(--gray); }
-
-        .menu-list { background: var(--card); border-radius: 25px; padding: 10px; margin-top: 30px; border: 1px solid #1e293b; }
-        .menu-item { display: flex; align-items: center; padding: 18px; border-bottom: 1px solid #0f172a; }
-        .menu-item:last-child { border-bottom: none; }
-        .menu-icon { font-size: 22px; margin-right: 15px; width: 40px; height: 40px; background: #0f172a; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-        .menu-text { flex: 1; font-weight: 600; font-size: 15px; }
-        .menu-arrow { color: var(--gray); font-size: 18px; }
-
-        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(16, 25, 38, 0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 15px; border-radius: 25px; border: 1px solid #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000; }
-        .nav-btn { color: var(--gray); font-size: 24px; transition: 0.3s; cursor: pointer; }
-        .nav-btn.active { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 10px var(--gold); }
-
-        .page { display: none; }
-        .active-page { display: block; animation: fadeInUp 0.5s ease; }
+        /* Görevler */
+        .menu { background: var(--card); border-radius: 25px; margin-top: 30px; overflow: hidden; border: 1px solid #1E293B; }
+        .item { display: flex; justify-content: space-between; padding: 20px; border-bottom: 1px solid #1E293B; cursor: pointer; }
+        .item:last-child { border-bottom: none; }
     </style>
 </head>
-
 <body>
-
-<div class="container">
-    <div class="header-top">
-        <div class="user-pill">
-            <div class="avatar">🦅</div>
-            <span id="user-name">...</span>
-        </div>
-        <div class="level-badge" id="user-level">LVL 1</div>
+    <div class="header">
+        <div class="bal-title">TOPLAM BAKİYE</div>
+        <div id="balance" class="bal-val">0</div>
+        <div class="bal-usd">~ $<span id="usd">0.00</span></div>
     </div>
 
-    <div id="home" class="page active-page">
-        <div class="balance-main">
-            <div class="bal-label">GELİR EVRENİ BAKİYE</div>
-            <div id="balance" class="bal-value">0</div>
-            <div class="bal-usd">~ $<span id="balance-usd">0.00</span> USD</div>
+    <div class="container">
+        <div class="stats">
+            <div class="s-box"><small>HIZ</small>+<b id="speed">50</b>/s</div>
+            <div class="s-box"><small>SEVİYE</small><b id="lvl">1</b></div>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-item">
-                <small>ÜRETİM HIZI</small>
-                <b>+<span id="speed">50</span> / SAAT</b>
-            </div>
-            <div class="stat-item">
-                <small>EKİP GÜCÜ</small>
-                <b><span id="ref-count">0</span> AVCI</b>
-            </div>
-        </div>
+        <button class="mine-btn" id="mbtn" onclick="mine()">Madenciliği Başlat</button>
+        <div id="timer" style="margin-top:15px; color:#666; font-weight:bold;">READY</div>
 
-        <button class="mine-btn" id="mine-btn" onclick="startMining()">MADENLERİ ÇALIŞTIR</button>
-        <div id="timer" style="text-align:center; font-family:'Orbitron'; font-size:14px; color:var(--gray); margin-top:10px;">READY</div>
-
-        <div class="menu-list">
-            <div class="menu-item" onclick="showPage('leaderboard')">
-                <div class="menu-icon">🏆</div>
-                <div class="menu-text">Liderlik Sıralaması</div>
-                <div class="menu-arrow">❯</div>
-            </div>
-            <div class="menu-item" onclick="copyRef()">
-                <div class="menu-icon">🔗</div>
-                <div class="menu-text">Referans Linkini Kopyala</div>
-                <div class="menu-arrow">❯</div>
-            </div>
+        <div class="menu">
+            <div class="item" onclick="alert('Liderler Yakında!')">🏆 Liderlik Tablosu <span>❯</span></div>
+            <div class="item" onclick="copy()">🔗 Arkadaş Davet Et <span id="refs">0</span> <span>❯</span></div>
         </div>
     </div>
 
-    <div id="leaderboard" class="page">
-        <h2 style="text-align:center; font-family:'Orbitron'; color:var(--gold);">ELİT SIRALAMA</h2>
-        <div id="leader-list" class="menu-list"></div>
-        <button class="mine-btn" style="background:var(--card); color:white; box-shadow:none; margin-top:20px;" onclick="showPage('home')">ANA SAYFA</button>
-    </div>
-</div>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const userId = new URLSearchParams(window.location.search).get('userid');
 
-<div class="nav-bar">
-    <div class="nav-btn active" id="nav-home" onclick="showPage('home')">🏠</div>
-    <div class="nav-btn" id="nav-lead" onclick="showPage('leaderboard')">🏆</div>
-</div>
+        async function load() {
+            const res = await fetch('/api/user/' + userId);
+            const u = await res.json();
+            document.getElementById('balance').innerText = Math.floor(u.balance).toLocaleString();
+            document.getElementById('usd').innerText = u.balanceUsd;
+            document.getElementById('speed').innerText = u.speed;
+            document.getElementById('lvl').innerText = u.level;
+            document.getElementById('refs').innerText = u.refCount;
 
-<script>
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-// ✅ DÜZELTİLMİŞ USER ID
-let userId = new URLSearchParams(window.location.search).get('userid');
-
-if (!userId && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-  userId = tg.initDataUnsafe.user.id;
-}
-
-if (!userId) {
-  alert("User ID bulunamadı!");
-}
-
-// --- VERİ ÇEKME ---
-async function load() {
-    const res = await fetch('/api/user/' + userId);
-    const u = await res.json();
-
-    document.getElementById('user-name').innerText = u.username;
-    document.getElementById('user-level').innerText = `LVL ${u.level || 1}`;
-    document.getElementById('balance').innerText = Math.floor(u.balance).toLocaleString();
-    document.getElementById('balance-usd').innerText = u.balanceUsd || "0.00";
-    document.getElementById('speed').innerText = u.speed;
-    document.getElementById('ref-count').innerText = u.refCount;
-
-    if (u.lastMined) {
-        const diff = Date.now() - new Date(u.lastMined).getTime();
-        if (diff < 8*60*60*1000) {
-            document.getElementById('mine-btn').disabled = true;
-            runTimer(8*60*60*1000 - diff);
+            if (u.lastMined) {
+                const diff = Date.now() - new Date(u.lastMined).getTime();
+                if (diff < 28800000) { // 8 saat
+                    document.getElementById('mbtn').disabled = true;
+                    let t = (28800000 - diff) / 1000;
+                    setInterval(() => {
+                        let h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = Math.floor(t%60);
+                        document.getElementById('timer').innerText = `${h}:${m}:${s}`;
+                        t--;
+                    }, 1000);
+                }
+            }
         }
-    }
-}
-
-function runTimer(ms) {
-    let t = ms / 1000;
-    const intr = setInterval(() => {
-        let h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = Math.floor(t%60);
-        document.getElementById('timer').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-        if (--t < 0) { 
-            clearInterval(intr); 
-            document.getElementById('mine-btn').disabled = false; 
-            document.getElementById('timer').innerText = "COLLECT READY"; 
+        async function mine() {
+            await fetch('/api/mine', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId }) });
+            location.reload();
         }
-    }, 1000);
-}
-
-async function startMining() {
-    await fetch('/api/mine', { 
-        method: 'POST', 
-        headers: {'Content-Type': 'application/json'}, 
-        body: JSON.stringify({ userId }) 
-    });
-    load();
-}
-
-async function showPage(p) {
-    document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active-page'));
-    document.querySelectorAll('.nav-btn').forEach(nb => nb.classList.remove('active'));
-    document.getElementById(p).classList.add('active-page');
-
-    if(p === 'home') document.getElementById('nav-home').classList.add('active');
-
-    if(p === 'leaderboard') {
-        document.getElementById('nav-lead').classList.add('active');
-
-        const res = await fetch('/api/leaderboard');
-        const data = await res.json();
-
-        document.getElementById('leader-list').innerHTML = data.map((u, i) => `
-            <div class="menu-item">
-                <div class="menu-icon" style="color:var(--gold)">#${i+1}</div>
-                <div class="menu-text">${u.username}</div>
-                <div style="font-family:'Orbitron'; font-weight:bold; color:var(--green)">${Math.floor(u.balance)}</div>
-            </div>
-        `).join('');
-    }
-}
-
-function copyRef() {
-    const link = `https://t.me/gelir_evreni_bot?start=${userId}`;
-    const i = document.createElement('input');
-    i.value = link;
-    document.body.appendChild(i);
-    i.select();
-    document.execCommand('copy');
-    document.body.removeChild(i);
-
-    tg.showAlert("Link kopyalandı!");
-}
-
-load();
-</script>
-
+        function copy() {
+            const link = `https://t.me/gelir_evreni_bot?start=${userId}`;
+            const i = document.createElement('input'); i.value = link; document.body.appendChild(i); i.select(); document.execCommand('copy'); document.body.removeChild(i);
+            tg.showAlert("Link kopyalandı!");
+        }
+        load();
+    </script>
 </body>
 </html>
