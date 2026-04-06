@@ -5,103 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gelir Evreni - Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-dark: #0a0f1e; --card-bg: #151c2c; --gold: #fbc02d; --green: #4caf50; --text-gray: #a0a0a0; }
-        body { background-color: var(--bg-dark); color: white; font-family: 'Roboto', sans-serif; margin: 0; padding: 0; user-select: none; }
+        :root { --bg: #050a14; --card: #101926; --gold: #fbc02d; --green: #00e676; --blue: #2979ff; --gray: #94a3b8; }
         
-        .container { padding: 15px; padding-bottom: 80px; }
+        body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; user-select: none; overflow-x: hidden; }
 
-        /* Üst Profil Kartı */
-        .profile-section { background: var(--card-bg); border-radius: 20px; padding: 15px; display: flex; align-items: center; border-bottom: 4px solid rgba(0,0,0,0.3); margin-bottom: 20px; }
-        .avatar { width: 50px; height: 50px; background: var(--gold); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-right: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .user-info h3 { margin: 0; font-size: 18px; color: var(--gold); }
-        .user-info p { margin: 0; font-size: 12px; color: var(--text-gray); }
+        .container { padding: 20px; padding-bottom: 100px; }
 
-        /* Bakiye Alanı */
-        .balance-card { background: linear-gradient(180deg, #1e2a3a 0%, #151c2c 100%); border-radius: 25px; padding: 25px; text-align: center; margin-bottom: 25px; border: 1px solid #2d3a4d; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
-        .balance-label { color: var(--text-gray); font-size: 14px; letter-spacing: 1px; font-weight: bold; }
-        .balance-value { font-size: 42px; font-weight: 900; color: white; margin: 10px 0; text-shadow: 0 0 20px rgba(255,255,255,0.1); }
-        .speed-badge { background: rgba(76, 175, 80, 0.1); color: var(--green); padding: 5px 15px; border-radius: 50px; font-size: 13px; font-weight: bold; display: inline-block; }
+        /* Üst Profil Alanı */
+        .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+        .user-pill { background: var(--card); padding: 8px 15px; border-radius: 50px; display: flex; align-items: center; border: 1px solid #1e293b; }
+        .user-pill .avatar { width: 30px; height: 30px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 16px; }
+        .user-pill span { font-weight: 600; font-size: 14px; }
 
-        /* Görseldeki O Yeşil 3D Buton */
-        .main-btn { background: linear-gradient(180deg, #66bb6a 0%, #388e3c 100%); color: white; border: none; width: 100%; padding: 20px; border-radius: 18px; font-size: 18px; font-weight: 900; cursor: pointer; text-transform: uppercase; box-shadow: 0 6px 0 #1b5e20, 0 10px 20px rgba(0,0,0,0.4); transition: 0.1s; margin-bottom: 10px; }
-        .main-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #1b5e20; }
-        .main-btn:disabled { background: #454d55; box-shadow: 0 6px 0 #2c3136; color: #888; }
+        .level-badge { background: linear-gradient(90deg, #2979ff, #00e676); padding: 5px 12px; border-radius: 10px; font-size: 12px; font-weight: bold; font-family: 'Orbitron'; }
 
-        /* Alt Sekmeler */
-        .tabs-container { background: var(--card-bg); border-radius: 20px; padding: 10px; margin-top: 20px; }
-        .tab-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #252d3d; }
-        .tab-item:last-child { border-bottom: none; }
-        .tab-icon { font-size: 20px; margin-right: 15px; }
-        .tab-text { flex-grow: 1; font-weight: bold; font-size: 15px; }
-        .tab-value { color: var(--gold); font-weight: bold; }
+        /* Ana Bakiye Kartı (Görseldeki Gibi Derinlikli) */
+        .balance-main { background: radial-gradient(circle at top right, #1e293b, #0f172a); border-radius: 30px; padding: 35px 20px; text-align: center; border: 1px solid #334155; position: relative; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .balance-main::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(from 180deg at 50% 50%, transparent 0deg, rgba(251, 192, 45, 0.05) 360deg); pointer-events: none; }
+        
+        .bal-label { color: var(--gray); font-size: 12px; font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; }
+        .bal-value { font-family: 'Orbitron', sans-serif; font-size: 44px; font-weight: 900; color: white; margin: 5px 0; }
+        .bal-usd { color: var(--green); font-weight: 600; font-size: 16px; opacity: 0.9; }
 
-        /* Alt Navigasyon */
-        .navbar { position: fixed; bottom: 0; left: 0; right: 0; background: #151c2c; display: flex; justify-content: space-around; padding: 15px; border-top: 2px solid #1e2a3a; z-index: 100; }
-        .nav-link { color: var(--text-gray); text-decoration: none; font-size: 24px; transition: 0.3s; }
-        .nav-link.active { color: var(--gold); transform: scale(1.2); }
+        /* Hız ve İstatistik Çubuğu */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .stat-item { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid #1e293b; text-align: center; }
+        .stat-item small { color: var(--gray); font-size: 11px; display: block; margin-bottom: 5px; }
+        .stat-item b { font-family: 'Orbitron'; color: var(--gold); }
+
+        /* 3D Yeşil Buton (Görseldeki İle Aynı) */
+        .mine-btn { background: linear-gradient(180deg, #00e676 0%, #00a052 100%); color: #000; border: none; width: 100%; padding: 22px; border-radius: 20px; font-size: 18px; font-weight: 900; font-family: 'Orbitron'; cursor: pointer; box-shadow: 0 6px 0 #007039, 0 15px 30px rgba(0,230,118,0.2); transition: 0.1s; text-transform: uppercase; margin-top: 10px; }
+        .mine-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #007039; }
+        .mine-btn:disabled { background: #1e293b; box-shadow: 0 6px 0 #0f172a; color: var(--gray); }
+
+        /* Görevler ve Menu Listesi */
+        .menu-list { background: var(--card); border-radius: 25px; padding: 10px; margin-top: 30px; border: 1px solid #1e293b; }
+        .menu-item { display: flex; align-items: center; padding: 18px; border-bottom: 1px solid #0f172a; }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-icon { font-size: 22px; margin-right: 15px; width: 40px; height: 40px; background: #0f172a; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .menu-text { flex: 1; font-weight: 600; font-size: 15px; }
+        .menu-arrow { color: var(--gray); font-size: 18px; }
+
+        /* Navbar */
+        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(16, 25, 38, 0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 15px; border-radius: 25px; border: 1px solid #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000; }
+        .nav-btn { color: var(--gray); font-size: 24px; transition: 0.3s; cursor: pointer; }
+        .nav-btn.active { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 10px var(--gold); }
 
         .page { display: none; }
-        .active-page { display: block; animation: slideUp 0.4s ease; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .active-page { display: block; animation: fadeInUp 0.5s ease; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="profile-section">
-        <div class="avatar">🦅</div>
-        <div class="user-info">
-            <h3 id="user-name">Yükleniyor...</h3>
-            <p>Seviye 1 Avcı</p>
+    <div class="header-top">
+        <div class="user-pill">
+            <div class="avatar">🦅</div>
+            <span id="user-name">...</span>
         </div>
+        <div class="level-badge" id="user-level">LVL 1</div>
     </div>
 
     <div id="home" class="page active-page">
-        <div class="balance-card">
-            <div class="balance-label">GEP BALANCE</div>
-            <div id="balance" class="balance-value">0</div>
-            <div class="speed-badge">⚡ <span id="speed">50</span> GEP / SAAT</div>
+        <div class="balance-main">
+            <div class="bal-label">GELİR EVRENİ BAKİYE</div>
+            <div id="balance" class="bal-value">0</div>
+            <div class="bal-usd">~ $<span id="balance-usd">0.00</span> USD</div>
         </div>
 
-        <button class="main-btn" id="mine-btn" onclick="startMining()">Madenciliği Başlat</button>
-        <div id="timer" style="text-align:center; font-weight:bold; color:var(--text-gray); margin-top:5px;">HAZIR</div>
-
-        <div class="tabs-container">
-            <div class="tab-item" onclick="showPage('leaderboard')">
-                <span class="tab-icon">🏆</span>
-                <span class="tab-text">Liderlik Tablosu</span>
-                <span class="tab-value">❯</span>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <small>ÜRETİM HIZI</small>
+                <b>+<span id="speed">50</span> / SAAT</b>
             </div>
-            <div class="tab-item" onclick="showPage('refs')">
-                <span class="tab-icon">👥</span>
-                <span class="tab-text">Arkadaşlarını Davet Et</span>
-                <span class="tab-value" id="ref-count">0</span>
+            <div class="stat-item">
+                <small>EKİP GÜCÜ</small>
+                <b><span id="ref-count">0</span> AVCI</b>
+            </div>
+        </div>
+
+        <button class="mine-btn" id="mine-btn" onclick="startMining()">MADENLERİ ÇALIŞTIR</button>
+        <div id="timer" style="text-align:center; font-family:'Orbitron'; font-size:14px; color:var(--gray); margin-top:10px;">READY</div>
+
+        <div class="menu-list">
+            <div class="menu-item" onclick="showPage('leaderboard')">
+                <div class="menu-icon">🏆</div>
+                <div class="menu-text">Liderlik Sıralaması</div>
+                <div class="menu-arrow">❯</div>
+            </div>
+            <div class="menu-item" onclick="copyRef()">
+                <div class="menu-icon">🔗</div>
+                <div class="menu-text">Referans Linkini Kopyala</div>
+                <div class="menu-arrow">❯</div>
             </div>
         </div>
     </div>
 
     <div id="leaderboard" class="page">
-        <h2 style="color:var(--gold); text-align:center;">ELİT SIRALAMA</h2>
-        <div id="leader-list" class="tabs-container"></div>
-        <button class="main-btn" style="background:var(--card-bg); margin-top:20px;" onclick="showPage('home')">GERİ DÖN</button>
-    </div>
-
-    <div id="refs" class="page">
-        <h2 style="color:var(--gold); text-align:center;">EKİBİNİ KUR</h2>
-        <div class="balance-card">
-            <p style="font-size:14px;">Her davet için <b>1000 GEP</b> kazan ve üretim hızını kalıcı olarak artır!</p>
-            <button class="main-btn" onclick="copyRef()">DAVET LİNKİNİ KOPYALA</button>
-        </div>
-        <button class="main-btn" style="background:var(--card-bg);" onclick="showPage('home')">GERİ DÖN</button>
+        <h2 style="text-align:center; font-family:'Orbitron'; color:var(--gold);">ELİT SIRALAMA</h2>
+        <div id="leader-list" class="menu-list"></div>
+        <button class="mine-btn" style="background:var(--card); color:white; box-shadow:none; margin-top:20px;" onclick="showPage('home')">ANA SAYFA</button>
     </div>
 </div>
 
-<div class="navbar">
-    <a href="#" class="nav-link active" onclick="showPage('home')">🏠</a>
-    <a href="#" class="nav-link" onclick="showPage('leaderboard')">🏆</a>
-    <a href="#" class="nav-link" onclick="showPage('refs')">👥</a>
+<div class="nav-bar">
+    <div class="nav-btn active" id="nav-home" onclick="showPage('home')">🏠</div>
+    <div class="nav-btn" id="nav-lead" onclick="showPage('leaderboard')">🏆</div>
 </div>
 
 <script>
@@ -112,8 +124,11 @@
     async function load() {
         const res = await fetch('/api/user/' + userId);
         const u = await res.json();
+        
         document.getElementById('user-name').innerText = u.username;
+        document.getElementById('user-level').innerText = `LVL ${u.level || 1}`;
         document.getElementById('balance').innerText = Math.floor(u.balance).toLocaleString();
+        document.getElementById('balance-usd').innerText = u.balanceUsd || "0.00";
         document.getElementById('speed').innerText = u.speed;
         document.getElementById('ref-count').innerText = u.refCount;
 
@@ -131,26 +146,38 @@
         const intr = setInterval(() => {
             let h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = Math.floor(t%60);
             document.getElementById('timer').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            if (--t < 0) { clearInterval(intr); document.getElementById('mine-btn').disabled = false; document.getElementById('timer').innerText = "HAZIR"; }
+            if (--t < 0) { 
+                clearInterval(intr); 
+                document.getElementById('mine-btn').disabled = false; 
+                document.getElementById('timer').innerText = "COLLECT READY"; 
+            }
         }, 1000);
     }
 
     async function startMining() {
-        await fetch('/api/mine', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId }) });
+        await fetch('/api/mine', { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({ userId }) 
+        });
         load();
     }
 
     async function showPage(p) {
         document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active-page'));
+        document.querySelectorAll('.nav-btn').forEach(nb => nb.classList.remove('active'));
         document.getElementById(p).classList.add('active-page');
+        
+        if(p === 'home') document.getElementById('nav-home').classList.add('active');
         if(p === 'leaderboard') {
+            document.getElementById('nav-lead').classList.add('active');
             const res = await fetch('/api/leaderboard');
             const data = await res.json();
             document.getElementById('leader-list').innerHTML = data.map((u, i) => `
-                <div class="tab-item">
-                    <span style="color:var(--gold); margin-right:10px;">#${i+1}</span>
-                    <span class="tab-text">${u.username.substring(0,12)}</span>
-                    <span class="tab-value">${Math.floor(u.balance)}</span>
+                <div class="menu-item">
+                    <div class="menu-icon" style="color:var(--gold)">#${i+1}</div>
+                    <div class="menu-text">${u.username}</div>
+                    <div style="font-family:'Orbitron'; font-weight:bold; color:var(--green)">${Math.floor(u.balance)}</div>
                 </div>
             `).join('');
         }
@@ -159,7 +186,7 @@
     function copyRef() {
         const link = `https://t.me/gelir_evreni_bot?start=${userId}`;
         const i = document.createElement('input'); i.value = link; document.body.appendChild(i); i.select(); document.execCommand('copy'); document.body.removeChild(i);
-        tg.showAlert("Link kopyalandı! Arkadaşlarını davet et!");
+        tg.showAlert("Link kopyalandı! Arkadaşlarını davet et, hızını artır!");
     }
 
     load();
