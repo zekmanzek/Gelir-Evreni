@@ -7,23 +7,36 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Bot Bilgileri
-const token = '8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s';
-const bot = new TelegramBot(token, { polling: true });
-const ADMIN_ID = 1469411131; 
+// --- DOSYA YOLUNU GARANTİYE ALAN KISIM ---
+const publicPath = path.resolve(__dirname); 
+app.use(express.static(publicPath));
 
+const token = '8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s';
+
+// Polling hatasını engellemek için botu bu şekilde başlatıyoruz
+const bot = new TelegramBot(token, { 
+    polling: {
+        autoStart: true,
+        params: { timeout: 10 }
+    } 
+});
+
+const ADMIN_ID = 1469411131; 
 let users = {}; 
 
-// --- KRİTİK DÜZELTME BURASI ---
-// Statik dosyaları şu şekilde tanımlayalım
-app.use(express.static(__dirname));
-
-// Ana sayfa isteği geldiğinde dosyayı zorla gönder
+// Ana sayfa için her iki ihtimali de deniyoruz
 app.get('/', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'index.html'));
+    res.sendFile(path.join(publicPath, 'index.html'), (err) => {
+        if (err) {
+            // Eğer src içindeyse oradan dene
+            res.sendFile(path.join(publicPath, 'src', 'index.html'), (err2) => {
+                if (err2) res.status(404).send("index.html bulunamadı! Lütfen dosya adını kontrol et.");
+            });
+        }
+    });
 });
-// ------------------------------
 
+// API ve Kayıt fonksiyonların (Aynı kalıyor)
 app.get('/api/user/:id', (req, res) => {
     const userId = req.params.id;
     const referrerId = req.query.ref;
@@ -49,7 +62,7 @@ app.post('/api/save', (req, res) => {
         }
         res.json({ success: true });
     } else {
-        res.status(404).send("User not found");
+        res.status(404).json({error: "User not found"});
     }
 });
 
