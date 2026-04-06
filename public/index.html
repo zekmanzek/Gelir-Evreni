@@ -7,122 +7,74 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { background: #0b1e33; color: white; font-family: sans-serif; text-align: center; margin: 0; }
-        .header { background: #112b4a; padding: 15px; border-bottom: 2px solid #ffd700; }
-        .page { padding: 20px; padding-bottom: 100px; display: none; }
-        .active { display: block; }
-        .btn { background: #ffd700; color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 90%; margin-top: 10px; }
-        .nav { position: fixed; bottom: 0; width: 100%; background: #112b4a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #ffd700; }
-        .card { background: #163558; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .header { background: #112b4a; padding: 20px; border-bottom: 2px solid #ffd700; }
+        .btn { background: #ffd700; color: black; border: none; padding: 15px; border-radius: 12px; font-weight: bold; width: 80%; margin-top: 20px; font-size: 18px; cursor: pointer; }
+        .btn:disabled { background: #444; color: #888; cursor: not-allowed; }
     </style>
 </head>
 <body>
+    <div class="header">
+        <h2 style="color:#ffd700; margin: 0;">GELİR EVRENİ</h2>
+        <div id="balance" style="font-size:32px; font-weight:bold; margin-top:10px;">Yükleniyor...</div>
+    </div>
 
-<div class="header">
-    <h2 style="color:#ffd700; margin:0;">GELİR EVRENİ</h2>
-    <div id="balance" style="font-size:28px; font-weight:bold; margin-top:5px;">Yükleniyor...</div>
-</div>
+    <div style="padding: 30px;">
+        <img src="https://img.icons8.com/emoji/96/money-bag-emoji.png" width="120">
+        <button class="btn" id="mine-btn" onclick="mine()">MADENCİLİĞİ BAŞLAT</button>
+        <div id="timer" style="margin-top:15px; color:#ffd700; font-weight: bold;">Hazır</div>
+        
+        <hr style="margin: 40px 0; border: 0.5px solid #112b4a;">
+        
+        <button class="btn" style="background:#ff4757; color:white;" onclick="spin()">🎡 GÜNLÜK ÇARK</button>
+    </div>
 
-<div id="home" class="page active">
-    <div id="speed" style="color:#ffd700;">Hız: +50 GEP / Saat</div>
-    <img src="https://img.icons8.com/emoji/96/money-bag-emoji.png" width="100" style="margin:20px;">
-    <button class="btn" id="mine-btn" onclick="startMining()">MADENCİLİĞİ BAŞLAT</button>
-    <div id="timer" style="margin-top:10px;">08:00:00</div>
-    <button class="btn" style="background:#ff4757; color:white;" onclick="spinWheel()">🎡 ÇARKI ÇEVİR</button>
-</div>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // ID'yi Telegram'dan alıyoruz
+        const userId = new URLSearchParams(window.location.search).get('userid') || tg.initDataUnsafe?.user?.id;
 
-<div id="leaderboard" class="page">
-    <h3>🏆 LİDERLER</h3>
-    <div id="leader-list"></div>
-</div>
-
-<div id="refs" class="page">
-    <h3>👥 DAVET ET</h3>
-    <div class="card" style="justify-content:center;">Referans: <span id="ref-count" style="margin-left:5px;">0</span></div>
-    <button class="btn" onclick="copyRef()">LİNKİ KOPYALA</button>
-</div>
-
-<div class="nav">
-    <div onclick="showPage('home')">🏠</div>
-    <div onclick="showPage('leaderboard')">🏆</div>
-    <div onclick="showPage('refs')">👥</div>
-</div>
-
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
-    // EN GARANTİ ID ALMA YÖNTEMİ
-    let userId = new URLSearchParams(window.location.search).get('userid') || tg.initDataUnsafe?.user?.id?.toString();
-    
-    let userData = null;
-
-    async function loadData() {
-        if (!userId) {
-            document.getElementById('balance').innerText = "ID Bekleniyor...";
-            setTimeout(loadData, 1000); // 1 saniye sonra tekrar dene
-            return;
-        }
-        try {
-            const res = await fetch(`/api/user/${userId}`);
-            userData = await res.json();
-            document.getElementById('balance').innerText = Math.floor(userData.balance).toLocaleString() + ' GEP';
-            document.getElementById('speed').innerText = `⚡ Hız: +${userData.currentSpeed} GEP / Saat`;
-            document.getElementById('ref-count').innerText = userData.refCount;
-            checkMining();
-        } catch (e) { document.getElementById('balance').innerText = "Hata oluştu"; }
-    }
-
-    function checkMining() {
-        if (userData.lastMined) {
-            const diff = Date.now() - new Date(userData.lastMined).getTime();
-            if (diff < 8 * 60 * 60 * 1000) {
-                document.getElementById('mine-btn').disabled = true;
-                startTimer(8 * 60 * 60 * 1000 - diff);
+        async function load() {
+            if (!userId) {
+                document.getElementById('balance').innerText = "Giriş Hatası";
+                return;
+            }
+            const res = await fetch('/api/user/' + userId);
+            const user = await res.json();
+            document.getElementById('balance').innerText = user.balance.toLocaleString() + " GEP";
+            
+            if (user.lastMined) {
+                const diff = Date.now() - new Date(user.lastMined).getTime();
+                const eightHours = 8 * 60 * 60 * 1000;
+                if (diff < eightHours) {
+                    document.getElementById('mine-btn').disabled = true;
+                    document.getElementById('timer').innerText = "Madencilik Devam Ediyor";
+                }
             }
         }
-    }
 
-    function startTimer(ms) {
-        let t = ms / 1000;
-        const intr = setInterval(() => {
-            let h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = Math.floor(t%60);
-            document.getElementById('timer').innerText = `${h}:${m}:${s}`;
-            if (--t < 0) { clearInterval(intr); document.getElementById('mine-btn').disabled = false; }
-        }, 1000);
-    }
+        async function mine() {
+            await fetch('/api/mine', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ userId }) 
+            });
+            load();
+        }
 
-    async function startMining() {
-        await fetch('/api/mine', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId }) });
-        loadData();
-    }
+        async function spin() {
+            const res = await fetch('/api/spin', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ userId }) 
+            });
+            const data = await res.json();
+            alert("🎉 " + data.win + " GEP Kazandın!");
+            load();
+        }
 
-    async function spinWheel() {
-        const res = await fetch('/api/spin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId }) });
-        const d = await res.json();
-        alert(d.win + " GEP Kazandın!");
-        loadData();
-    }
-
-    async function loadLeaderboard() {
-        const res = await fetch('/api/leaderboard');
-        const data = await res.json();
-        const list = document.getElementById('leader-list');
-        list.innerHTML = data.map((u, i) => `<div class="card"><span>#${i+1} Avcı_${u.userId.slice(-4)}</span><b>${Math.floor(u.balance)}</b></div>`).join('');
-    }
-
-    function showPage(p) {
-        document.querySelectorAll('.page').forEach(pg => pg.style.display = 'none');
-        document.getElementById(p).style.display = 'block';
-        if(p === 'leaderboard') loadLeaderboard();
-    }
-
-    function copyRef() {
-        const link = `https://t.me/gelir_evreni_bot?start=${userId}`;
-        const i = document.createElement('input'); i.value = link; document.body.appendChild(i); i.select(); document.execCommand('copy'); document.body.removeChild(i);
-        alert("Referans linkin kopyalandı!");
-    }
-
-    loadData();
-</script>
+        load();
+    </script>
 </body>
 </html>
