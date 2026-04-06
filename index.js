@@ -7,36 +7,21 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// --- DOSYA YOLUNU GARANTİYE ALAN KISIM ---
-const publicPath = path.resolve(__dirname); 
-app.use(express.static(publicPath));
+// --- BURASI ÇOK ÖNEMLİ: Sunucuya public klasörüne bakmasını söylüyoruz ---
+app.use(express.static(path.join(__dirname, 'public')));
 
 const token = '8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s';
-
-// Polling hatasını engellemek için botu bu şekilde başlatıyoruz
-const bot = new TelegramBot(token, { 
-    polling: {
-        autoStart: true,
-        params: { timeout: 10 }
-    } 
-});
-
+const bot = new TelegramBot(token, { polling: true });
 const ADMIN_ID = 1469411131; 
+
 let users = {}; 
 
-// Ana sayfa için her iki ihtimali de deniyoruz
+// Ana sayfa isteği geldiğinde public klasörü içindeki index.html'i açar
 app.get('/', (req, res) => {
-    res.sendFile(path.join(publicPath, 'index.html'), (err) => {
-        if (err) {
-            // Eğer src içindeyse oradan dene
-            res.sendFile(path.join(publicPath, 'src', 'index.html'), (err2) => {
-                if (err2) res.status(404).send("index.html bulunamadı! Lütfen dosya adını kontrol et.");
-            });
-        }
-    });
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// API ve Kayıt fonksiyonların (Aynı kalıyor)
+// API: Kullanıcı Bilgilerini Çekme
 app.get('/api/user/:id', (req, res) => {
     const userId = req.params.id;
     const referrerId = req.query.ref;
@@ -51,32 +36,38 @@ app.get('/api/user/:id', (req, res) => {
     res.json(users[userId]);
 });
 
+// API: Veri Kaydetme ve Bildirim
 app.post('/api/save', (req, res) => {
     const { userId, amount, tasks, wallet, isRequest } = req.body;
     if (users[userId]) {
         if (amount !== undefined) users[userId].balance = amount;
         if (tasks !== undefined) users[userId].tasks = tasks;
         if (wallet !== undefined) users[userId].wallet = wallet;
+
         if (isRequest) {
-            bot.sendMessage(ADMIN_ID, `💰 **YENİ ÖDEME TALEBİ!**\n\n👤 **Kullanıcı:** ${userId}\n💎 **Bakiye:** ${users[userId].balance}\n💳 **Cüzdan:** ${wallet}`, { parse_mode: 'Markdown' });
+            bot.sendMessage(ADMIN_ID, `💰 **YENİ ÖDEME TALEBİ!**\n\n👤 **Kullanıcı:** ${userId}\n💎 **Bakiye:** ${users[userId].balance.toLocaleString()} GEP\n💳 **Cüzdan:** \`${wallet}\``, { parse_mode: 'Markdown' });
         }
         res.json({ success: true });
     } else {
-        res.status(404).json({error: "User not found"});
+        res.status(404).send();
     }
 });
 
+// Telegram Bot Komutu
 bot.on('message', (msg) => {
     if (msg.text && msg.text.startsWith('/start')) {
         const userId = msg.from.id;
         const parts = msg.text.split(' ');
         const referrerId = parts.length > 1 ? parts[1] : null;
         const webAppUrl = `https://gelir-evreni.onrender.com/?userid=${userId}${referrerId ? '&ref=' + referrerId : ''}`;
-        bot.sendMessage(msg.chat.id, `🦅 Gelir Evreni'ne Hoş Geldin!\n\nRef Linkin: https://t.me/gelir_evreni_bot?start=${userId}`, {
-            reply_markup: { inline_keyboard: [[{ text: "🚀 Madenciliği Aç", web_app: { url: webAppUrl } }]] }
+        
+        bot.sendMessage(msg.chat.id, `🦅 Gelir Evreni'ne Hoş Geldin!\n\nRef Linkin: https://t.me/gelir_evreni_bot?start=${userId}\n\nHer ref: 500 GEP +10 Hız!`, {
+            reply_markup: { 
+                inline_keyboard: [[{ text: "🚀 Madenciliği Aç", web_app: { url: webAppUrl } }]] 
+            }
         });
     }
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
