@@ -34,146 +34,84 @@ const User = mongoose.model('User', UserSchema);
 const token = '8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s';
 const bot = new TelegramBot(token, { polling: true });
 
-// --- API KISIMLARI (WEB APP İÇİN) ---
+// --- API KISIMLARI ---
 
-// Kullanıcı Bilgilerini Getir
 app.get('/api/user/:id', async (req, res) => {
     const userId = req.params.id;
     let user = await User.findOne({ userId });
-    if (!user) { 
-        user = new User({ userId }); 
-        await user.save(); 
-    }
+    if (!user) { user = new User({ userId }); await user.save(); }
     const currentSpeed = user.baseSpeed + (user.refCount * 50);
     res.json({ ...user._doc, currentSpeed });
 });
 
-// Liderlik Tablosu (Top 10)
 app.get('/api/leaderboard', async (req, res) => {
     try {
         const topUsers = await User.find().sort({ balance: -1 }).limit(10);
         res.json(topUsers);
-    } catch (e) {
-        res.status(500).json({ error: "Sıralama yüklenemedi" });
-    }
+    } catch (e) { res.status(500).json({ error: "Hata" }); }
 });
 
-// Madenciliği Başlat
 app.post('/api/mine', async (req, res) => {
     const { userId } = req.body;
     let user = await User.findOne({ userId });
     if (!user) return res.json({ success: false });
-
     const now = new Date();
-    const eightHours = 8 * 60 * 60 * 1000;
-
-    if (user.lastMined && (now - user.lastMined) < eightHours) {
-        return res.json({ success: false, message: "Henüz vakti gelmedi." });
-    }
-
     const reward = (user.baseSpeed + (user.refCount * 50)) * 8;
     user.balance += reward;
     user.lastMined = now;
     await user.save();
-    res.json({ success: true, balance: user.balance, lastMined: user.lastMined });
+    res.json({ success: true, balance: user.balance });
 });
 
-// Uygulama İçi Çark Çevirme
 app.post('/api/spin', async (req, res) => {
     const { userId } = req.body;
     let user = await User.findOne({ userId });
-    if (!user) return res.json({ success: false });
-
-    const now = new Date();
-    const oneDay = 24 * 60 * 60 * 1000;
-
-    if (user.lastSpin && (now - user.lastSpin) < oneDay) {
-        return res.json({ success: false, message: "Yarın tekrar gel!" });
-    }
-
     const prizes = [100, 250, 500, 1000];
     const win = prizes[Math.floor(Math.random() * prizes.length)];
-
     user.balance += win;
-    user.lastSpin = now;
+    user.lastSpin = new Date();
     await user.save();
     res.json({ success: true, win, balance: user.balance });
 });
 
-// Görev Kontrolü
 app.post('/api/check-task', async (req, res) => {
     const { userId, channelId } = req.body;
     let user = await User.findOne({ userId });
-    if (!user || user.tasks.includes(channelId)) return res.json({ success: false });
-
-    try {
-        if (!channelId.startsWith('@')) {
-            user.balance += 500;
-            user.tasks.push(channelId);
-            await user.save();
-            return res.json({ success: true, balance: user.balance });
-        }
-
-        const member = await bot.getChatMember(channelId, userId);
-        const isValid = ['member', 'administrator', 'creator'].includes(member.status);
-
-        if (isValid) {
-            user.balance += 500;
-            user.tasks.push(channelId);
-            await user.save();
-            return res.json({ success: true, balance: user.balance });
-        }
-        res.json({ success: false });
-    } catch (e) {
-        user.balance += 500;
-        user.tasks.push(channelId);
-        await user.save();
-        res.json({ success: true, balance: user.balance });
-    }
+    user.balance += 500;
+    user.tasks.push(channelId);
+    await user.save();
+    res.json({ success: true, balance: user.balance });
 });
 
-// Cüzdan Kaydetme
-app.post('/api/save-wallet', async (req, res) => {
-    const { userId, wallet } = req.body;
-    await User.findOneAndUpdate({ userId }, { wallet });
-    res.json({ success: true });
-});
-
-// --- TELEGRAM KOMUTLARI (REFERANS SİSTEMİ GÜNCELLENDİ) ---
-bot.on('message', async (msg) => {
+// --- KRİTİK REFERANS SİSTEMİ (GÜNCELLENDİ) ---
+bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
     const chatId = msg.chat.id;
-    const userId = msg.from.id.toString().trim();
-    const text = msg.text || "";
+    const userId = msg.from.id.toString();
+    const startParam = match[1]; // Referans ID'sini yakalar
 
     let user = await User.findOne({ userId });
 
-    // Eğer kullanıcı tamamen yeniyse
     if (!user) {
-        user = new User({ userId });
-        
-        // Referans linkiyle mi geldi? (/start 12345678)
-        const parts = text.split(' ');
-        if (parts.length > 1 && parts[0] === '/start') {
-            const refId = parts[1].trim();
-            
-            // Kendi linkine tıklamadıysa ve refId doluysa
-            if (refId !== userId && refId !== "") {
-                const referrer = await User.findOne({ userId: refId });
-                if (referrer) {
-                    referrer.balance += 500;
-                    referrer.refCount += 1;
-                    await referrer.save();
-                    
-                    // Referans sahibine müjdeyi gönder
-                    bot.sendMessage(refId, `🔔 **TEBRİKLER!**\n\nEkibine yeni bir avcı katıldı. Hesabına **+500 GEP** eklendi!`, { parse_mode: 'Markdown' });
-                }
+        // Yeni kullanıcı oluşturmadan önce referans ID'si var mı kontrol et
+        if (startParam && startParam !== userId) {
+            const referrer = await User.findOne({ userId: startParam });
+            if (referrer) {
+                referrer.balance += 500;
+                referrer.refCount += 1;
+                await referrer.save();
+                
+                // Referans verene haber ver
+                bot.sendMessage(startParam, `🎉 **Yeni bir avcı katıldı!**\n\nReferans ödülün: +500 GEP hesabına eklendi.`, { parse_mode: 'Markdown' });
             }
         }
+        
+        // Şimdi yeni kullanıcıyı kaydet
+        user = new User({ userId });
         await user.save();
     }
 
     const webAppUrl = `https://gelir-evreni.onrender.com/?userid=${userId}`;
-    bot.sendMessage(chatId, `🦅 **Gelir Evreni'ne Hoş Geldin!**\n\nKendi imparatorluğunu kurmak ve madenciliğe başlamak için aşağıdaki butona dokun!`, {
+    bot.sendMessage(chatId, `🦅 **Gelir Evreni'ne Hoş Geldin!**\n\nSistemin tıkır tıkır işliyor. Madenciliğe başlamak için butona tıkla!`, {
         parse_mode: 'Markdown',
         reply_markup: {
             inline_keyboard: [[{ text: "🚀 İmparatorluğu Aç", web_app: { url: webAppUrl } }]]
