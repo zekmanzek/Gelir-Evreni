@@ -48,7 +48,7 @@ app.get('/api/leaderboard', async (req, res) => {
     try {
         const topUsers = await User.find().sort({ balance: -1 }).limit(10);
         res.json(topUsers);
-    } catch (e) { res.status(500).json({ error: "Hata" }); }
+    } catch (e) { res.status(500).json({ error: "Sıralama yüklenemedi" }); }
 });
 
 app.post('/api/mine', async (req, res) => {
@@ -83,35 +83,30 @@ app.post('/api/check-task', async (req, res) => {
     res.json({ success: true, balance: user.balance });
 });
 
-// --- KRİTİK REFERANS SİSTEMİ (GÜNCELLENDİ) ---
+// --- TELEGRAM KOMUTLARI (DEEP LINKING DESTEKLİ) ---
 bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id.toString();
-    const startParam = match[1]; // Referans ID'sini yakalar
+    const startParam = match[1];
 
     let user = await User.findOne({ userId });
 
     if (!user) {
-        // Yeni kullanıcı oluşturmadan önce referans ID'si var mı kontrol et
         if (startParam && startParam !== userId) {
             const referrer = await User.findOne({ userId: startParam });
             if (referrer) {
                 referrer.balance += 500;
                 referrer.refCount += 1;
                 await referrer.save();
-                
-                // Referans verene haber ver
                 bot.sendMessage(startParam, `🎉 **Yeni bir avcı katıldı!**\n\nReferans ödülün: +500 GEP hesabına eklendi.`, { parse_mode: 'Markdown' });
             }
         }
-        
-        // Şimdi yeni kullanıcıyı kaydet
         user = new User({ userId });
         await user.save();
     }
 
     const webAppUrl = `https://gelir-evreni.onrender.com/?userid=${userId}`;
-    bot.sendMessage(chatId, `🦅 **Gelir Evreni'ne Hoş Geldin!**\n\nSistemin tıkır tıkır işliyor. Madenciliğe başlamak için butona tıkla!`, {
+    bot.sendMessage(chatId, `🦅 **Gelir Evreni'ne Hoş Geldin!**\n\nKendi imparatorluğunu kurmak için aşağıdaki butona tıkla!`, {
         parse_mode: 'Markdown',
         reply_markup: {
             inline_keyboard: [[{ text: "🚀 İmparatorluğu Aç", web_app: { url: webAppUrl } }]]
