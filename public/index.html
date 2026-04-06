@@ -5,43 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gelir Evreni</title>
     <style>
-        body { background: #0b1e33; color: white; font-family: sans-serif; text-align: center; margin: 0; }
-        .header { background: #112b4a; padding: 20px; border-bottom: 2px solid #ffd700; }
+        body { background: #0b1e33; color: white; font-family: sans-serif; text-align: center; margin: 0; user-select: none; }
+        .header { background: #112b4a; padding: 15px; border-bottom: 2px solid #ffd700; }
         .nav { position: fixed; bottom: 0; width: 100%; background: #112b4a; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #ffd700; }
-        .page { padding: 20px; padding-bottom: 100px; }
-        .btn { background: #ffd700; color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 80%; cursor: pointer; margin: 10px 0; }
-        .btn:disabled { background: #555; color: #ccc; cursor: not-allowed; }
-        .task-card { background: #163558; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
+        .page { padding: 20px; padding-bottom: 100px; display: none; }
+        .active { display: block; }
+        .btn { background: #ffd700; color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 85%; cursor: pointer; }
+        .btn:disabled { background: #444; color: #888; }
+        .card { background: #163558; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+        .lang-btn { cursor: pointer; font-size: 24px; margin: 5px; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h2 style="color:#ffd700; margin:0;">GELİR EVRENİ</h2>
-    <div id="balance" style="font-size:28px; font-weight:bold; margin-top:10px;">0 GEP</div>
-    <div style="color:#00ff00; font-size:14px;">≈ $<span id="usd-val">0.00</span></div>
+    <div><span class="lang-btn" onclick="setLang('tr')">🇹🇷</span><span class="lang-btn" onclick="setLang('az')">🇦🇿</span></div>
+    <h2 id="title" style="color:#ffd700; margin:5px;">GELİR EVRENİ</h2>
+    <div id="balance" style="font-size:28px; font-weight:bold;">0 GEP</div>
+    <div style="color:#00ff00;">≈ $<span id="usd">0.00</span></div>
 </div>
 
-<div id="home" class="page">
-    <div id="speed" style="color:#ffd700; margin-bottom:20px;">Hız: +50 GEP / Saat</div>
+<div id="home" class="page active">
+    <div id="speed" style="color:#ffd700; margin-bottom:15px;">Hız: +50 GEP / Saat</div>
     <img src="https://img.icons8.com/emoji/96/money-bag-emoji.png" width="120">
-    <button class="btn" id="mine-btn" onclick="startMining()">Madenciliği Başlat</button>
-    <div id="timer" style="font-size:20px; margin-top:10px; font-weight:bold;">08:00:00</div>
+    <button class="btn" id="mine-btn" onclick="startMining()">MADENCİLİĞİ BAŞLAT</button>
+    <div id="timer" style="font-size:20px; margin-top:10px;">08:00:00</div>
 </div>
 
-<div id="tasks" class="page" style="display:none;">
-    <h3>İMPARATORLUK GÖREVLERİ</h3>
+<div id="tasks" class="page">
+    <h3 id="task-title">İMPARATORLUK GÖREVLERİ</h3>
     <div id="task-list"></div>
 </div>
 
+<div id="refs" class="page">
+    <h3 id="ref-title">AVCI EKİBİ</h3>
+    <p id="ref-info">Her referans için +500 GEP ve +50 Hız kazanırsın!</p>
+    <div class="card">🚀 <span id="ref-count">0</span> Referans</div>
+    <button class="btn" onclick="copyRef()">LİNKİ KOPYALA</button>
+</div>
+
+<div id="wallet" class="page">
+    <h3 id="wallet-title">GELİR</h3>
+    <p>Minimum: 50.000 GEP ($5)</p>
+    <input type="text" id="wallet-input" placeholder="USDT BEP20 Adresiniz" style="width:80%; padding:10px; border-radius:5px; border:none; margin-bottom:10px;">
+    <button class="btn" onclick="saveWallet()">KAYDET / TALEP ET</button>
+</div>
+
 <div class="nav">
-    <div onclick="showPage('home')">🏠 ANA SAYFA</div>
-    <div onclick="showPage('tasks')">🎯 GÖREVLER</div>
+    <div onclick="showPage('home')">🏠 <small>ANA SAYFA</small></div>
+    <div onclick="showPage('tasks')">🎯 <small>GÖREVLER</small></div>
+    <div onclick="showPage('refs')">👥 <small>AVCI EKİBİ</small></div>
+    <div onclick="showPage('wallet')">💰 <small>GELİR</small></div>
 </div>
 
 <script>
     let userId = new URLSearchParams(window.location.search).get('userid') || 'test';
-    let userData = { balance: 0, currentSpeed: 50, tasks: [], lastMined: null };
+    let userData = { balance: 0, currentSpeed: 50, tasks: [], lastMined: null, refCount: 0 };
+    let lang = 'tr';
+
+    const texts = {
+        tr: { title: 'GELİR EVRENİ', mine: 'MADENCİLİĞİ BAŞLAT', tasks: 'İMPARATORLUK GÖREVLERİ', refs: 'AVCI EKİBİ', wallet: 'GELİR' },
+        az: { title: 'GƏLİR ALƏMİ', mine: 'MƏDƏNÇİLİYİ BAŞLAT', tasks: 'İMPERİYA TAPŞIRIQLARI', refs: 'OVÇU KOMANDASI', wallet: 'GƏLİR' }
+    };
+
+    const CHANNELS = [
+        { id: '@gelirevreni', name: 'Gelir Evreni', link: 'https://t.me/gelirevreni' },
+        { id: '@gelirevreniproje', name: 'Gelir Evreni Proje', link: 'https://t.me/gelirevreniproje' },
+        { id: '@kriptotayfa', name: 'Kripto Tayfa', link: 'https://t.me/kriptotayfa' },
+        { id: '@referanslinkim', name: 'Referans Linkim', link: 'https://t.me/referanslinkim' },
+        { id: '@sorareturkiye', name: 'Sorare Türkiye', link: 'https://t.me/sorareturkiye' },
+        { id: 'x_gelir', name: 'X: Gelir Evreni', link: 'https://x.com/gelirevreni' },
+        { id: 'x_tayfa', name: 'X: Kripto Tayfa', link: 'https://x.com/kriptotayfa' }
+    ];
 
     async function loadData() {
         const res = await fetch(`/api/user/${userId}`);
@@ -50,10 +85,14 @@
         renderTasks();
     }
 
+    function setLang(l) { lang = l; document.getElementById('title').innerText = texts[lang].title; document.getElementById('mine-btn').innerText = texts[lang].mine; }
+
     function updateUI() {
         document.getElementById('balance').innerText = userData.balance.toLocaleString() + ' GEP';
-        document.getElementById('usd-val').innerText = (userData.balance / 10000).toFixed(2);
+        document.getElementById('usd').innerText = (userData.balance / 10000).toFixed(2);
         document.getElementById('speed').innerText = `Hız: +${userData.currentSpeed} GEP / Saat`;
+        document.getElementById('ref-count').innerText = userData.refCount;
+        if(userData.wallet) document.getElementById('wallet-input').value = userData.wallet;
         
         if (userData.lastMined) {
             const diff = Date.now() - userData.lastMined;
@@ -65,68 +104,44 @@
     }
 
     async function startMining() {
-        const res = await fetch('/api/mine', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ userId })
-        });
-        const data = await res.json();
-        if(data.success) {
-            userData.balance = data.balance;
-            userData.lastMined = data.lastMined;
-            updateUI();
-            alert("Madencilik başladı! +500 GEP eklendi.");
-        }
+        const res = await fetch('/api/mine', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId }) });
+        const d = await res.json();
+        if(d.success) { userData.balance = d.balance; userData.lastMined = d.lastMined; updateUI(); }
     }
 
     function startTimer(duration) {
-        let timer = duration / 1000;
-        const interval = setInterval(() => {
-            let h = Math.floor(timer / 3600);
-            let m = Math.floor((timer % 3600) / 60);
-            let s = Math.floor(timer % 60);
+        let t = duration / 1000;
+        const intr = setInterval(() => {
+            let h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = Math.floor(t % 60);
             document.getElementById('timer').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            if (--timer < 0) {
-                clearInterval(interval);
-                document.getElementById('mine-btn').disabled = false;
-                document.getElementById('timer').innerText = "08:00:00";
-            }
+            if (--t < 0) { clearInterval(intr); document.getElementById('mine-btn').disabled = false; }
         }, 1000);
     }
 
-    function showPage(p) {
-        document.getElementById('home').style.display = p === 'home' ? 'block' : 'none';
-        document.getElementById('tasks').style.display = p === 'tasks' ? 'block' : 'none';
-    }
-
-    const CHANNELS = [
-        { id: '@gelirevreni', name: 'Gelir Evreni', link: 'https://t.me/gelirevreni' },
-        { id: '@kriptotayfa', name: 'Kripto Tayfa', link: 'https://t.me/kriptotayfa' },
-        { id: '@sorareturkiye', name: 'Sorare Türkiye', link: 'https://t.me/sorareturkiye' }
-    ];
+    function showPage(p) { document.querySelectorAll('.page').forEach(pg => pg.style.display = 'none'); document.getElementById(p).style.display = 'block'; }
 
     function renderTasks() {
         const list = document.getElementById('task-list');
         list.innerHTML = '';
         CHANNELS.forEach(ch => {
             const done = userData.tasks.includes(ch.id);
-            list.innerHTML += `
-                <div class="task-card">
-                    <div style="text-align:left;"><b>${ch.name}</b><br><small>+500 GEP</small></div>
-                    ${done ? '✅' : `<button onclick="doTask('${ch.link}','${ch.id}')" style="background:#ffd700; border:none; padding:8px; border-radius:5px;">Yap</button>`}
-                </div>`;
+            list.innerHTML += `<div class="card"><div><b>${ch.name}</b><br><small>+500 GEP</small></div>${done ? '✅' : `<button onclick="doTask('${ch.link}','${ch.id}')" style="background:#ffd700; border:none; padding:8px; border-radius:5px;">Yap</button>`}</div>`;
         });
     }
 
     async function doTask(url, id) {
         window.open(url, '_blank');
-        const res = await fetch('/api/check-task', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ userId, channelId: id })
-        });
+        const res = await fetch('/api/check-task', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId, channelId: id }) });
         const d = await res.json();
-        if(d.success) { alert("Onaylandı!"); loadData(); } else { alert("Katılmalısın!"); }
+        if(d.success) { alert("Puan eklendi!"); loadData(); } else { alert("Katılmalısınız!"); }
+    }
+
+    function copyRef() { navigator.clipboard.writeText(`https://t.me/gelir_evreni_bot?start=${userId}`); alert("Link kopyalandı!"); }
+
+    async function saveWallet() {
+        const w = document.getElementById('wallet-input').value;
+        await fetch('/api/save-wallet', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId, wallet: w }) });
+        alert("Cüzdan kaydedildi!");
     }
 
     loadData();
