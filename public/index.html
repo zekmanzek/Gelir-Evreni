@@ -3,138 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gelir Evreni Pro</title>
+    <title>Gelir Evreni - Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #FFD700; --bg: #050A10; --card: #0F1722; --accent: #00D4FF; }
-        body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; margin: 0; user-select: none; overflow: hidden; }
-        .app-container { height: 100vh; display: flex; flex-direction: column; }
+        :root { --bg-dark: #0a0f1e; --card-bg: #151c2c; --gold: #fbc02d; --green: #4caf50; --text-gray: #a0a0a0; }
+        body { background-color: var(--bg-dark); color: white; font-family: 'Roboto', sans-serif; margin: 0; padding: 0; user-select: none; }
         
-        /* Header Bölümü */
-        .main-header { background: var(--card); padding: 25px 15px; border-bottom: 2px solid var(--gold); border-radius: 0 0 25px 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
-        .balance-title { font-family: 'Orbitron', sans-serif; color: var(--gold); font-size: 14px; letter-spacing: 2px; }
-        .balance-amount { font-size: 36px; font-weight: 700; margin: 5px 0; text-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+        .container { padding: 15px; padding-bottom: 80px; }
 
-        /* Sayfalar */
-        .page { flex: 1; overflow-y: auto; padding: 20px; display: none; }
-        .active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Üst Profil Kartı */
+        .profile-section { background: var(--card-bg); border-radius: 20px; padding: 15px; display: flex; align-items: center; border-bottom: 4px solid rgba(0,0,0,0.3); margin-bottom: 20px; }
+        .avatar { width: 50px; height: 50px; background: var(--gold); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-right: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .user-info h3 { margin: 0; font-size: 18px; color: var(--gold); }
+        .user-info p { margin: 0; font-size: 12px; color: var(--text-gray); }
 
-        /* Kartlar ve Butonlar */
-        .stat-card { background: var(--card); padding: 20px; border-radius: 18px; border: 1px solid #1A2635; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .action-btn { background: linear-gradient(135deg, var(--gold), #B8860B); color: black; border: none; padding: 18px; border-radius: 15px; font-weight: 700; width: 100%; font-size: 16px; font-family: 'Orbitron'; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(255,215,0,0.2); }
-        .action-btn:disabled { background: #2D3748; color: #718096; box-shadow: none; }
-        
-        /* Navbar */
-        .bottom-nav { background: var(--card); display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #1A2635; }
-        .nav-item { font-size: 24px; cursor: pointer; opacity: 0.5; transition: 0.3s; }
-        .nav-item.active-nav { opacity: 1; color: var(--gold); transform: scale(1.2); }
+        /* Bakiye Alanı */
+        .balance-card { background: linear-gradient(180deg, #1e2a3a 0%, #151c2c 100%); border-radius: 25px; padding: 25px; text-align: center; margin-bottom: 25px; border: 1px solid #2d3a4d; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        .balance-label { color: var(--text-gray); font-size: 14px; letter-spacing: 1px; font-weight: bold; }
+        .balance-value { font-size: 42px; font-weight: 900; color: white; margin: 10px 0; text-shadow: 0 0 20px rgba(255,255,255,0.1); }
+        .speed-badge { background: rgba(76, 175, 80, 0.1); color: var(--green); padding: 5px 15px; border-radius: 50px; font-size: 13px; font-weight: bold; display: inline-block; }
 
-        .leader-item { background: #131C28; padding: 12px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; border-left: 4px solid var(--accent); }
+        /* Görseldeki O Yeşil 3D Buton */
+        .main-btn { background: linear-gradient(180deg, #66bb6a 0%, #388e3c 100%); color: white; border: none; width: 100%; padding: 20px; border-radius: 18px; font-size: 18px; font-weight: 900; cursor: pointer; text-transform: uppercase; box-shadow: 0 6px 0 #1b5e20, 0 10px 20px rgba(0,0,0,0.4); transition: 0.1s; margin-bottom: 10px; }
+        .main-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #1b5e20; }
+        .main-btn:disabled { background: #454d55; box-shadow: 0 6px 0 #2c3136; color: #888; }
+
+        /* Alt Sekmeler */
+        .tabs-container { background: var(--card-bg); border-radius: 20px; padding: 10px; margin-top: 20px; }
+        .tab-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #252d3d; }
+        .tab-item:last-child { border-bottom: none; }
+        .tab-icon { font-size: 20px; margin-right: 15px; }
+        .tab-text { flex-grow: 1; font-weight: bold; font-size: 15px; }
+        .tab-value { color: var(--gold); font-weight: bold; }
+
+        /* Alt Navigasyon */
+        .navbar { position: fixed; bottom: 0; left: 0; right: 0; background: #151c2c; display: flex; justify-content: space-around; padding: 15px; border-top: 2px solid #1e2a3a; z-index: 100; }
+        .nav-link { color: var(--text-gray); text-decoration: none; font-size: 24px; transition: 0.3s; }
+        .nav-link.active { color: var(--gold); transform: scale(1.2); }
+
+        .page { display: none; }
+        .active-page { display: block; animation: slideUp 0.4s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div class="main-header">
-        <div class="balance-title">TOPLAM BAKİYE</div>
-        <div id="balance" class="balance-amount">0 GEP</div>
-        <div style="color: #4CAF50; font-size: 14px; font-weight: 600;">⚡ <span id="current-speed">50</span> GEP/S</div>
+<div class="container">
+    <div class="profile-section">
+        <div class="avatar">🦅</div>
+        <div class="user-info">
+            <h3 id="user-name">Yükleniyor...</h3>
+            <p>Seviye 1 Avcı</p>
+        </div>
     </div>
 
-    <div id="home" class="page active">
-        <div style="margin: 40px 0; position: relative;">
-            <div style="font-size: 80px;">🪙</div>
-            <div id="timer" style="font-family: 'Orbitron'; font-size: 22px; margin-top: 15px; color: var(--accent);">READY TO COLLECT</div>
+    <div id="home" class="page active-page">
+        <div class="balance-card">
+            <div class="balance-label">GEP BALANCE</div>
+            <div id="balance" class="balance-value">0</div>
+            <div class="speed-badge">⚡ <span id="speed">50</span> GEP / SAAT</div>
         </div>
-        <button class="action-btn" id="mine-btn" onclick="mine()">MADENLERİ ÇALIŞTIR</button>
-        <button class="action-btn" style="background: #E53E3E; color: white; margin-top: 15px;" onclick="spin()">🎡 GÜNLÜK ŞANS</button>
+
+        <button class="main-btn" id="mine-btn" onclick="startMining()">Madenciliği Başlat</button>
+        <div id="timer" style="text-align:center; font-weight:bold; color:var(--text-gray); margin-top:5px;">HAZIR</div>
+
+        <div class="tabs-container">
+            <div class="tab-item" onclick="showPage('leaderboard')">
+                <span class="tab-icon">🏆</span>
+                <span class="tab-text">Liderlik Tablosu</span>
+                <span class="tab-value">❯</span>
+            </div>
+            <div class="tab-item" onclick="showPage('refs')">
+                <span class="tab-icon">👥</span>
+                <span class="tab-text">Arkadaşlarını Davet Et</span>
+                <span class="tab-value" id="ref-count">0</span>
+            </div>
+        </div>
     </div>
 
     <div id="leaderboard" class="page">
-        <h3 style="font-family: 'Orbitron'; color: var(--gold);">ELİT SIRALAMA</h3>
-        <div id="leader-list"></div>
+        <h2 style="color:var(--gold); text-align:center;">ELİT SIRALAMA</h2>
+        <div id="leader-list" class="tabs-container"></div>
+        <button class="main-btn" style="background:var(--card-bg); margin-top:20px;" onclick="showPage('home')">GERİ DÖN</button>
     </div>
 
     <div id="refs" class="page">
-        <h3 style="font-family: 'Orbitron'; color: var(--gold);">İMİPARATORLUĞUNU BÜYÜT</h3>
-        <div class="stat-card">
-            <span>Aktif Avcılar</span>
-            <b id="ref-count" style="color: var(--accent); font-size: 20px;">0</b>
+        <h2 style="color:var(--gold); text-align:center;">EKİBİNİ KUR</h2>
+        <div class="balance-card">
+            <p style="font-size:14px;">Her davet için <b>1000 GEP</b> kazan ve üretim hızını kalıcı olarak artır!</p>
+            <button class="main-btn" onclick="copyRef()">DAVET LİNKİNİ KOPYALA</button>
         </div>
-        <p style="font-size: 13px; color: #A0AEC0;">Her referans üretim hızını +25 GEP/S artırır ve sana +1000 GEP kazandırır.</p>
-        <button class="action-btn" onclick="copyRef()">DAVET LİNKİNİ AL</button>
+        <button class="main-btn" style="background:var(--card-bg);" onclick="showPage('home')">GERİ DÖN</button>
     </div>
+</div>
 
-    <div class="bottom-nav">
-        <div class="nav-item active-nav" onclick="showPage('home', this)">🏠</div>
-        <div class="nav-item" onclick="showPage('leaderboard', this)">🏆</div>
-        <div class="nav-item" onclick="showPage('refs', this)">👥</div>
-    </div>
+<div class="navbar">
+    <a href="#" class="nav-link active" onclick="showPage('home')">🏠</a>
+    <a href="#" class="nav-link" onclick="showPage('leaderboard')">🏆</a>
+    <a href="#" class="nav-link" onclick="showPage('refs')">👥</a>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
     const userId = new URLSearchParams(window.location.search).get('userid') || tg.initDataUnsafe?.user?.id;
-    
+
     async function load() {
         const res = await fetch('/api/user/' + userId);
         const u = await res.json();
-        document.getElementById('balance').innerText = Math.floor(u.balance).toLocaleString() + " GEP";
-        document.getElementById('current-speed').innerText = u.speed;
+        document.getElementById('user-name').innerText = u.username;
+        document.getElementById('balance').innerText = Math.floor(u.balance).toLocaleString();
+        document.getElementById('speed').innerText = u.speed;
         document.getElementById('ref-count').innerText = u.refCount;
-        
+
         if (u.lastMined) {
             const diff = Date.now() - new Date(u.lastMined).getTime();
             if (diff < 8*60*60*1000) {
                 document.getElementById('mine-btn').disabled = true;
-                startTimer(8*60*60*1000 - diff);
+                runTimer(8*60*60*1000 - diff);
             }
         }
     }
 
-    function startTimer(ms) {
+    function runTimer(ms) {
         let t = ms / 1000;
         const intr = setInterval(() => {
             let h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = Math.floor(t%60);
             document.getElementById('timer').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            if (--t < 0) { clearInterval(intr); document.getElementById('mine-btn').disabled = false; document.getElementById('timer').innerText = "COLLECT READY"; }
+            if (--t < 0) { clearInterval(intr); document.getElementById('mine-btn').disabled = false; document.getElementById('timer').innerText = "HAZIR"; }
         }, 1000);
     }
 
-    async function mine() {
+    async function startMining() {
         await fetch('/api/mine', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId }) });
         load();
     }
 
-    async function spin() {
-        const res = await fetch('/api/spin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId }) });
-        const d = await res.json();
-        if(!d.success) return alert("Yarın tekrar gel!");
-        alert("🎉 " + d.win + " GEP KAZANDIN!");
-        load();
-    }
-
-    async function showPage(id, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
-        document.getElementById(id).classList.add('active');
-        el.classList.add('active-nav');
-        if(id === 'leaderboard') {
+    async function showPage(p) {
+        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active-page'));
+        document.getElementById(p).classList.add('active-page');
+        if(p === 'leaderboard') {
             const res = await fetch('/api/leaderboard');
             const data = await res.json();
             document.getElementById('leader-list').innerHTML = data.map((u, i) => `
-                <div class="leader-item"><span>#${i+1} ${u.username.substring(0,12)}</span><b>${Math.floor(u.balance)}</b></div>
+                <div class="tab-item">
+                    <span style="color:var(--gold); margin-right:10px;">#${i+1}</span>
+                    <span class="tab-text">${u.username.substring(0,12)}</span>
+                    <span class="tab-value">${Math.floor(u.balance)}</span>
+                </div>
             `).join('');
         }
     }
 
     function copyRef() {
         const link = `https://t.me/gelir_evreni_bot?start=${userId}`;
-        const input = document.createElement('input'); input.value = link; document.body.appendChild(input); input.select(); document.execCommand('copy'); document.body.removeChild(input);
-        tg.showAlert("Davet linkin kopyalandı! Arkadaşlarını çağır, hızı kap!");
+        const i = document.createElement('input'); i.value = link; document.body.appendChild(i); i.select(); document.execCommand('copy'); document.body.removeChild(i);
+        tg.showAlert("Link kopyalandı! Arkadaşlarını davet et!");
     }
 
     load();
