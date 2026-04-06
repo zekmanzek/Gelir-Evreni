@@ -7,11 +7,12 @@
     <style>
         body { background: #0b1e33; color: white; font-family: sans-serif; text-align: center; margin: 0; user-select: none; }
         .header { background: #112b4a; padding: 15px; border-bottom: 2px solid #ffd700; }
-        .nav { position: fixed; bottom: 0; width: 100%; background: #112b4a; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #ffd700; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: #112b4a; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #ffd700; z-index: 100; }
         .page { padding: 20px; padding-bottom: 100px; display: none; }
         .active { display: block; }
-        .btn { background: #ffd700; color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 85%; cursor: pointer; }
+        .btn { background: #ffd700; color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 85%; cursor: pointer; margin-bottom: 10px; transition: 0.3s; }
         .btn:disabled { background: #444; color: #888; }
+        .btn-spin { background: #ff4757; color: white; border: 2px solid #ffd700; }
         .card { background: #163558; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
         .lang-btn { cursor: pointer; font-size: 24px; margin: 5px; }
     </style>
@@ -27,9 +28,18 @@
 
 <div id="home" class="page active">
     <div id="speed" style="color:#ffd700; margin-bottom:15px;">Hız: +50 GEP / Saat</div>
-    <img src="https://img.icons8.com/emoji/96/money-bag-emoji.png" width="120">
+    <div style="margin-bottom: 20px;">
+        <img src="https://img.icons8.com/emoji/96/money-bag-emoji.png" width="120">
+    </div>
+    
     <button class="btn" id="mine-btn" onclick="startMining()">MADENCİLİĞİ BAŞLAT</button>
-    <div id="timer" style="font-size:20px; margin-top:10px;">08:00:00</div>
+    <div id="timer" style="font-size:18px; margin-bottom:20px; color: #888;">08:00:00</div>
+
+    <hr style="border: 0.5px solid #112b4a; width: 80%; margin: 20px auto;">
+
+    <h3 id="spin-title">GÜNLÜK ŞANS</h3>
+    <button class="btn btn-spin" id="spin-btn" onclick="spinWheel()">🎡 ÇARKI ÇEVİR</button>
+    <p id="spin-timer" style="font-size:14px; color: #ffd700;"></p>
 </div>
 
 <div id="tasks" class="page">
@@ -46,74 +56,97 @@
 
 <div id="wallet" class="page">
     <h3 id="wallet-title">GELİR</h3>
-    <p>Minimum: 50.000 GEP ($5)</p>
-    <input type="text" id="wallet-input" placeholder="USDT BEP20 Adresiniz" style="width:80%; padding:10px; border-radius:5px; border:none; margin-bottom:10px;">
+    <p>Minimum Çekim: 50.000 GEP ($5)</p>
+    <input type="text" id="wallet-input" placeholder="USDT BEP20 Adresiniz" style="width:80%; padding:10px; border-radius:5px; border:none; margin-bottom:10px; background: #112b4a; color: white;">
     <button class="btn" onclick="saveWallet()">KAYDET / TALEP ET</button>
 </div>
 
 <div class="nav">
-    <div onclick="showPage('home')">🏠 <small>ANA SAYFA</small></div>
-    <div onclick="showPage('tasks')">🎯 <small>GÖREVLER</small></div>
-    <div onclick="showPage('refs')">👥 <small>AVCI EKİBİ</small></div>
-    <div onclick="showPage('wallet')">💰 <small>GELİR</small></div>
+    <div onclick="showPage('home')">🏠 <br><small>ANA SAYFA</small></div>
+    <div onclick="showPage('tasks')">🎯 <br><small>GÖREVLER</small></div>
+    <div onclick="showPage('refs')">👥 <br><small>AVCI</small></div>
+    <div onclick="showPage('wallet')">💰 <br><small>GELİR</small></div>
 </div>
 
 <script>
     let userId = new URLSearchParams(window.location.search).get('userid') || 'test';
-    let userData = { balance: 0, currentSpeed: 50, tasks: [], lastMined: null, refCount: 0 };
+    let userData = { balance: 0, currentSpeed: 50, tasks: [], lastMined: null, lastSpin: null, refCount: 0 };
     let lang = 'tr';
 
     const texts = {
-        tr: { title: 'GELİR EVRENİ', mine: 'MADENCİLİĞİ BAŞLAT', tasks: 'İMPARATORLUK GÖREVLERİ', refs: 'AVCI EKİBİ', wallet: 'GELİR' },
-        az: { title: 'GƏLİR ALƏMİ', mine: 'MƏDƏNÇİLİYİ BAŞLAT', tasks: 'İMPERİYA TAPŞIRIQLARI', refs: 'OVÇU KOMANDASI', wallet: 'GƏLİR' }
+        tr: { title: 'GELİR EVRENİ', mine: 'MADENCİLİĞİ BAŞLAT', tasks: 'İMPARATORLUK GÖREVLERİ', refs: 'AVCI EKİBİ', wallet: 'GELİR', spin: '🎡 ÇARKI ÇEVİR', spinTitle: 'GÜNLÜK ŞANS' },
+        az: { title: 'GƏLİR ALƏMİ', mine: 'MƏDƏNÇİLİYİ BAŞLAT', tasks: 'İMPERİYA TAPŞIRIQLARI', refs: 'OVÇU KOMANDASI', wallet: 'GƏLİR', spin: '🎡 ÇARXI ÇEVİR', spinTitle: 'GÜNLÜK ŞANS' }
     };
 
-    const CHANNELS = [
-        { id: '@gelirevreni', name: 'Gelir Evreni', link: 'https://t.me/gelirevreni' },
-        { id: '@gelirevreniproje', name: 'Gelir Evreni Proje', link: 'https://t.me/gelirevreniproje' },
-        { id: '@kriptotayfa', name: 'Kripto Tayfa', link: 'https://t.me/kriptotayfa' },
-        { id: '@referanslinkim', name: 'Referans Linkim', link: 'https://t.me/referanslinkim' },
-        { id: '@sorareturkiye', name: 'Sorare Türkiye', link: 'https://t.me/sorareturkiye' },
-        { id: 'x_gelir', name: 'X: Gelir Evreni', link: 'https://x.com/gelirevreni' },
-        { id: 'x_tayfa', name: 'X: Kripto Tayfa', link: 'https://x.com/kriptotayfa' }
-    ];
-
     async function loadData() {
-        const res = await fetch(`/api/user/${userId}`);
-        userData = await res.json();
-        updateUI();
-        renderTasks();
+        try {
+            const res = await fetch(`/api/user/${userId}`);
+            userData = await res.json();
+            updateUI();
+            renderTasks();
+        } catch (e) { console.error("Veri yüklenemedi"); }
     }
 
-    function setLang(l) { lang = l; document.getElementById('title').innerText = texts[lang].title; document.getElementById('mine-btn').innerText = texts[lang].mine; }
+    function setLang(l) { 
+        lang = l; 
+        document.getElementById('title').innerText = texts[lang].title; 
+        document.getElementById('mine-btn').innerText = texts[lang].mine;
+        document.getElementById('task-title').innerText = texts[lang].tasks;
+        document.getElementById('spin-btn').innerText = texts[lang].spin;
+        document.getElementById('spin-title').innerText = texts[lang].spinTitle;
+    }
 
     function updateUI() {
-        document.getElementById('balance').innerText = userData.balance.toLocaleString() + ' GEP';
+        document.getElementById('balance').innerText = Math.floor(userData.balance).toLocaleString() + ' GEP';
         document.getElementById('usd').innerText = (userData.balance / 10000).toFixed(2);
         document.getElementById('speed').innerText = `Hız: +${userData.currentSpeed} GEP / Saat`;
         document.getElementById('ref-count').innerText = userData.refCount;
-        if(userData.wallet) document.getElementById('wallet-input').value = userData.wallet;
         
+        // Madencilik Zaman Kontrolü
         if (userData.lastMined) {
-            const diff = Date.now() - userData.lastMined;
+            const diff = Date.now() - new Date(userData.lastMined).getTime();
             if (diff < 8 * 60 * 60 * 1000) {
                 document.getElementById('mine-btn').disabled = true;
-                startTimer(8 * 60 * 60 * 1000 - diff);
+                startTimer(8 * 60 * 60 * 1000 - diff, 'timer');
             }
+        }
+
+        // Çark Zaman Kontrolü
+        if (userData.lastSpin) {
+            const diffSpin = Date.now() - new Date(userData.lastSpin).getTime();
+            if (diffSpin < 24 * 60 * 60 * 1000) {
+                document.getElementById('spin-btn').disabled = true;
+                document.getElementById('spin-btn').innerText = "YARIN TEKRAR GEL";
+            }
+        }
+    }
+
+    async function spinWheel() {
+        const res = await fetch('/api/spin', { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({ userId }) 
+        });
+        const d = await res.json();
+        if(d.success) {
+            alert(`🎉 Tebrikler! ${d.win} GEP kazandın!`);
+            loadData();
+        } else {
+            alert(d.message);
         }
     }
 
     async function startMining() {
         const res = await fetch('/api/mine', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId }) });
         const d = await res.json();
-        if(d.success) { userData.balance = d.balance; userData.lastMined = d.lastMined; updateUI(); }
+        if(d.success) { loadData(); }
     }
 
-    function startTimer(duration) {
+    function startTimer(duration, elementId) {
         let t = duration / 1000;
         const intr = setInterval(() => {
             let h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = Math.floor(t % 60);
-            document.getElementById('timer').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            document.getElementById(elementId).innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             if (--t < 0) { clearInterval(intr); document.getElementById('mine-btn').disabled = false; }
         }, 1000);
     }
@@ -121,25 +154,47 @@
     function showPage(p) { document.querySelectorAll('.page').forEach(pg => pg.style.display = 'none'); document.getElementById(p).style.display = 'block'; }
 
     function renderTasks() {
+        const CHANNELS = [
+            { id: '@gelirevreni', name: 'Gelir Evreni', link: 'https://t.me/gelirevreni' },
+            { id: '@gelirevreniproje', name: 'Gelir Evreni Proje', link: 'https://t.me/gelirevreniproje' },
+            { id: '@kriptotayfa', name: 'Kripto Tayfa', link: 'https://t.me/kriptotayfa' },
+            { id: '@referanslinkim', name: 'Referans Linkim', link: 'https://t.me/referanslinkim' },
+            { id: '@sorareturkiye', name: 'Sorare Türkiye', link: 'https://t.me/sorareturkiye' },
+            { id: 'x_gelir', name: 'X: Gelir Evreni', link: 'https://x.com/gelirevreni' },
+            { id: 'x_tayfa', name: 'X: Kripto Tayfa', link: 'https://x.com/kriptotayfa' }
+        ];
         const list = document.getElementById('task-list');
         list.innerHTML = '';
         CHANNELS.forEach(ch => {
             const done = userData.tasks.includes(ch.id);
-            list.innerHTML += `<div class="card"><div><b>${ch.name}</b><br><small>+500 GEP</small></div>${done ? '✅' : `<button onclick="doTask('${ch.link}','${ch.id}')" style="background:#ffd700; border:none; padding:8px; border-radius:5px;">Yap</button>`}</div>`;
+            list.innerHTML += `<div class="card"><div><b>${ch.name}</b><br><small>+500 GEP</small></div>${done ? '✅' : `<button onclick="doTask('${ch.link}','${ch.id}')" style="background:#ffd700; border:none; padding:8px; border-radius:5px; font-weight:bold;">YAP</button>`}</div>`;
         });
     }
 
     async function doTask(url, id) {
         window.open(url, '_blank');
-        const res = await fetch('/api/check-task', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId, channelId: id }) });
-        const d = await res.json();
-        if(d.success) { alert("Puan eklendi!"); loadData(); } else { alert("Katılmalısınız!"); }
+        // Kullanıcıya zaman tanımak için 5 saniye bekle ve otomatik kontrol et
+        setTimeout(async () => {
+            const res = await fetch('/api/check-task', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId, channelId: id }) });
+            const d = await res.json();
+            if(d.success) { loadData(); }
+        }, 5000);
     }
 
-    function copyRef() { navigator.clipboard.writeText(`https://t.me/gelir_evreni_bot?start=${userId}`); alert("Link kopyalandı!"); }
+    function copyRef() { 
+        const link = `https://t.me/gelir_evreni_bot?start=${userId}`;
+        const el = document.createElement('textarea');
+        el.value = link;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        alert("Referans linkin kopyalandı!"); 
+    }
 
     async function saveWallet() {
         const w = document.getElementById('wallet-input').value;
+        if(!w) return alert("Lütfen adres girin!");
         await fetch('/api/save-wallet', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId, wallet: w }) });
         alert("Cüzdan kaydedildi!");
     }
