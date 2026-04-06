@@ -1,61 +1,101 @@
-<div id="tasks-page" class="page" style="display:none; padding:20px;">
-    <h3>İMPARATORLUK GÖREVLERİ</h3>
-    <div id="task-list">
-        </div>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gelir Evreni</title>
+    <style>
+        body { background: #0f3460; color: white; font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; }
+        .header { background: #16213e; padding: 20px; border-bottom: 2px solid #ffd700; }
+        .page { padding: 20px; padding-bottom: 80px; }
+        .btn { background: #ffd700; color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 80%; margin: 10px 0; cursor: pointer; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: #16213e; display: flex; justify-content: space-around; padding: 10px 0; border-top: 2px solid #ffd700; }
+        .nav-item { color: white; text-decoration: none; font-size: 12px; cursor: pointer; }
+        .task-card { background: #1a1a2e; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2 style="margin:0; color:#ffd700;">GELİR EVRENİ</h2>
+    <div id="balance-display" style="font-size:24px; font-weight:bold; margin-top:10px;">0.00 GEP</div>
+</div>
+
+<div id="home-page" class="page">
+    <div id="speed-display" style="color:#ffd700; margin-bottom:20px;">Hız: +50 GEP / Saat</div>
+    <img src="https://img.icons8.com/emoji/96/money-bag-emoji.png" width="100">
+    <br>
+    <button class="btn" id="mine-btn" onclick="startMining()">Madenciliği Başlat</button>
+    <div id="timer" style="margin-top:10px; font-weight:bold;">08:00:00</div>
+</div>
+
+<div id="tasks-page" class="page" style="display:none;">
+    <h3>İMРАRАTORLUK GÖREVLERİ</h3>
+    <div id="task-list"></div>
+</div>
+
+<div class="nav">
+    <div class="nav-item" onclick="showPage('home')">🏠 ANA SAYFA</div>
+    <div class="nav-item" onclick="showPage('tasks')">🎯 GÖREVLER</div>
 </div>
 
 <script>
-const CHANNELS = [
-    { id: '@gelirevreni', name: 'Gelir Evreni', link: 'https://t.me/gelirevreni' },
-    { id: '@gelirevreniproje', name: 'Gelir Evreni Proje', link: 'https://t.me/gelirevreniproje' },
-    { id: '@kriptotayfa', name: 'Kripto Tayfa', link: 'https://t.me/kriptotayfa' },
-    { id: '@referanslinkim', name: 'Referans Linkim', link: 'https://t.me/referanslinkim' },
-    { id: '@sorareturkiye', name: 'Sorare Türkiye', link: 'https://t.me/sorareturkiye' },
-    { id: 'x_gelir', name: 'X: Gelir Evreni', link: 'https://x.com/gelirevreni' },
-    { id: 'x_tayfa', name: 'X: Kripto Tayfa', link: 'https://x.com/kriptotayfa' }
-];
+    let userId = new URLSearchParams(window.location.search).get('userid') || 'test';
+    let userData = { balance: 0, tasks: [], currentSpeed: 50 };
 
-async function loadTasks() {
-    const taskContainer = document.getElementById('task-list');
-    taskContainer.innerHTML = '';
-    CHANNELS.forEach(ch => {
-        const done = userData.tasks.includes(ch.id);
-        taskContainer.innerHTML += `
-            <div style="background:#16213e; padding:15px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; border:1px solid #ffd700;">
-                <div>
-                    <div style="font-weight:bold;">${ch.name}</div>
-                    <div style="color:#ffd700; font-size:12px;">+500 GEP</div>
-                </div>
-                ${done ? '<span style="color:green;">✅</span>' : 
-                `<button onclick="doTask('${ch.link}', '${ch.id}')" style="background:#ffd700; color:black; border:none; padding:8px 15px; border-radius:5px; font-weight:bold;">Yap</button>`}
-            </div>
-        `;
-    });
-}
-
-async function doTask(link, id) {
-    window.open(link, '_blank');
-    // X görevleri için direkt onay, Telegram için otomatik kontrol
-    if(id.startsWith('@')) {
-        const res = await fetch('/api/check-task', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ userId, channelId: id })
-        });
-        const data = await res.json();
-        if(data.success) {
-            alert('Görev Başarılı! 500 GEP Eklendi.');
-            location.reload();
-        } else {
-            alert('Önce gruba katılmalısınız!');
-        }
-    } else {
-        // X Görevleri için manuel onay simülasyonu
-        userData.balance += 500;
-        userData.tasks.push(id);
-        saveData();
-        alert('X Takip Ödülü Eklendi!');
-        location.reload();
+    async function loadData() {
+        try {
+            const res = await fetch(`/api/user/${userId}`);
+            userData = await res.json();
+            updateUI();
+            loadTasks();
+        } catch (e) { console.log("Veri çekme hatası"); }
     }
-}
+
+    function updateUI() {
+        document.getElementById('balance-display').innerText = userData.balance.toLocaleString() + ' GEP';
+        document.getElementById('speed-display').innerText = `Hız: +${userData.currentSpeed} GEP / Saat`;
+    }
+
+    function showPage(pageId) {
+        document.getElementById('home-page').style.display = pageId === 'home' ? 'block' : 'none';
+        document.getElementById('tasks-page').style.display = pageId === 'tasks' ? 'block' : 'none';
+    }
+
+    const CHANNELS = [
+        { id: '@gelirevreni', name: 'Gelir Evreni', link: 'https://t.me/gelirevreni' },
+        { id: '@kriptotayfa', name: 'Kripto Tayfa', link: 'https://t.me/kriptotayfa' },
+        { id: 'x_gelir', name: 'X: Gelir Evreni', link: 'https://x.com/gelirevreni' }
+    ];
+
+    function loadTasks() {
+        const container = document.getElementById('task-list');
+        container.innerHTML = '';
+        CHANNELS.forEach(ch => {
+            const isDone = userData.tasks && userData.tasks.includes(ch.id);
+            container.innerHTML += `
+                <div class="task-card">
+                    <div style="text-align:left;"><b>${ch.name}</b><br><small>+500 GEP</small></div>
+                    ${isDone ? '<b style="color:lime;">✅</b>' : `<button onclick="doTask('${ch.link}', '${ch.id}')" style="background:#ffd700; border:none; padding:5px 10px; border-radius:5px;">Yap</button>`}
+                </div>`;
+        });
+    }
+
+    async function doTask(link, id) {
+        window.open(link, '_blank');
+        if(id.startsWith('@')) {
+            const res = await fetch('/api/check-task', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ userId, channelId: id })
+            });
+            const data = await res.json();
+            if(data.success) { alert("Puan eklendi!"); loadData(); }
+            else { alert("Önce katılmalısın!"); }
+        }
+    }
+
+    loadData();
 </script>
+</body>
+</html>
