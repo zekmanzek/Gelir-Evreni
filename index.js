@@ -45,6 +45,16 @@ app.get('/api/user/:id', async (req, res) => {
     res.json({ ...user._doc, currentSpeed });
 });
 
+// Liderlik Tablosu (Top 10)
+app.get('/api/leaderboard', async (req, res) => {
+    try {
+        const topUsers = await User.find().sort({ balance: -1 }).limit(10);
+        res.json(topUsers);
+    } catch (e) {
+        res.status(500).json({ error: "Sıralama yüklenemedi" });
+    }
+});
+
 // Madenciliği Başlat
 app.post('/api/mine', async (req, res) => {
     const { userId } = req.body;
@@ -58,7 +68,7 @@ app.post('/api/mine', async (req, res) => {
         return res.json({ success: false, message: "Henüz vakti gelmedi." });
     }
 
-    const reward = (user.baseSpeed + (user.refCount * 50)) * 8; // 8 saatlik kazanç
+    const reward = (user.baseSpeed + (user.refCount * 50)) * 8;
     user.balance += reward;
     user.lastMined = now;
     await user.save();
@@ -94,7 +104,6 @@ app.post('/api/check-task', async (req, res) => {
     if (!user || user.tasks.includes(channelId)) return res.json({ success: false });
 
     try {
-        // Eğer ID @ ile başlamıyorsa (X görevleri gibi), direkt onay ver (Bot X'i kontrol edemez)
         if (!channelId.startsWith('@')) {
             user.balance += 500;
             user.tasks.push(channelId);
@@ -113,7 +122,6 @@ app.post('/api/check-task', async (req, res) => {
         }
         res.json({ success: false });
     } catch (e) {
-        // Hata durumunda (bot grupta değilse vb.) manuel onay verelim ki kullanıcı mağdur olmasın
         user.balance += 500;
         user.tasks.push(channelId);
         await user.save();
@@ -128,20 +136,44 @@ app.post('/api/save-wallet', async (req, res) => {
     res.json({ success: true });
 });
 
-// --- TELEGRAM KOMUTLARI ---
+// --- TELEGRAM KOMUTLARI (REFERANS DESTEKLİ) ---
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id.toString();
+    const text = msg.text || "";
 
-    if (msg.text && msg.text.startsWith('/start')) {
-        const webAppUrl = `https://gelir-evreni.onrender.com/?userid=${userId}`;
-        bot.sendMessage(chatId, `🦅 **Gelir Evreni'ne Hoş Geldin!**\n\nİmparatorluğunu kurmak ve GEP avına başlamak için butona tıkla!`, {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [[{ text: "🚀 İmparatorluğu Aç", web_app: { url: webAppUrl } }]]
+    let user = await User.findOne({ userId });
+
+    // Eğer kullanıcı yeni geliyorsa
+    if (!user) {
+        user = new User({ userId });
+        
+        // Referans kontrolü (/start 123456 gibi)
+        if (text.startsWith('/start ') && text.split(' ').length > 1) {
+            const refId = text.split(' ')[1];
+            
+            if (refId !== userId) {
+                const referrer = await User.findOne({ userId: refId });
+                if (referrer) {
+                    referrer.balance += 500;
+                    referrer.refCount += 1;
+                    await referrer.save();
+                    
+                    // Referans sahibine bildirim gönder
+                    bot.sendMessage(refId, `🎉 **Ekibine yeni bir avcı katıldı!**\n\nReferans ödülü: +500 GEP hesabına eklendi.`, { parse_mode: 'Markdown' });
+                }
             }
-        });
+        }
+        await user.save();
     }
+
+    const webAppUrl = `https://gelir-evreni.onrender.com/?userid=${userId}`;
+    bot.sendMessage(chatId, `🦅 **Gelir Evreni'ne Hoş Geldin!**\n\nİmparatorluğunu kurmak ve GEP avına başlamak için butona tıkla!`, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            inline_keyboard: [[{ text: "🚀 İmparatorluğu Aç", web_app: { url: webAppUrl } }]]
+        }
+    });
 });
 
 app.listen(process.env.PORT || 10000);
