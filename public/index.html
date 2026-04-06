@@ -3,185 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gelir Evreni - Pro</title>
+    <title>Gelir Evreni Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-deep: #0a111f;
-            --card-grad: linear-gradient(145deg, #162133, #0f172a);
-            --neon-green: #00ff88;
-            --gold: #ffcc00;
-            --text-gray: #94a3b8;
-        }
-
-        body {
-            background: var(--bg-deep);
-            color: white;
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            overflow-x: hidden;
-        }
-
-        .container { padding: 15px; padding-bottom: 100px; }
-
-        /* Üst Panel - Bayraklar ve Başlık */
-        .header-top { display: flex; justify-content: center; gap: 10px; margin-bottom: 5px; }
-        .flag { width: 24px; border-radius: 4px; }
-        .title { color: var(--gold); font-weight: 800; font-size: 18px; text-transform: uppercase; letter-spacing: 1px; }
-
-        /* Ana Bakiye Kartı */
-        .main-card {
-            background: var(--card-grad);
-            border-radius: 30px;
-            padding: 25px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .coin-img { width: 80px; margin-bottom: 10px; filter: drop-shadow(0 0 15px rgba(255,204,0,0.3)); }
-        .balance-value { font-size: 38px; font-weight: 800; margin: 5px 0; }
-        .balance-usd { color: var(--neon-green); font-size: 16px; font-weight: 600; }
-
-        /* Parlayan Yeşil Madencilik Butonu */
-        .btn-mine {
-            background: linear-gradient(180deg, #34d399, #059669);
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 16px;
-            border-radius: 20px;
-            font-size: 16px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 0 20px rgba(52, 211, 153, 0.4), inset 0 -4px 0 rgba(0,0,0,0.2);
-            margin-top: 15px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-mine:active { transform: scale(0.98); }
-        .btn-mine:disabled { background: #334155; box-shadow: none; opacity: 0.7; }
-
-        /* 3'lü Görev Kartları (Görseldeki gibi) */
-        .grid-tasks { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .task-card {
-            background: var(--card-grad);
-            border-radius: 20px;
-            padding: 12px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.05);
-            font-size: 12px;
-        }
-        .task-card.gold { background: linear-gradient(145deg, #f59e0b, #b45309); }
-        .task-card.green { background: linear-gradient(145deg, #10b981, #065f46); }
+        :root { --gold: #FFD700; --green: #00FF88; --bg: #0B0E14; --card: #151921; --blue: #2A5EEF; }
         
-        .task-icon { font-size: 24px; margin-bottom: 5px; display: block; }
-        .task-title { font-weight: 600; display: block; margin-bottom: 5px; line-height: 1.2; }
-        .task-bonus { font-weight: 800; color: white; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 2px 5px; }
+        body { background: var(--bg); color: white; font-family: 'Ubuntu', sans-serif; margin: 0; padding: 0; user-select: none; }
+        .container { padding: 20px; padding-bottom: 90px; }
 
-        /* Görev Sistemi Bölümü */
-        .section-label { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--gold); margin-bottom: 15px; }
-        .list-container { background: var(--card-grad); border-radius: 25px; overflow: hidden; }
-        .list-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+        /* Üst Header */
+        .header { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 10px 0 25px 0; }
+        .header img { width: 22px; height: 16px; border-radius: 2px; box-shadow: 0 0 10px rgba(255,255,255,0.1); }
+        .header h1 { font-family: 'Montserrat'; font-size: 18px; font-weight: 900; color: var(--gold); margin: 0; text-transform: uppercase; }
+
+        /* Bakiye Alanı */
+        .balance-section { text-align: center; margin-bottom: 30px; position: relative; }
+        .coin-glow { width: 90px; filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.4)); margin-bottom: 15px; }
+        .balance-main { font-family: 'Montserrat'; font-size: 42px; font-weight: 900; margin: 5px 0; }
+        .balance-sub { color: var(--green); font-weight: bold; font-size: 18px; opacity: 0.9; }
+
+        /* Ana Buton */
+        .mine-btn {
+            background: linear-gradient(180deg, #00FF88 0%, #008F4C 100%);
+            border: none; width: 100%; padding: 20px; border-radius: 20px;
+            color: #000; font-family: 'Montserrat'; font-weight: 900; font-size: 18px;
+            box-shadow: 0 8px 0 #005F32, 0 15px 30px rgba(0,255,136,0.2);
+            cursor: pointer; transition: 0.1s; text-transform: uppercase;
         }
-        .list-icon { width: 40px; height: 40px; background: #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 12px; }
-        .list-content { flex: 1; }
-        .list-content h4 { margin: 0; font-size: 14px; }
-        .list-content p { margin: 0; font-size: 11px; color: var(--text-gray); }
+        .mine-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 #005F32; }
+        .mine-btn:disabled { background: #2D343F; box-shadow: 0 8px 0 #1A1F26; color: #555; }
+        #timer { margin-top: 15px; font-family: 'Montserrat'; font-weight: bold; font-size: 16px; color: #888; text-align: center; }
+
+        /* Sayfalar (Sekmeler) */
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .active-page { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Grid Kartları */
+        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        .mini-card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
+        .mini-card i { font-size: 24px; display: block; margin-bottom: 8px; }
+        .mini-card span { font-size: 12px; color: #aaa; display: block; }
+        .mini-card b { font-size: 16px; color: var(--gold); }
+
+        /* Liste Elemanları */
+        .list-box { background: var(--card); border-radius: 25px; margin-top: 25px; border: 1px solid rgba(255,255,255,0.05); }
+        .list-item { display: flex; align-items: center; padding: 18px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .list-item:last-child { border-bottom: none; }
+        .list-icon { width: 45px; height: 45px; background: #0B0E14; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 20px; }
+        .list-info h4 { margin: 0; font-size: 14px; }
+        .list-info p { margin: 0; font-size: 12px; color: #777; }
 
         /* Alt Navigasyon */
         .navbar {
-            position: fixed;
-            bottom: 15px;
-            left: 15px;
-            right: 15px;
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(10px);
-            display: flex;
-            justify-content: space-around;
-            padding: 12px;
-            border-radius: 25px;
-            border: 1px solid rgba(255,255,255,0.1);
+            position: fixed; bottom: 15px; left: 15px; right: 15px;
+            background: rgba(21, 25, 33, 0.95); backdrop-filter: blur(10px);
+            display: flex; justify-content: space-around; padding: 12px;
+            border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .nav-item { text-align: center; color: var(--text-gray); text-decoration: none; font-size: 10px; }
-        .nav-item.active { color: var(--gold); }
-        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
-
+        .nav-item { text-align: center; color: #666; font-size: 10px; font-weight: bold; flex: 1; cursor: pointer; transition: 0.3s; }
+        .nav-item i { font-size: 22px; display: block; margin-bottom: 4px; font-style: normal; }
+        .nav-item.active { color: var(--gold); transform: translateY(-5px); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header-top">
-        <img src="https://flagcdn.com/w40/tr.png" class="flag">
-        <div class="title">GELİR EVRENİ</div>
-        <img src="https://flagcdn.com/w40/az.png" class="flag">
+    <div class="header">
+        <img src="https://flagcdn.com/w40/tr.png">
+        <h1>GELİR EVRENİ</h1>
+        <img src="https://flagcdn.com/w40/az.png">
     </div>
 
-    <div class="main-card">
-        <img src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" class="coin-img">
-        <div id="balance" class="balance-value">0 GEP</div>
-        <div class="balance-usd">≈ $<span id="usd">0.00</span></div>
-        
-        <button class="btn-mine" id="mine-btn" onclick="startMining()">
-            ⛏️ MADENCİLİĞİ BAŞLAT
-        </button>
-        <div id="timer" style="margin-top:8px; font-size:14px; font-weight:bold; color:var(--text-gray);">08:00:00</div>
-    </div>
+    <div id="home" class="page active-page">
+        <div class="balance-section">
+            <img src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" class="coin-glow">
+            <div id="balance" class="balance-main">0 GEP</div>
+            <div class="balance-sub">≈ $<span id="usd">0.00</span></div>
+        </div>
 
-    <div class="grid-tasks">
-        <div class="task-card gold">
-            <span class="task-icon">📋</span>
-            <span class="task-title">Görevler</span>
-            <span class="task-bonus">+150 GEP</span>
-        </div>
-        <div class="task-card">
-            <span class="task-icon">🎁</span>
-            <span class="task-title">Çekiliş</span>
-            <div style="font-size:9px;">Tamamlandı: %80</div>
-        </div>
-        <div class="task-card green">
-            <span class="task-icon">👥</span>
-            <span class="task-title">Referans</span>
-            <span class="task-bonus">+25% bonus</span>
+        <button class="mine-btn" id="mbtn" onclick="startMining()">🚀 Madenciliği Başlat</button>
+        <div id="timer">HAZIR</div>
+
+        <div class="card-grid">
+            <div class="mini-card"><i>⚡</i><span>Üretim Hızı</span><b id="speed">+50 / s</b></div>
+            <div class="mini-card"><i>👥</i><span>Referanslar</span><b id="refs">0</b></div>
         </div>
     </div>
 
-    <div class="section-label">🔥 Görev Sistemi</div>
-    <div class="list-container">
-        <div class="list-item">
-            <div class="list-icon">📅</div>
-            <div class="list-content">
-                <h4>Günlük Görev</h4>
-                <p>Bugünkü görevleri yap ve 50 GEP kazan</p>
+    <div id="earn" class="page">
+        <h2 style="text-align:center; color:var(--gold);">GÖREV MERKEZİ</h2>
+        <div class="list-box">
+            <div class="list-item" onclick="copyRef()">
+                <div class="list-icon">📢</div>
+                <div class="list-info"><h4>Arkadaş Davet Et</h4><p>Her kişi için +1000 GEP kazan</p></div>
+            </div>
+            <div class="list-item">
+                <div class="list-icon">⭐</div>
+                <div class="list-info"><h4>Günlük Bonus</h4><p>Her gün gir, ödülünü katla</p></div>
             </div>
         </div>
-        <div class="list-item">
-            <div class="list-icon">👤</div>
-            <div class="list-content">
-                <h4>Referans Görevi</h4>
-                <p>100 GEP için 2 arkadaşını davet et</p>
+    </div>
+
+    <div id="profile" class="page">
+        <h2 style="text-align:center; color:var(--gold);">AVCI PROFİLİ</h2>
+        <div class="list-box">
+            <div class="list-item">
+                <div class="list-icon">👤</div>
+                <div class="list-info"><h4 id="user-display">Yükleniyor...</h4><p id="user-id-display">ID: ---</p></div>
+            </div>
+            <div class="list-item">
+                <div class="list-icon">📈</div>
+                <div class="list-info"><h4>Mevcut Seviye</h4><p>Seviye 1 (Başlangıç)</p></div>
             </div>
         </div>
     </div>
 </div>
 
 <div class="navbar">
-    <div class="nav-item active"><i>🏠</i>Ana Sayfa</div>
-    <div class="nav-item"><i>💰</i>Kazanç</div>
-    <div class="nav-item"><i>👤</i>Profil</div>
+    <div class="nav-item active" id="nav-home" onclick="showPage('home')"><i>🏠</i>Ev</div>
+    <div class="nav-item" id="nav-earn" onclick="showPage('earn')"><i>💰</i>Kazanç</div>
+    <div class="nav-item" id="nav-profile" onclick="showPage('profile')"><i>👤</i>Profil</div>
 </div>
 
 <script>
@@ -192,13 +135,18 @@
     async function load() {
         const res = await fetch('/api/user/' + userId);
         const u = await res.json();
+        
         document.getElementById('balance').innerText = Math.floor(u.balance).toLocaleString() + ' GEP';
         document.getElementById('usd').innerText = (u.balance * 0.0001).toFixed(2);
+        document.getElementById('speed').innerText = '+' + u.speed + ' / s';
+        document.getElementById('refs').innerText = u.refCount;
+        document.getElementById('user-display').innerText = u.username;
+        document.getElementById('user-id-display').innerText = 'ID: ' + u.userId;
 
         if (u.lastMined) {
             const diff = Date.now() - new Date(u.lastMined).getTime();
             if (diff < 28800000) {
-                document.getElementById('mine-btn').disabled = true;
+                document.getElementById('mbtn').disabled = true;
                 startTimer(28800000 - diff);
             }
         }
@@ -217,6 +165,20 @@
     async function startMining() {
         await fetch('/api/mine', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId }) });
         location.reload();
+    }
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        
+        document.getElementById(pageId).classList.add('active-page');
+        document.getElementById('nav-' + pageId).classList.add('active');
+    }
+
+    function copyRef() {
+        const link = `https://t.me/gelir_evreni_bot?start=${userId}`;
+        const i = document.createElement('input'); i.value = link; document.body.appendChild(i); i.select(); document.execCommand('copy'); document.body.removeChild(i);
+        tg.showAlert("Referans linkin kopyalandı! Arkadaşlarını davet et.");
     }
 
     load();
