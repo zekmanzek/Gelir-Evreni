@@ -1,200 +1,61 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gelir Evreni</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        * { -webkit-tap-highlight-color: transparent; outline: none; box-sizing: border-box; }
-        body { background-color: #0a0f1e; color: white; font-family: Arial, sans-serif; text-align: center; margin: 0; overflow-x: hidden; }
-        .header { padding: 15px; background: #16213e; border-bottom: 1px solid #ffd700; position: sticky; top: 0; z-index: 100; }
-        .logo-text { font-size: 22px; font-weight: bold; color: #ffd700; }
-        .page { display: none; padding: 20px; padding-bottom: 100px; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .active-page { display: block; }
-        .balance-amount { font-size: 40px; font-weight: bold; margin: 10px 0; }
-        .usd-value { color: #00e676; font-size: 18px; font-weight: bold; }
-        .main-button { width: 180px; height: 180px; border-radius: 50%; border: 4px solid #ffd700; display: inline-flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1e3a8a, #0a0f1e); margin: 15px 0; }
-        .main-button img { width: 110px; }
-        .action-btn { background: #ffd700; border: none; padding: 15px; border-radius: 25px; font-weight: bold; width: 85%; font-size: 16px; color: black; cursor: pointer; }
-        .action-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
-        .income-card { background: #16213e; padding: 20px; border-radius: 15px; border: 1px solid #ffd700; text-align: left; }
-        .progress-container { background: #0a0f1e; height: 12px; border-radius: 6px; margin: 15px 0; overflow: hidden; border: 1px solid #333; }
-        .progress-bar { background: linear-gradient(90deg, #ffd700, #00e676); height: 100%; width: 0%; transition: width 0.5s; }
-        .footer-menu { position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; padding: 12px 0; background: #16213e; border-top: 2px solid #ffd700; }
-        .menu-item { color: #b0bec5; font-size: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
-        .menu-item.active { color: #ffd700; font-weight: bold; }
-        .lang-btn { cursor: pointer; font-size: 24px; margin: 0 5px; }
-        input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #0a0f1e; color: white; margin-top: 10px; }
-        .task-card { background: #16213e; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
-        .task-btn { background: #00e676; color: black; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="logo-text">GELİR EVRENİ</div>
-        <div style="margin-top:5px;"><span class="lang-btn" onclick="setLanguage('tr')">🇹🇷</span><span class="lang-btn" onclick="setLanguage('az')">🇦🇿</span></div>
-    </div>
-
-    <div id="home" class="page active-page">
-        <div id="lbl-total" style="color:#00e676; font-size:12px;">TOPLAM KAZANÇ</div>
-        <div class="balance-amount" id="balance">0.00</div>
-        <div class="usd-value" id="usd-val">$0.00</div>
-        <div id="lbl-rate" style="color:#ffd700; font-weight:bold; margin-top:5px;">+50 GEP / Saat</div>
-        <div class="main-button"><img src="https://img.icons8.com/emoji/256/money-bag-emoji.png"></div><br>
-        <button class="action-btn" id="action-btn" onclick="handleAction()">Madenciliği Başlat</button>
-        <div id="timer-text" style="color:#ffd700; margin-top:15px; font-weight:bold; font-size: 20px;"></div>
-    </div>
-
-    <div id="tasks" class="page">
-        <h2 id="t-tasks-title">GÖREVLER</h2>
-        <div class="task-card">
-            <div style="text-align:left;"><b id="t-tg-task">Telegram Kanalına Katıl</b><br><small style="color:#00e676;">+1000 GEP</small></div>
-            <button class="task-btn" id="t-do" onclick="doTask('tg_join', 1000, 'https://t.me/gelir_evreni')">Yap</button>
+<div id="tasks-page" class="page" style="display:none; padding:20px;">
+    <h3>İMPARATORLUK GÖREVLERİ</h3>
+    <div id="task-list">
         </div>
-    </div>
+</div>
 
-    <div id="team" class="page">
-        <h2 id="t-team-title">AVCI EKİBİ</h2>
-        <div class="income-card" style="text-align: center;">
-            <div id="t-refcount">Toplam Referans</div>
-            <div style="font-size:42px; font-weight:bold; color:#ffd700;" id="ref-count-val">0</div>
-            <p style="font-size:12px; color:#888;" id="t-ref-info">Her ref için 500 GEP kazandın!</p>
-        </div>
-    </div>
+<script>
+const CHANNELS = [
+    { id: '@gelirevreni', name: 'Gelir Evreni', link: 'https://t.me/gelirevreni' },
+    { id: '@gelirevreniproje', name: 'Gelir Evreni Proje', link: 'https://t.me/gelirevreniproje' },
+    { id: '@kriptotayfa', name: 'Kripto Tayfa', link: 'https://t.me/kriptotayfa' },
+    { id: '@referanslinkim', name: 'Referans Linkim', link: 'https://t.me/referanslinkim' },
+    { id: '@sorareturkiye', name: 'Sorare Türkiye', link: 'https://t.me/sorareturkiye' },
+    { id: 'x_gelir', name: 'X: Gelir Evreni', link: 'https://x.com/gelirevreni' },
+    { id: 'x_tayfa', name: 'X: Kripto Tayfa', link: 'https://x.com/kriptotayfa' }
+];
 
-    <div id="income" class="page">
-        <h2 id="t-income-title">GELİR</h2>
-        <div class="income-card">
-            <div style="display:flex; justify-content: space-between;">
-                <span id="t-withdraw-limit">Min. Çekim</span>
-                <span style="color:#ffd700;">500.000 GEP ($5)</span>
+async function loadTasks() {
+    const taskContainer = document.getElementById('task-list');
+    taskContainer.innerHTML = '';
+    CHANNELS.forEach(ch => {
+        const done = userData.tasks.includes(ch.id);
+        taskContainer.innerHTML += `
+            <div style="background:#16213e; padding:15px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; border:1px solid #ffd700;">
+                <div>
+                    <div style="font-weight:bold;">${ch.name}</div>
+                    <div style="color:#ffd700; font-size:12px;">+500 GEP</div>
+                </div>
+                ${done ? '<span style="color:green;">✅</span>' : 
+                `<button onclick="doTask('${ch.link}', '${ch.id}')" style="background:#ffd700; color:black; border:none; padding:8px 15px; border-radius:5px; font-weight:bold;">Yap</button>`}
             </div>
-            <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
-            <div id="t-progress-text" style="font-size:12px; text-align:center; color:#888;"></div>
-            
-            <label style="font-size:12px; color:#ffd700; margin-top:15px; display:block;">USDT BEP20 Adresiniz:</label>
-            <input type="text" id="wallet-input" placeholder="0x...">
-            
-            <button class="action-btn" id="withdraw-btn" style="margin-top:20px; width:100%;" onclick="requestWithdraw()" disabled>Ödeme Talep Et</button>
-        </div>
-    </div>
+        `;
+    });
+}
 
-    <div class="footer-menu">
-        <div class="menu-item active" id="m-home" onclick="showPage('home')">🏠<span id="txt-home">ANA SAYFA</span></div>
-        <div class="menu-item" id="m-tasks" onclick="showPage('tasks')">🎯<span id="txt-tasks">GÖREVLER</span></div>
-        <div class="menu-item" id="m-team" onclick="showPage('team')">👥<span id="txt-team">AVCI EKİBİ</span></div>
-        <div class="menu-item" id="m-income" onclick="showPage('income')">💰<span id="txt-income">GELİR</span></div>
-    </div>
-
-    <script>
-        const tele = window.Telegram.WebApp; tele.expand();
-        let balance = 0; let refCount = 0; let completedTasks = []; let userWallet = "";
-        let countdownInterval;
-        const MIN_WITHDRAW = 500000;
-
-        const translations = {
-            tr: { total: "TOPLAM KAZANÇ", start: "Madenciliği Başlat", collect: "Kazancı Topla", home: "ANA SAYFA", tasks: "GÖREVLER", team: "AVCI EKİBİ", income: "GELİR", tg_task: "Telegram Kanalına Katıl", do: "Yap", ref_title: "Toplam Referans", ref_info: "Her ref için 500 GEP kazandın!", limit: "Min. Çekim", withdraw_btn: "Ödeme Talep Et", need: "daha lazım" },
-            az: { total: "ÜMUMİ QAZANC", start: "Mədənçiliyi Başlat", collect: "Qazancı Topla", home: "ANA SƏHİFƏ", tasks: "TAPŞIRIQLAR", team: "OVÇU KOMANDASI", income: "GƏLİR", tg_task: "Telegram Kanalına Qatıl", do: "Et", ref_title: "Ümumi Referans", ref_info: "Hər ref üçün 500 GEP qazandın!", limit: "Min. Çıxarış", withdraw_btn: "Ödəniş Tələb Et", need: "daha lazımdır" }
-        };
-        let currentLang = 'tr';
-
-        function setLanguage(lang) {
-            currentLang = lang;
-            const t = translations[lang];
-            document.getElementById('lbl-total').innerText = t.total;
-            document.getElementById('txt-home').innerText = t.home;
-            document.getElementById('txt-tasks').innerText = t.tasks;
-            document.getElementById('txt-team').innerText = t.team;
-            document.getElementById('txt-income').innerText = t.income;
-            document.getElementById('t-tasks-title').innerText = t.tasks;
-            document.getElementById('t-team-title').innerText = t.team;
-            document.getElementById('t-income-title').innerText = t.income;
-            document.getElementById('t-tg-task').innerText = t.tg_task;
-            document.getElementById('t-do').innerText = t.do;
-            document.getElementById('t-refcount').innerText = t.ref_title;
-            document.getElementById('t-ref-info').innerText = t.ref_info;
-            document.getElementById('t-withdraw-limit').innerText = t.limit;
-            document.getElementById('withdraw-btn').innerText = t.withdraw_btn;
-            updateUI();
+async function doTask(link, id) {
+    window.open(link, '_blank');
+    // X görevleri için direkt onay, Telegram için otomatik kontrol
+    if(id.startsWith('@')) {
+        const res = await fetch('/api/check-task', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ userId, channelId: id })
+        });
+        const data = await res.json();
+        if(data.success) {
+            alert('Görev Başarılı! 500 GEP Eklendi.');
+            location.reload();
+        } else {
+            alert('Önce gruba katılmalısınız!');
         }
-
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active-page');
-            document.getElementById('m-' + pageId).classList.add('active');
-        }
-
-        async function init() {
-            const userId = new URLSearchParams(window.location.search).get('userid');
-            if(userId) {
-                const res = await fetch(`/api/user/${userId}`);
-                const data = await res.json();
-                balance = data.balance || 0; refCount = data.refCount || 0; completedTasks = data.tasks || [];
-                userWallet = data.wallet || "";
-                document.getElementById('wallet-input').value = userWallet;
-            }
-            updateUI();
-        }
-
-        function updateUI() {
-            document.getElementById('balance').innerText = balance.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('usd-val').innerText = `$${(balance / 100000).toFixed(2)}`;
-            document.getElementById('ref-count-val').innerText = refCount;
-            document.getElementById('lbl-rate').innerText = `+${50 + (refCount * 10)} GEP / Saat`;
-
-            const progress = Math.min((balance / MIN_WITHDRAW) * 100, 100);
-            document.getElementById('progress-bar').style.width = progress + "%";
-            const needed = Math.max(MIN_WITHDRAW - balance, 0);
-            document.getElementById('t-progress-text').innerText = `Hedefe ${needed.toLocaleString()} GEP ${translations[currentLang].need}.`;
-
-            const wBtn = document.getElementById('withdraw-btn');
-            wBtn.disabled = balance < MIN_WITHDRAW;
-            wBtn.style.background = balance >= MIN_WITHDRAW ? "#00e676" : "#444";
-
-            const startTime = localStorage.getItem('miningStartTime');
-            const btn = document.getElementById('action-btn');
-            if (!startTime) { btn.innerText = translations[currentLang].start; btn.disabled = false; clearInterval(countdownInterval); document.getElementById('timer-text').innerText = ""; }
-            else {
-                const elapsed = new Date().getTime() - parseInt(startTime);
-                if (elapsed < 8*60*60*1000) { btn.disabled = true; startCountdown(8*60*60*1000 - elapsed); }
-                else { btn.innerText = translations[currentLang].collect; btn.disabled = false; clearInterval(countdownInterval); document.getElementById('timer-text').innerText = "00:00:00"; }
-            }
-        }
-
-        function startCountdown(t) {
-            clearInterval(countdownInterval);
-            countdownInterval = setInterval(() => {
-                t -= 1000;
-                if(t <= 0) { clearInterval(countdownInterval); updateUI(); return; }
-                const h = Math.floor(t/3600000); const m = Math.floor((t%3600000)/60000); const s = Math.floor((t%60000)/1000);
-                document.getElementById('timer-text').innerText = `${h.toString().padStart(2,'0')}s ${m.toString().padStart(2,'0')}d ${s.toString().padStart(2,'0')}s`;
-            }, 1000);
-        }
-
-        async function handleAction() {
-            const startTime = localStorage.getItem('miningStartTime');
-            const userId = new URLSearchParams(window.location.search).get('userid');
-            if (!startTime) { localStorage.setItem('miningStartTime', new Date().getTime()); updateUI(); }
-            else {
-                balance += (50 + (refCount * 10)) * 8;
-                await fetch('/api/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({userId, amount: balance}) });
-                localStorage.removeItem('miningStartTime');
-                init();
-            }
-        }
-
-        async function requestWithdraw() {
-            const wallet = document.getElementById('wallet-input').value;
-            if(wallet.length < 15) return alert("Geçerli bir BEP20 adresi girin!");
-            const userId = new URLSearchParams(window.location.search).get('userid');
-            await fetch('/api/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({userId, wallet, isRequest: true}) });
-            alert("Talep Admin'e iletildi!");
-        }
-
-        init();
-    </script>
-</body>
-</html>
+    } else {
+        // X Görevleri için manuel onay simülasyonu
+        userData.balance += 500;
+        userData.tasks.push(id);
+        saveData();
+        alert('X Takip Ödülü Eklendi!');
+        location.reload();
+    }
+}
+</script>
