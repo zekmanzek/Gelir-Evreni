@@ -3,76 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gelir Evreni</title>
+    <title>Gelir Evreni Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
     <style>
-        body { background: #0b1e33; color: white; font-family: sans-serif; text-align: center; margin: 0; user-select: none; }
-        .header { background: #112b4a; padding: 15px; border-bottom: 2px solid #ffd700; position: sticky; top: 0; z-index: 100; }
-        .nav { position: fixed; bottom: 0; width: 100%; background: #112b4a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #ffd700; }
-        .page { padding: 20px; padding-bottom: 100px; display: none; }
-        .active { display: block; }
-        .btn { background: #ffd700; color: black; border: none; padding: 15px; border-radius: 12px; font-weight: bold; width: 85%; cursor: pointer; margin-top: 10px; }
-        .btn:disabled { background: #444; color: #888; }
-        .card { background: #163558; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        :root { --gold: #FFD700; --bg: #050A10; --card: #0F1722; --accent: #00D4FF; }
+        body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; margin: 0; user-select: none; overflow: hidden; }
+        .app-container { height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Header Bölümü */
+        .main-header { background: var(--card); padding: 25px 15px; border-bottom: 2px solid var(--gold); border-radius: 0 0 25px 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        .balance-title { font-family: 'Orbitron', sans-serif; color: var(--gold); font-size: 14px; letter-spacing: 2px; }
+        .balance-amount { font-size: 36px; font-weight: 700; margin: 5px 0; text-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+
+        /* Sayfalar */
+        .page { flex: 1; overflow-y: auto; padding: 20px; display: none; }
+        .active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Kartlar ve Butonlar */
+        .stat-card { background: var(--card); padding: 20px; border-radius: 18px; border: 1px solid #1A2635; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .action-btn { background: linear-gradient(135deg, var(--gold), #B8860B); color: black; border: none; padding: 18px; border-radius: 15px; font-weight: 700; width: 100%; font-size: 16px; font-family: 'Orbitron'; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(255,215,0,0.2); }
+        .action-btn:disabled { background: #2D3748; color: #718096; box-shadow: none; }
+        
+        /* Navbar */
+        .bottom-nav { background: var(--card); display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #1A2635; }
+        .nav-item { font-size: 24px; cursor: pointer; opacity: 0.5; transition: 0.3s; }
+        .nav-item.active-nav { opacity: 1; color: var(--gold); transform: scale(1.2); }
+
+        .leader-item { background: #131C28; padding: 12px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; border-left: 4px solid var(--accent); }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h2 style="color:#ffd700; margin:0;">GELİR EVRENİ</h2>
-    <div id="balance" style="font-size:28px; font-weight:bold;">...</div>
-</div>
+<div class="app-container">
+    <div class="main-header">
+        <div class="balance-title">TOPLAM BAKİYE</div>
+        <div id="balance" class="balance-amount">0 GEP</div>
+        <div style="color: #4CAF50; font-size: 14px; font-weight: 600;">⚡ <span id="current-speed">50</span> GEP/S</div>
+    </div>
 
-<div id="home" class="page active">
-    <div id="speed" style="color:#ffd700; margin-bottom:10px;">⚡ Hız: +50 GEP / Saat</div>
-    <img src="https://img.icons8.com/emoji/96/money-bag-emoji.png" width="100">
-    <button class="btn" id="mine-btn" onclick="startMining()">MADENCİLİĞİ BAŞLAT</button>
-    <div id="timer" style="margin-top:10px; font-family:monospace; font-size: 20px;">08:00:00</div>
-    <button class="btn" style="background:#ff4757; color:white;" id="spin-btn" onclick="spinWheel()">🎡 ÇARKI ÇEVİR</button>
-</div>
+    <div id="home" class="page active">
+        <div style="margin: 40px 0; position: relative;">
+            <div style="font-size: 80px;">🪙</div>
+            <div id="timer" style="font-family: 'Orbitron'; font-size: 22px; margin-top: 15px; color: var(--accent);">READY TO COLLECT</div>
+        </div>
+        <button class="action-btn" id="mine-btn" onclick="mine()">MADENLERİ ÇALIŞTIR</button>
+        <button class="action-btn" style="background: #E53E3E; color: white; margin-top: 15px;" onclick="spin()">🎡 GÜNLÜK ŞANS</button>
+    </div>
 
-<div id="leaderboard" class="page">
-    <h3 style="color:#ffd700;">🏆 LİDERLER</h3>
-    <div id="leader-list"></div>
-</div>
+    <div id="leaderboard" class="page">
+        <h3 style="font-family: 'Orbitron'; color: var(--gold);">ELİT SIRALAMA</h3>
+        <div id="leader-list"></div>
+    </div>
 
-<div id="refs" class="page">
-    <h3 style="color:#ffd700;">👥 AVCI EKİBİ</h3>
-    <div class="card" style="justify-content:center;">Referans Sayın: <span id="ref-count" style="margin-left:10px; font-weight:bold;">0</span></div>
-    <button class="btn" onclick="copyRef()">DAVET LİNKİNİ KOPYALA</button>
-</div>
+    <div id="refs" class="page">
+        <h3 style="font-family: 'Orbitron'; color: var(--gold);">İMİPARATORLUĞUNU BÜYÜT</h3>
+        <div class="stat-card">
+            <span>Aktif Avcılar</span>
+            <b id="ref-count" style="color: var(--accent); font-size: 20px;">0</b>
+        </div>
+        <p style="font-size: 13px; color: #A0AEC0;">Her referans üretim hızını +25 GEP/S artırır ve sana +1000 GEP kazandırır.</p>
+        <button class="action-btn" onclick="copyRef()">DAVET LİNKİNİ AL</button>
+    </div>
 
-<div class="nav">
-    <div onclick="showPage('home')">🏠</div>
-    <div onclick="showPage('leaderboard')">🏆</div>
-    <div onclick="showPage('refs')">👥</div>
+    <div class="bottom-nav">
+        <div class="nav-item active-nav" onclick="showPage('home', this)">🏠</div>
+        <div class="nav-item" onclick="showPage('leaderboard', this)">🏆</div>
+        <div class="nav-item" onclick="showPage('refs', this)">👥</div>
+    </div>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    const userId = new URLSearchParams(window.location.search).get('userid') || tg.initDataUnsafe?.user?.id?.toString();
+    const userId = new URLSearchParams(window.location.search).get('userid') || tg.initDataUnsafe?.user?.id;
     
-    let userData = null;
-
-    async function loadData() {
-        if (!userId) { document.getElementById('balance').innerText = "Hata: ID Yok"; return; }
-        try {
-            const res = await fetch(`/api/user/${userId}`);
-            userData = await res.json();
-            
-            document.getElementById('balance').innerText = Math.floor(userData.balance).toLocaleString() + ' GEP';
-            document.getElementById('speed').innerText = `⚡ Hız: +${userData.currentSpeed} GEP / Saat`;
-            document.getElementById('ref-count').innerText = userData.refCount;
-            
-            if (userData.lastMined) {
-                const diff = Date.now() - new Date(userData.lastMined).getTime();
-                if (diff < 8*60*60*1000) {
-                    document.getElementById('mine-btn').disabled = true;
-                    startTimer(8*60*60*1000 - diff);
-                }
+    async function load() {
+        const res = await fetch('/api/user/' + userId);
+        const u = await res.json();
+        document.getElementById('balance').innerText = Math.floor(u.balance).toLocaleString() + " GEP";
+        document.getElementById('current-speed').innerText = u.speed;
+        document.getElementById('ref-count').innerText = u.refCount;
+        
+        if (u.lastMined) {
+            const diff = Date.now() - new Date(u.lastMined).getTime();
+            if (diff < 8*60*60*1000) {
+                document.getElementById('mine-btn').disabled = true;
+                startTimer(8*60*60*1000 - diff);
             }
-        } catch (e) { console.error("Yükleme hatası"); }
+        }
     }
 
     function startTimer(ms) {
@@ -80,44 +100,44 @@
         const intr = setInterval(() => {
             let h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = Math.floor(t%60);
             document.getElementById('timer').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            if (--t < 0) { clearInterval(intr); document.getElementById('mine-btn').disabled = false; document.getElementById('timer').innerText = "Hazır!"; }
+            if (--t < 0) { clearInterval(intr); document.getElementById('mine-btn').disabled = false; document.getElementById('timer').innerText = "COLLECT READY"; }
         }, 1000);
     }
 
-    async function startMining() {
+    async function mine() {
         await fetch('/api/mine', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId }) });
-        loadData();
+        load();
     }
 
-    async function spinWheel() {
+    async function spin() {
         const res = await fetch('/api/spin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId }) });
         const d = await res.json();
-        if(!d.success) return alert("Günde sadece 1 kez çevirebilirsin!");
-        alert("🎉 " + d.win + " GEP Kazandın!");
-        loadData();
+        if(!d.success) return alert("Yarın tekrar gel!");
+        alert("🎉 " + d.win + " GEP KAZANDIN!");
+        load();
     }
 
-    async function loadLeaderboard() {
-        const res = await fetch('/api/leaderboard');
-        const data = await res.json();
-        document.getElementById('leader-list').innerHTML = data.map((u, i) => `
-            <div class="card"><span>#${i+1} Avcı_${u.userId.slice(-4)}</span><b>${Math.floor(u.balance)}</b></div>
-        `).join('');
-    }
-
-    function showPage(p) {
-        document.querySelectorAll('.page').forEach(pg => pg.style.display = 'none');
-        document.getElementById(p).style.display = 'block';
-        if(p === 'leaderboard') loadLeaderboard();
+    async function showPage(id, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
+        document.getElementById(id).classList.add('active');
+        el.classList.add('active-nav');
+        if(id === 'leaderboard') {
+            const res = await fetch('/api/leaderboard');
+            const data = await res.json();
+            document.getElementById('leader-list').innerHTML = data.map((u, i) => `
+                <div class="leader-item"><span>#${i+1} ${u.username.substring(0,12)}</span><b>${Math.floor(u.balance)}</b></div>
+            `).join('');
+        }
     }
 
     function copyRef() {
         const link = `https://t.me/gelir_evreni_bot?start=${userId}`;
-        const el = document.createElement('textarea'); el.value = link; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-        alert("Referans linkin kopyalandı!");
+        const input = document.createElement('input'); input.value = link; document.body.appendChild(input); input.select(); document.execCommand('copy'); document.body.removeChild(input);
+        tg.showAlert("Davet linkin kopyalandı! Arkadaşlarını çağır, hızı kap!");
     }
 
-    loadData();
+    load();
 </script>
 </body>
 </html>
