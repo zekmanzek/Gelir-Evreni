@@ -9,14 +9,14 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- VERİ TABANI BAĞLANTISI (HAFIZA MERKEZİ) ---
+// --- VERİ TABANI BAĞLANTISI ---
 const MONGO_URI = "mongodb+srv://mzybro_db_user:RrdTszJxirbFhHfm@zekman.bi8ty3t.mongodb.net/GelirEvreni?retryWrites=true&w=majority";
 
 mongoose.connect(MONGO_URI)
     .then(() => console.log("Hafıza merkezi bağlandı!"))
     .catch(err => console.log("Bağlantı hatası:", err));
 
-// Kullanıcı Şeması (Verilerin nasıl saklanacağı)
+// Kullanıcı Şeması (lastSpin eklendi)
 const UserSchema = new mongoose.Schema({
     userId: { type: String, unique: true },
     balance: { type: Number, default: 0 },
@@ -24,92 +24,81 @@ const UserSchema = new mongoose.Schema({
     tasks: [String],
     wallet: { type: String, default: '' },
     baseSpeed: { type: Number, default: 50 },
-    lastMined: { type: Number, default: null }
+    lastMined: { type: Number, default: null },
+    lastSpin: { type: Date, default: null } // Son çark çevirme zamanı
 });
 
 const User = mongoose.model('User', UserSchema);
 
-// --- BOT VE SUNUCU AYARLARI ---
+// --- BOT AYARLARI ---
 const token = '8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s';
 const bot = new TelegramBot(token, { polling: true });
 
+// --- API KISIMLARI ---
 app.get('/api/user/:id', async (req, res) => {
     const userId = req.params.id;
-    const referrerId = req.query.ref;
-    
     let user = await User.findOne({ userId });
-    
-    if (!user) {
-        user = new User({ userId });
-        await user.save();
-        
-        if (referrerId && referrerId !== userId) {
-            const referrer = await User.findOne({ userId: referrerId });
-            if (referrer) {
-                referrer.balance += 500;
-                referrer.refCount += 1;
-                await referrer.save();
-            }
-        }
-    }
-    
+    if (!user) { user = new User({ userId }); await user.save(); }
     const currentSpeed = user.baseSpeed + (user.refCount * 50);
     res.json({ ...user._doc, currentSpeed });
 });
 
-app.post('/api/check-task', async (req, res) => {
-    const { userId, channelId } = req.body;
-    let user = await User.findOne({ userId });
-    
-    if (!user) return res.status(404).json({ success: false });
+// --- TELEGRAM KOMUTLARI ---
+bot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+    const userId = msg.from.id.toString();
 
-    try {
-        if (channelId.startsWith('x_')) {
-            if (!user.tasks.includes(channelId)) {
-                user.balance += 500;
-                user.tasks.push(channelId);
-                await user.save();
-                return res.json({ success: true });
+    if (msg.text && msg.text.startsWith('/start')) {
+        const webAppUrl = `https://gelir-evreni.onrender.com/?userid=${userId}`;
+        
+        bot.sendMessage(chatId, `🦅 Gelir Evreni'ne Hoş Geldin!\n\nGünlük çarkını çevirmeyi unutma!`, {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: "🚀 Madenciliği Aç", web_app: { url: webAppUrl } }],
+                    [{ text: "🎡 Şans Çarkı (Günlük)", callback_data: 'spin_wheel' }]
+                ]
             }
-        } else {
-            const member = await bot.getChatMember(channelId, userId);
-            const isMember = ['member', 'administrator', 'creator'].includes(member.status);
-            if (isMember && !user.tasks.includes(channelId)) {
-                user.balance += 500;
-                user.tasks.push(channelId);
-                await user.save();
-                return res.json({ success: true });
-            }
-        }
-        res.json({ success: false });
-    } catch (e) { res.json({ success: false }); }
-});
-
-app.post('/api/mine', async (req, res) => {
-    const { userId } = req.body;
-    const now = Date.now();
-    let user = await User.findOne({ userId });
-    
-    if (user) {
-        const speed = user.baseSpeed + (user.refCount * 50);
-        user.balance += speed * 8; // 8 saatlik kazanç
-        user.lastMined = now;
-        await user.save();
-        res.json({ success: true, balance: user.balance, lastMined: now });
+        });
     }
 });
 
-app.post('/api/save-wallet', async (req, res) => {
-    const { userId, wallet } = req.body;
-    await User.findOneAndUpdate({ userId }, { wallet });
-    res.json({ success: true });
-});
+// --- ÇARK ÇEVİRME MANTIĞI ---
+bot.on('callback_query', async (query) => {
+    const chatId = query.message.chat.id;
+    const userId = query.from.id.toString();
 
-bot.on('message', (msg) => {
-    if (msg.text && msg.text.startsWith('/start')) {
-        const webAppUrl = `https://gelir-evreni.onrender.com/?userid=${msg.from.id}${msg.text.split(' ')[1] ? '&ref=' + msg.text.split(' ')[1] : ''}`;
-        bot.sendMessage(msg.chat.id, `🦅 Gelir Evreni'ne Hoş Geldin!\n\nMadencilik yaparak GEP kazan!`, {
-            reply_markup: { inline_keyboard: [[{ text: "🚀 Madenciliği Aç", web_app: { url: webAppUrl } }]] }
+    if (query.data === 'spin_wheel') {
+        let user = await User.findOne({ userId });
+        if (!user) user = new User({ userId });
+
+        const now = new Date();
+        const oneDay = 24 * 60 * 60 * 1000;
+
+        if (user.lastSpin && (now - user.lastSpin) < oneDay) {
+            const remaining = new Date(user.lastSpin.getTime() + oneDay) - now;
+            const hours = Math.floor(remaining / (1000 * 60 * 60));
+            const minutes = Math.floor((remaining / (1000 * 60)) % 60);
+            
+            return bot.answerCallbackQuery(query.id, {
+                text: `Sabırlı ol dostum! Tekrar çevirmek için ${hours} saat ${minutes} dakika beklemen lazım. ⏳`,
+                show_alert: true
+            });
+        }
+
+        // Ödül Belirleme (100, 250, 500, 1000 GEP)
+        const prizes = [100, 100, 100, 250, 250, 500, 1000];
+        const win = prizes[Math.floor(Math.random() * prizes.length)];
+
+        user.balance += win;
+        user.lastSpin = now;
+        await user.save();
+
+        bot.editMessageText(`🎡 Çark dönüyor... \n\n🎉 TEBRİKLER! **${win} GEP** kazandın! \n\nYeni bakiyen: ${user.balance} GEP`, {
+            chat_id: chatId,
+            message_id: query.message.message_id,
+            reply_markup: {
+                inline_keyboard: [[{ text: "🚀 Madenciliğe Dön", web_app: { url: `https://gelir-evreni.onrender.com/?userid=${userId}` } }]]
+            }
         });
     }
 });
