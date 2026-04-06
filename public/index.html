@@ -6,52 +6,43 @@
     <title>Gelir Evreni</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #0b1e33; color: white; font-family: sans-serif; text-align: center; margin: 0; user-select: none; }
-        .header { background: #112b4a; padding: 15px; border-bottom: 2px solid #ffd700; position: sticky; top: 0; z-index: 1000; }
-        .nav { position: fixed; bottom: 0; width: 100%; background: #112b4a; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #ffd700; z-index: 1000; }
-        .page { padding: 20px; padding-bottom: 120px; display: none; }
+        body { background: #0b1e33; color: white; font-family: sans-serif; text-align: center; margin: 0; }
+        .header { background: #112b4a; padding: 15px; border-bottom: 2px solid #ffd700; }
+        .page { padding: 20px; padding-bottom: 100px; display: none; }
         .active { display: block; }
-        .btn { background: #ffd700; color: black; border: none; padding: 15px; border-radius: 12px; font-weight: bold; width: 85%; cursor: pointer; box-shadow: 0 4px 0 #b8860b; }
-        .btn:disabled { background: #444; color: #888; box-shadow: none; cursor: not-allowed; }
-        .card { background: #163558; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-        .leader-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #ffffff11; }
+        .btn { background: #ffd700; color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 90%; margin-top: 10px; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: #112b4a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #ffd700; }
+        .card { background: #163558; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h2 style="color:#ffd700; margin:5px;">GELİR EVRENİ</h2>
-    <div id="balance" style="font-size:30px; font-weight:bold;">Yükleniyor...</div>
-    <div style="color:#00ff00;">≈ $<span id="usd">0.00</span></div>
+    <h2 style="color:#ffd700; margin:0;">GELİR EVRENİ</h2>
+    <div id="balance" style="font-size:28px; font-weight:bold; margin-top:5px;">Yükleniyor...</div>
 </div>
 
 <div id="home" class="page active">
-    <div id="speed" style="color:#ffd700; margin-bottom:15px; font-weight:bold;">⚡ Hız: +50 GEP / Saat</div>
-    <img src="https://img.icons8.com/emoji/96/money-bag-emoji.png" width="120" style="margin: 20px 0;">
+    <div id="speed" style="color:#ffd700;">Hız: +50 GEP / Saat</div>
+    <img src="https://img.icons8.com/emoji/96/money-bag-emoji.png" width="100" style="margin:20px;">
     <button class="btn" id="mine-btn" onclick="startMining()">MADENCİLİĞİ BAŞLAT</button>
-    <div id="timer" style="font-size:22px; margin-top:12px; color:#ffd700; font-family: monospace;">08:00:00</div>
-    <button class="btn" style="background:#ff4757; color:white; margin-top:20px;" id="spin-btn" onclick="spinWheel()">🎡 ÇARKI ÇEVİR</button>
-</div>
-
-<div id="tasks" class="page">
-    <h3 style="color:#ffd700;">🎯 GÖREVLER</h3>
-    <div id="task-list"></div>
+    <div id="timer" style="margin-top:10px;">08:00:00</div>
+    <button class="btn" style="background:#ff4757; color:white;" onclick="spinWheel()">🎡 ÇARKI ÇEVİR</button>
 </div>
 
 <div id="leaderboard" class="page">
-    <h3 style="color:#ffd700;">🏆 LİDERLER</h3>
-    <div id="leader-list" style="background: #112b4a; border-radius: 15px; padding: 10px;"></div>
+    <h3>🏆 LİDERLER</h3>
+    <div id="leader-list"></div>
 </div>
 
 <div id="refs" class="page">
-    <h3 style="color:#ffd700;">👥 AVCI EKİBİ</h3>
-    <div class="card" style="justify-content: center; font-size: 20px;">🚀 <span id="ref-count">0</span> Referans</div>
-    <button class="btn" onclick="copyRef()">DAVET LİNKİNİ KOPYALA</button>
+    <h3>👥 DAVET ET</h3>
+    <div class="card" style="justify-content:center;">Referans: <span id="ref-count" style="margin-left:5px;">0</span></div>
+    <button class="btn" onclick="copyRef()">LİNKİ KOPYALA</button>
 </div>
 
 <div class="nav">
     <div onclick="showPage('home')">🏠</div>
-    <div onclick="showPage('tasks')">🎯</div>
     <div onclick="showPage('leaderboard')">🏆</div>
     <div onclick="showPage('refs')">👥</div>
 </div>
@@ -60,48 +51,43 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    // Kullanıcı ID'sini kesinleştiren mantık
+    // EN GARANTİ ID ALMA YÖNTEMİ
     let userId = new URLSearchParams(window.location.search).get('userid') || tg.initDataUnsafe?.user?.id?.toString();
     
-    let userData = { balance: 0, currentSpeed: 50, tasks: [], lastMined: null, lastSpin: null, refCount: 0 };
-    let timerInterval = null;
+    let userData = null;
 
     async function loadData() {
         if (!userId) {
-            document.getElementById('balance').innerText = "Kullanıcı Bulunamadı";
+            document.getElementById('balance').innerText = "ID Bekleniyor...";
+            setTimeout(loadData, 1000); // 1 saniye sonra tekrar dene
             return;
         }
         try {
             const res = await fetch(`/api/user/${userId}`);
             userData = await res.json();
-            updateUI();
-            renderTasks();
-        } catch (e) { console.error("Veri hatası"); }
+            document.getElementById('balance').innerText = Math.floor(userData.balance).toLocaleString() + ' GEP';
+            document.getElementById('speed').innerText = `⚡ Hız: +${userData.currentSpeed} GEP / Saat`;
+            document.getElementById('ref-count').innerText = userData.refCount;
+            checkMining();
+        } catch (e) { document.getElementById('balance').innerText = "Hata oluştu"; }
     }
 
-    function updateUI() {
-        document.getElementById('balance').innerText = Math.floor(userData.balance).toLocaleString() + ' GEP';
-        document.getElementById('usd').innerText = (userData.balance / 10000).toFixed(2);
-        document.getElementById('speed').innerText = `⚡ Hız: +${userData.currentSpeed} GEP / Saat`;
-        document.getElementById('ref-count').innerText = userData.refCount;
-        
+    function checkMining() {
         if (userData.lastMined) {
             const diff = Date.now() - new Date(userData.lastMined).getTime();
-            const eightHours = 8 * 60 * 60 * 1000;
-            if (diff < eightHours) {
+            if (diff < 8 * 60 * 60 * 1000) {
                 document.getElementById('mine-btn').disabled = true;
-                startTimer(eightHours - diff);
+                startTimer(8 * 60 * 60 * 1000 - diff);
             }
         }
     }
 
-    function startTimer(duration) {
-        if (timerInterval) clearInterval(timerInterval);
-        let t = duration / 1000;
-        timerInterval = setInterval(() => {
-            let h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = Math.floor(t % 60);
-            document.getElementById('timer').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            if (--t < 0) { clearInterval(timerInterval); document.getElementById('mine-btn').disabled = false; }
+    function startTimer(ms) {
+        let t = ms / 1000;
+        const intr = setInterval(() => {
+            let h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = Math.floor(t%60);
+            document.getElementById('timer').innerText = `${h}:${m}:${s}`;
+            if (--t < 0) { clearInterval(intr); document.getElementById('mine-btn').disabled = false; }
         }, 1000);
     }
 
@@ -113,7 +99,7 @@
     async function spinWheel() {
         const res = await fetch('/api/spin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId }) });
         const d = await res.json();
-        alert(`🎉 ${d.win} GEP Kazandın!`);
+        alert(d.win + " GEP Kazandın!");
         loadData();
     }
 
@@ -121,10 +107,7 @@
         const res = await fetch('/api/leaderboard');
         const data = await res.json();
         const list = document.getElementById('leader-list');
-        list.innerHTML = '';
-        data.forEach((u, i) => {
-            list.innerHTML += `<div class="leader-item"><span>#${i+1} ${u.userId === userId ? 'SEN' : 'Avcı_'+u.userId.substring(0,4)}</span><b>${Math.floor(u.balance).toLocaleString()}</b></div>`;
-        });
+        list.innerHTML = data.map((u, i) => `<div class="card"><span>#${i+1} Avcı_${u.userId.slice(-4)}</span><b>${Math.floor(u.balance)}</b></div>`).join('');
     }
 
     function showPage(p) {
@@ -133,24 +116,9 @@
         if(p === 'leaderboard') loadLeaderboard();
     }
 
-    function renderTasks() {
-        const tasks = [{ id: '@gelirevreni', name: 'Kanalı Takip Et' }, { id: '@kriptotayfa', name: 'Gruba Katıl' }];
-        const list = document.getElementById('task-list');
-        list.innerHTML = '';
-        tasks.forEach(t => {
-            const done = userData.tasks.includes(t.id);
-            list.innerHTML += `<div class="card"><b>${t.name}</b> ${done ? '✅' : `<button onclick="doTask('${t.id}')">YAP</button>`}</div>`;
-        });
-    }
-
-    async function doTask(id) {
-        await fetch('/api/check-task', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId, channelId: id }) });
-        loadData();
-    }
-
     function copyRef() {
         const link = `https://t.me/gelir_evreni_bot?start=${userId}`;
-        navigator.clipboard.writeText(link);
+        const i = document.createElement('input'); i.value = link; document.body.appendChild(i); i.select(); document.execCommand('copy'); document.body.removeChild(i);
         alert("Referans linkin kopyalandı!");
     }
 
