@@ -121,7 +121,7 @@ bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
         reply_markup: { 
             inline_keyboard: [[{ 
                 text: "🚀 İmparatorluğa Gir", 
-                web_app: { url: `https://gelir-evreni.onrender.com/?userid=${userId}` } 
+                web_app: { url: `https://gelir-evreni.onrender.com/?userid=${userId}&v=${Date.now()}` }
             }]] 
         }
     });
