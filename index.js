@@ -40,7 +40,10 @@ const bot = new TelegramBot(token, { polling: true });
 app.get('/api/user/:id', async (req, res) => {
     const userId = req.params.id;
     let user = await User.findOne({ userId });
-    if (!user) { user = new User({ userId }); await user.save(); }
+    if (!user) { 
+        user = new User({ userId }); 
+        await user.save(); 
+    }
     const currentSpeed = user.baseSpeed + (user.refCount * 50);
     res.json({ ...user._doc, currentSpeed });
 });
@@ -136,31 +139,33 @@ app.post('/api/save-wallet', async (req, res) => {
     res.json({ success: true });
 });
 
-// --- TELEGRAM KOMUTLARI (REFERANS DESTEKLİ) ---
+// --- TELEGRAM KOMUTLARI (REFERANS SİSTEMİ GÜNCELLENDİ) ---
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
-    const userId = msg.from.id.toString();
+    const userId = msg.from.id.toString().trim();
     const text = msg.text || "";
 
     let user = await User.findOne({ userId });
 
-    // Eğer kullanıcı yeni geliyorsa
+    // Eğer kullanıcı tamamen yeniyse
     if (!user) {
         user = new User({ userId });
         
-        // Referans kontrolü (/start 123456 gibi)
-        if (text.startsWith('/start ') && text.split(' ').length > 1) {
-            const refId = text.split(' ')[1];
+        // Referans linkiyle mi geldi? (/start 12345678)
+        const parts = text.split(' ');
+        if (parts.length > 1 && parts[0] === '/start') {
+            const refId = parts[1].trim();
             
-            if (refId !== userId) {
+            // Kendi linkine tıklamadıysa ve refId doluysa
+            if (refId !== userId && refId !== "") {
                 const referrer = await User.findOne({ userId: refId });
                 if (referrer) {
                     referrer.balance += 500;
                     referrer.refCount += 1;
                     await referrer.save();
                     
-                    // Referans sahibine bildirim gönder
-                    bot.sendMessage(refId, `🎉 **Ekibine yeni bir avcı katıldı!**\n\nReferans ödülü: +500 GEP hesabına eklendi.`, { parse_mode: 'Markdown' });
+                    // Referans sahibine müjdeyi gönder
+                    bot.sendMessage(refId, `🔔 **TEBRİKLER!**\n\nEkibine yeni bir avcı katıldı. Hesabına **+500 GEP** eklendi!`, { parse_mode: 'Markdown' });
                 }
             }
         }
@@ -168,7 +173,7 @@ bot.on('message', async (msg) => {
     }
 
     const webAppUrl = `https://gelir-evreni.onrender.com/?userid=${userId}`;
-    bot.sendMessage(chatId, `🦅 **Gelir Evreni'ne Hoş Geldin!**\n\nİmparatorluğunu kurmak ve GEP avına başlamak için butona tıkla!`, {
+    bot.sendMessage(chatId, `🦅 **Gelir Evreni'ne Hoş Geldin!**\n\nKendi imparatorluğunu kurmak ve madenciliğe başlamak için aşağıdaki butona dokun!`, {
         parse_mode: 'Markdown',
         reply_markup: {
             inline_keyboard: [[{ text: "🚀 İmparatorluğu Aç", web_app: { url: webAppUrl } }]]
