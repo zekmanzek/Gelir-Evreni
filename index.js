@@ -83,4 +83,55 @@ app.post('/api/register', async (req, res) => {
 });
 
 // 3. LİDERLİK TABLOSU
-app.get('/api/leaderboard/:id', async (req, res) =>
+app.get('/api/leaderboard/:id', async (req, res) => {
+    try {
+        const allUsers = await User.find().sort({ balance: -1 });
+        const userRank = allUsers.findIndex(u => u.userId === req.params.id) + 1;
+        const top50 = allUsers.slice(0, 50);
+        res.json({ top50, userRank: userRank || "--" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 4. MADENCİLİK
+app.post('/api/mine', async (req, res) => {
+    const { userId } = req.body;
+    try {
+        let user = await User.findOne({ userId });
+        const reward = (50 + (user.refCount * 25)) * 8;
+        user.balance += reward;
+        user.lastMined = new Date();
+        await user.save();
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 5. TEKİL GÖREV ONAYLAMA (Her görev 1000 GEP)
+app.post('/api/complete-single-task', async (req, res) => {
+    const { userId, taskId } = req.body;
+    try {
+        let user = await User.findOne({ userId });
+        if (!user) return res.status(404).json({ error: "Kullanıcı bulunamadı" });
+
+        if (user.completedTasks.includes(taskId)) {
+            return res.status(400).json({ error: "Bu ödül zaten alındı!" });
+        }
+
+        user.balance += 1000; // Görev başı 1000 GEP
+        user.completedTasks.push(taskId);
+        await user.save();
+        res.json({ success: true, newBalance: user.balance });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+bot.onText(/\/start/, async (msg) => {
+    bot.sendMessage(msg.chat.id, `🦅 **Gelir Evreni'ne Hoş Geldin!**`, {
+        reply_markup: {
+            inline_keyboard: [[{ 
+                text: "🚀 Operasyon Merkezin", 
+                web_app: { url: `https://gelir-evreni.onrender.com/?v=${Date.now()}` } 
+            }]]
+        }
+    });
+});
+
+app.listen(process.env.PORT || 10000);
