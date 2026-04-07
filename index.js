@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const MONGO_URI = "mongodb+srv://mzybro_db_user:RrdTszJxirbFhHfm@zekman.bi8ty3t.mongodb.net/GelirEvreni?retryWrites=true&w=majority";
 mongoose.connect(MONGO_URI).then(() => console.log("💎 Gelir Evreni Veritabanı Aktif"));
 
-// Kullanıcı Şeması (Görev kontrolü eklendi)
+// Kullanıcı Şeması (Görevleri tek tek takip eder)
 const UserSchema = new mongoose.Schema({
     userId: { type: String, unique: true, required: true },
     username: { type: String },
@@ -30,7 +30,7 @@ const UserSchema = new mongoose.Schema({
     referredBy: { type: String, default: null },
     isRegistered: { type: Boolean, default: false },
     lastMined: { type: Date, default: null },
-    tasksCompleted: { type: Boolean, default: false } // 1000 GEP ödülünü alıp almadığı
+    completedTasks: { type: [String], default: [] } // Yapılan görevlerin ID'lerini tutar
 });
 
 const User = mongoose.model('User', UserSchema);
@@ -50,7 +50,7 @@ app.get('/api/user/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 2. KAYIT VE DAVET KODU SİSTEMİ
+// 2. KAYIT SİSTEMİ
 app.post('/api/register', async (req, res) => {
     const { userId, username, fullName, referredBy } = req.body;
     try {
@@ -82,59 +82,5 @@ app.post('/api/register', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 3. LİDERLİK TABLOSU VE SIRALAMA
-app.get('/api/leaderboard/:id', async (req, res) => {
-    try {
-        const allUsers = await User.find().sort({ balance: -1 });
-        const userRank = allUsers.findIndex(u => u.userId === req.params.id) + 1;
-        const top50 = allUsers.slice(0, 50);
-        res.json({ top50, userRank: userRank || "--" });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// 4. MADENCİLİK
-app.post('/api/mine', async (req, res) => {
-    const { userId } = req.body;
-    try {
-        let user = await User.findOne({ userId });
-        const reward = (50 + (user.refCount * 25)) * 8;
-        user.balance += reward;
-        user.lastMined = new Date();
-        await user.save();
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// 5. SOSYAL MEDYA GÖREVLERİ (YENİ!)
-app.post('/api/complete-social-tasks', async (req, res) => {
-    const { userId } = req.body;
-    try {
-        let user = await User.findOne({ userId });
-        if (!user) return res.status(404).json({ error: "Kullanıcı bulunamadı" });
-        
-        if (user.tasksCompleted) {
-            return res.status(400).json({ error: "Ödül zaten alındı!" });
-        }
-
-        user.balance += 1000;
-        user.tasksCompleted = true;
-        await user.save();
-        
-        res.json({ success: true, newBalance: user.balance });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// BOT START
-bot.onText(/\/start/, async (msg) => {
-    const userId = msg.from.id.toString();
-    bot.sendMessage(msg.chat.id, `🦅 **Gelir Evreni'ne Hoş Geldin!**\n\nOperasyon merkezin hazır.`, {
-        reply_markup: {
-            inline_keyboard: [[{ 
-                text: "🚀 Operasyon Merkezin", 
-                web_app: { url: `https://gelir-evreni.onrender.com/?v=${Date.now()}` } 
-            }]]
-        }
-    });
-});
-
-app.listen(process.env.PORT || 10000);
+// 3. LİDERLİK TABLOSU
+app.get('/api/leaderboard/:id', async (req, res) =>
