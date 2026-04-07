@@ -18,9 +18,8 @@
             color: var(--text-light); font-family: 'Inter', sans-serif;
             margin: 0; padding: 0; overflow-x: hidden; min-height: 100vh;
         }
-        .container { padding: 15px; padding-bottom: 110px; display: none; } /* Kayıt olana kadar gizli */
+        .container { padding: 15px; padding-bottom: 110px; display: none; }
         
-        /* GİRİŞ EKRANI (GATEKEEPER) */
         #gatekeeper {
             position: fixed; top:0; left:0; width:100%; height:100%; 
             background: var(--bg-dark); z-index: 9999; display: flex; 
@@ -33,7 +32,6 @@
             text-align: center; font-family: 'Orbitron'; font-size: 18px; margin-bottom: 20px;
         }
 
-        /* DASHBOARD STİLLERİ */
         .brand-title { text-align: center; font-family: 'Orbitron'; color: var(--accent-gold); font-size: 18px; margin: 15px 0; letter-spacing: 2px; }
         .balance-section { text-align: center; margin-bottom: 20px; }
         .balance-amount { font-size: 36px; font-weight: 800; margin: 5px 0; }
@@ -185,7 +183,13 @@
 
     function startTimer(ms) {
         let t = ms / 1000;
-        setInterval(() => {
+        const interval = setInterval(() => {
+            if (t <= 0) {
+                clearInterval(interval);
+                document.getElementById('timer').innerText = "HAZIR";
+                document.getElementById('mine-btn').disabled = false;
+                return;
+            }
             let h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = Math.floor(t%60);
             document.getElementById('timer').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             t--;
@@ -193,21 +197,34 @@
     }
 
     async function loadLeaderboard() {
-        const res = await fetch('/api/leaderboard');
-        const list = await res.json();
-        const container = document.getElementById('leaderboard-list');
-        container.innerHTML = list.map((u, i) => `
-            <div class="rank-item">
-                <span>${i+1}. ${u.fullName || 'Gizli'}</span>
-                <span style="color:var(--accent-gold); font-weight:800;">${Math.floor(u.balance).toLocaleString()} GEP</span>
-            </div>
-        `).join('');
+        try {
+            const res = await fetch(`/api/leaderboard/${tUserId}`);
+            const data = await res.json();
+            
+            if(document.getElementById('stat-rank')) 
+                document.getElementById('stat-rank').innerText = "#" + data.userRank;
+
+            const container = document.getElementById('leaderboard-list');
+            if (data.top50 && data.top50.length > 0) {
+                container.innerHTML = data.top50.map((u, i) => `
+                    <div class="rank-item" style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="${u.userId === tUserId ? 'color:var(--accent-gold); font-weight:bold;' : ''}">
+                            ${i + 1}. ${u.fullName || 'Gizli Paydaş'}
+                        </span>
+                        <span style="color:var(--accent-gold); font-weight:800;">${Math.floor(u.balance).toLocaleString()} GEP</span>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = "<p style='text-align:center;'>Henüz veri yok.</p>";
+            }
+        } catch (err) { console.error("Liderlik yükleme hatası:", err); }
     }
 
     function switchPage(page) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(page + '-page').classList.add('active');
         tg.HapticFeedback.impactOccurred('light');
+        if(page === 'profile') loadLeaderboard();
     }
 
     function copyRef() {
