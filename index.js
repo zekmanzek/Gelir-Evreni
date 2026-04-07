@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Önbellek Kapatma
+// Önbellek Kapatma (Cache-Control)
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     next();
@@ -16,21 +16,20 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// DB Bağlantısı
+// Veritabanı Bağlantısı
 const MONGO_URI = "mongodb+srv://mzybro_db_user:RrdTszJxirbFhHfm@zekman.bi8ty3t.mongodb.net/GelirEvreni?retryWrites=true&w=majority";
-mongoose.connect(MONGO_URI).then(() => console.log("💎 Gelir Evreni DB Aktif"));
+mongoose.connect(MONGO_URI).then(() => console.log("💎 Gelir Evreni Veritabanı Aktif"));
 
-// Gelişmiş Kullanıcı Şeması
+// Kullanıcı Şeması
 const UserSchema = new mongoose.Schema({
     userId: { type: String, unique: true, required: true },
-    username: { type: String, unique: true }, // Davet kodu olarak kullanılacak
-    fullName: { type: String, default: "Avcı" },
+    username: { type: String },
+    fullName: { type: String, default: "Paydaş" },
     balance: { type: Number, default: 0 },
     refCount: { type: Number, default: 0 },
-    referredBy: { type: String, default: null }, // Kim davet etti?
-    isRegistered: { type: Boolean, default: false }, // Giriş kapısını geçti mi?
-    lastMined: { type: Date, default: null },
-    level: { type: Number, default: 1 }
+    referredBy: { type: String, default: null },
+    isRegistered: { type: Boolean, default: false },
+    lastMined: { type: Date, default: null }
 });
 
 const User = mongoose.model('User', UserSchema);
@@ -38,49 +37,42 @@ const User = mongoose.model('User', UserSchema);
 // Bot Ayarı
 const bot = new TelegramBot('8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s', { polling: true });
 
-// KULLANICI VERİSİ ÇEKME
+// 1. KULLANICI VERİSİ
 app.get('/api/user/:id', async (req, res) => {
     try {
         let user = await User.findOne({ userId: req.params.id });
         if (!user) {
-            // Hiç yoksa taslak oluştur ama isRegistered: false kalsın
             user = new User({ userId: req.params.id });
             await user.save();
         }
-        const speed = 50 + (user.refCount * 25);
-        res.json({ ...user._doc, speed });
+        res.json(user);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// YENİ KAYIT VE DAVET KODU DOĞRULAMA
+// 2. KAYIT VE DAVET KODU SİSTEMİ
 app.post('/api/register', async (req, res) => {
     const { userId, username, fullName, referredBy } = req.body;
-    
     try {
         let user = await User.findOne({ userId });
         if (!user) user = new User({ userId });
 
-        // MASTER KEY KONTROLÜ (Senin girişin için)
+        // Master Key Kontrolü
         if (referredBy === "MZY2026") {
             user.isRegistered = true;
             user.username = username;
             user.fullName = fullName;
             await user.save();
-            return res.json({ success: true, message: "Kurucu Girişi Başarılı" });
+            return res.json({ success: true });
         }
 
-        // Normal Davet Kodu Kontrolü
+        // Davet Edeni Bul (Username üzerinden)
         const inviter = await User.findOne({ username: referredBy });
-        if (!inviter && referredBy !== "MZY2026") {
-            return res.status(400).json({ error: "Geçersiz Davet Kodu" });
-        }
+        if (!inviter) return res.status(400).json({ error: "Geçersiz Davet Kodu" });
 
-        // Davet edene ödül ver
-        if (inviter) {
-            inviter.balance += 1000;
-            inviter.refCount += 1;
-            await inviter.save();
-        }
+        // Puan Ver
+        inviter.balance += 1000;
+        inviter.refCount += 1;
+        await inviter.save();
 
         user.isRegistered = true;
         user.username = username;
@@ -92,23 +84,33 @@ app.post('/api/register', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// MADENCİLİK
-app.post('/api/mine', async (req, res) => {
-    const { userId } = req.body;
-    let user = await User.findOne({ userId });
-    if (!user) return res.status(404).send();
-
-    const reward = (50 + (user.refCount * 25)) * 8;
-    user.balance += reward;
-    user.lastMined = new Date();
-    await user.save();
-    res.json({ success: true });
+// 3. LİDERLİK TABLOSU VE SIRALAMA (VİDEODAKİ HATAYI ÇÖZEN KISIM)
+app.get('/api/leaderboard/:id', async (req, res) => {
+    try {
+        const allUsers = await User.find().sort({ balance: -1 });
+        const userRank = allUsers.findIndex(u => u.userId === req.params.id) + 1;
+        const top50 = allUsers.slice(0, 50);
+        res.json({ top50, userRank: userRank || "--" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// BOT START KOMUTU
+// 4. MADENCİLİK
+app.post('/api/mine', async (req, res) => {
+    const { userId } = req.body;
+    try {
+        let user = await User.findOne({ userId });
+        const reward = (50 + (user.refCount * 25)) * 8;
+        user.balance += reward;
+        user.lastMined = new Date();
+        await user.save();
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// BOT START
 bot.onText(/\/start/, async (msg) => {
     const userId = msg.from.id.toString();
-    bot.sendMessage(msg.chat.id, `🦅 **Gelir Evreni'ne Hoş Geldin!**\n\nSistem seni bekliyor Komutan. Giriş yapmak için aşağıdaki butonu kullan.`, {
+    bot.sendMessage(msg.chat.id, `🦅 **Gelir Evreni'ne Hoş Geldin!**\n\nOperasyon merkezin hazır.`, {
         reply_markup: {
             inline_keyboard: [[{ 
                 text: "🚀 Operasyon Merkezin", 
