@@ -8,6 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Cache temizleme (Verilerin güncel kalması için)
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     next();
@@ -15,19 +16,18 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Veritabanı Bağlantısı
 const MONGO_URI = "mongodb+srv://mzybro_db_user:RrdTszJxirbFhHfm@zekman.bi8ty3t.mongodb.net/GelirEvreni?retryWrites=true&w=majority";
 mongoose.connect(MONGO_URI).then(() => console.log("💎 Veritabanı Bağlandı"));
 
 const UserSchema = new mongoose.Schema({
     userId: { type: String, unique: true, required: true },
     username: { type: String },
-    fullName: { type: String, default: "Paydaş" },
+    fullName: { type: String, default: "Avcı" },
     balance: { type: Number, default: 0 },
     refCount: { type: Number, default: 0 },
     referredBy: { type: String, default: null },
-    isRegistered: { type: Boolean, default: false },
     lastMined: { type: Date, default: null },
-    lastSpin: { type: Date, default: null },
     completedTasks: { type: [String], default: [] }
 });
 
@@ -35,27 +35,22 @@ const User = mongoose.model('User', UserSchema);
 
 const bot = new TelegramBot('8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s', { polling: true });
 
-// Kullanıcı Bilgisi Getir
+// API: Kullanıcı Bilgisi
 app.get('/api/user/:id', async (req, res) => {
     try {
         let user = await User.findOne({ userId: req.params.id });
-        if (!user) { 
-            user = new User({ userId: req.params.id }); 
-            await user.save(); 
-        }
+        if (!user) { user = new User({ userId: req.params.id }); await user.save(); }
         res.json(user);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Madencilik
+// API: Madencilik (8 Saatlik)
 app.post('/api/mine', async (req, res) => {
     const { userId } = req.body;
     try {
         let user = await User.findOne({ userId });
         const now = new Date();
-        if (user.lastMined && (now - user.lastMined < 8 * 60 * 60 * 1000)) {
-            return res.status(400).json({ error: "Kilitli" });
-        }
+        if (user.lastMined && (now - user.lastMined < 8 * 60 * 60 * 1000)) return res.status(400).json({ error: "Kilitli" });
         user.balance += (50 + (user.refCount * 25)) * 8;
         user.lastMined = now; 
         await user.save();
@@ -63,7 +58,7 @@ app.post('/api/mine', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Sosyal Görev Tamamlama (500 GEP)
+// API: Sosyal Görev Tamamlama (500 GEP)
 app.post('/api/complete-social-task', async (req, res) => {
     const { userId, taskId } = req.body;
     try {
@@ -78,6 +73,7 @@ app.post('/api/complete-social-task', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// API: Liderlik Tablosu
 app.get('/api/leaderboard/:id', async (req, res) => {
     try {
         const allUsers = await User.find().sort({ balance: -1 });
@@ -86,9 +82,10 @@ app.get('/api/leaderboard/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Bot Mesajı
 bot.onText(/\/start/, (msg) => {
     const webAppUrl = `https://gelir-evreni.onrender.com/?userid=${msg.from.id}`;
-    bot.sendMessage(msg.chat.id, `🚀 **Gelir Evreni Aktif!**\n\nAv sahasına hoş geldin komutan!`, {
+    bot.sendMessage(msg.chat.id, `🚀 **Gelir Evreni Aktif!**\n\nAv sahasına hoş geldin!`, {
         reply_markup: { inline_keyboard: [[{ text: "Uygulamayı Aç", web_app: { url: webAppUrl } }]] }
     });
 });
