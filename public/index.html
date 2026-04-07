@@ -14,7 +14,7 @@
         .gate-input { background: rgba(255,255,255,0.05); border: 2px solid var(--accent-gold); padding: 15px; border-radius: 12px; color: white; width: 100%; text-align: center; margin-bottom: 20px; font-size: 18px; }
         .brand-title { text-align: center; font-family: 'Orbitron'; color: var(--accent-gold); font-size: 20px; margin: 20px 0; }
         .balance-amount { font-size: 42px; font-weight: 800; text-align: center; margin: 10px 0; }
-        .mine-btn { background: var(--accent-green); border-radius: 20px; padding: 18px; width: 100%; border: none; color: white; font-weight: 800; font-size: 18px; cursor: pointer; margin-bottom: 20px; }
+        .mine-btn { background: var(--accent-green); border-radius: 20px; padding: 18px; width: 100%; border: none; color: white; font-weight: 800; font-size: 18px; cursor: pointer; margin-bottom: 20px; transition: 0.3s; }
         .mine-btn:disabled { opacity: 0.6; filter: grayscale(1); }
         .main-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .card { border-radius: 25px; padding: 20px; cursor: pointer; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between; }
@@ -22,7 +22,7 @@
         .card.blue { background: var(--card-bg); color: #fff; }
         .task-item { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-action { background: var(--accent-green); color: white; padding: 8px 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-action:disabled { background: #475569; }
+        .btn-action:disabled { background: #475569; color: #94a3b8; }
         .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #0F2038; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid rgba(255,255,255,0.1); }
         .nav-item { color: #64748B; font-size: 12px; cursor: pointer; text-align: center; text-transform: uppercase; font-weight: 800; }
         .nav-item.active { color: var(--accent-gold); }
@@ -87,21 +87,99 @@
 
 <script>
     const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
     const tUserId = (tg.initDataUnsafe.user?.id || "123").toString();
 
-    async function init() {
-        const res = await fetch(`/api/user/${tUserId}`);
-        const data = await res.json();
-        if (data.isRegistered) {
-            document.getElementById('gatekeeper').style.display = 'none';
-            document.getElementById('app-container').style.display = 'block';
-            document.getElementById('nav-bar').style.display = 'flex';
-            document.getElementById('balance').innerText = data.balance.toLocaleString() + ' GEP';
-            if(data.completedTasks) data.completedTasks.forEach(id => {
-                const btn = document.querySelector(`#t-${id} button`);
-                if(btn) { btn.innerText = "ALINDI"; btn.disabled = true; }
-            });
+    // Sayfayı yenilemeden verileri güncelleyen ana fonksiyon
+    async function loadUserData() {
+        try {
+            const res = await fetch(`/api/user/${tUserId}`);
+            const data = await res.json();
+            
+            if (data.isRegistered) {
+                document.getElementById('gatekeeper').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+                document.getElementById('nav-bar').style.display = 'flex';
+                
+                // Bakiyeyi güncelle (Virgüllü formatta)
+                document.getElementById('balance').innerText = data.balance.toLocaleString() + ' GEP';
+                
+                // Görev butonlarını kontrol et
+                if(data.completedTasks) {
+                    data.completedTasks.forEach(id => {
+                        const btn = document.querySelector(`#t-${id} button`);
+                        if(btn) { 
+                            btn.innerText = "ALINDI"; 
+                            btn.disabled = true;
+                            btn.style.background = "#475569";
+                        }
+                    });
+                }
+            } else {
+                document.getElementById('gatekeeper').style.display = 'flex';
+            }
+        } catch (e) {
+            console.error("Veri yükleme hatası:", e);
         }
+    }
+
+    async function startMining() {
+        const btn = document.getElementById('mine-btn');
+        btn.disabled = true;
+        btn.innerText = "İşlem Yapılıyor...";
+
+        try {
+            const res = await fetch('/api/mine', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ userId: tUserId }) 
+            });
+            
+            if(res.ok) {
+                // location.reload() YERİNE sadece veriyi tekrar çekiyoruz
+                await loadUserData(); 
+                btn.innerText = "⛏ BAŞARIYLA KAZILDI";
+                setTimeout(() => { 
+                    btn.disabled = false; 
+                    btn.innerText = "⛏ MADENCİLİĞİ BAŞLAT"; 
+                }, 2000);
+            }
+        } catch (e) {
+            tg.showAlert("Hata oluştu!");
+            btn.disabled = false;
+        }
+    }
+
+    async function doTask(link, id) {
+        if(link.includes('t.me')) tg.openTelegramLink(link); else tg.openLink(link);
+        tg.showConfirm("Görevi tamamladıysanız onaylayın.", async (ok) => {
+            if(ok) {
+                const res = await fetch('/api/complete-single-task', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ userId: tUserId, taskId: id }) 
+                });
+                if(res.ok) {
+                    await loadUserData(); // Sayfayı yenilemeden butonu "ALINDI" yapar
+                }
+            }
+        });
+    }
+
+    async function register() {
+        const res = await fetch('/api/register', { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({ 
+                userId: tUserId, 
+                username: tg.initDataUnsafe.user?.username, 
+                fullName: tg.initDataUnsafe.user?.first_name, 
+                referredBy: document.getElementById('invite-code').value 
+            }) 
+        });
+        if(res.ok) loadUserData(); else tg.showAlert("Geçersiz Kod!");
     }
 
     function switchPage(p) {
@@ -112,30 +190,14 @@
         if(p === 'profile') { document.getElementById('nav-profile').classList.add('active'); loadLB(); }
     }
 
-    async function doTask(link, id) {
-        if(link.includes('t.me')) tg.openTelegramLink(link); else tg.openLink(link);
-        tg.showConfirm("Görevi tamamladıysanız onaylayın.", async (ok) => {
-            if(ok) {
-                const res = await fetch('/api/complete-single-task', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId, taskId: id }) });
-                if(res.ok) location.reload();
-            }
-        });
-    }
-
-    async function register() {
-        const res = await fetch('/api/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId, username: tg.initDataUnsafe.user?.username, fullName: tg.initDataUnsafe.user?.first_name, referredBy: document.getElementById('invite-code').value }) });
-        if(res.ok) location.reload(); else tg.showAlert("Geçersiz Kod!");
-    }
-
-    async function startMining() {
-        await fetch('/api/mine', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId }) });
-        location.reload();
-    }
-
     async function loadLB() {
         const res = await fetch(`/api/leaderboard/${tUserId}`);
         const data = await res.json();
-        document.getElementById('lb-list').innerHTML = data.top50.map((u,i) => `<div class="rank-row"><span>${i+1}. ${u.fullName}</span><span>${u.balance.toLocaleString()} GEP</span></div>`).join('');
+        document.getElementById('lb-list').innerHTML = data.top50.map((u,i) => `
+            <div class="rank-row">
+                <span>${i+1}. ${u.fullName}</span>
+                <span>${u.balance.toLocaleString()} GEP</span>
+            </div>`).join('');
     }
 
     function copyRef() {
@@ -144,7 +206,8 @@
         tg.showAlert("Davet kodun kopyalandı!");
     }
 
-    init();
+    // İlk açılışta verileri yükle
+    loadUserData();
 </script>
 </body>
 </html>
