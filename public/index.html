@@ -3,224 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    
-    <title>Gelir Evreni - Pro Platform</title>
-    
+    <title>Gelir Evreni - Premium Dashboard</title>
     <script src="https://telegram.org/js/telegram-web-app.js?v=999"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --neon-gold: #FFD700; --neon-green: #00FF88; --space-black: #05070A;
-            --deep-blue: #0A192F; --glass: rgba(255, 255, 255, 0.03); --border-glow: rgba(255, 215, 0, 0.3);
-        }
-        body {
-            background: radial-gradient(circle at top right, #0A192F, #05070A), 
-                        radial-gradient(circle at bottom left, rgba(0, 255, 136, 0.07), transparent 40%);
-            color: #E2E8F0; font-family: 'Rajdhani', sans-serif; margin: 0; padding: 0; overflow-x: hidden; min-height: 100vh;
-        }
-        .container { padding: 20px; padding-bottom: 110px; }
-        
-        /* Onboarding / Davet Ekranı Stili */
-        #onboarding-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--space-black); z-index: 9999; display: none;
-            flex-direction: column; align-items: center; justify-content: center; padding: 30px; box-sizing: border-box;
-        }
-        .invite-input {
-            background: rgba(255,255,255,0.05); border: 1px solid var(--neon-gold);
-            padding: 15px; border-radius: 15px; color: white; width: 100%;
-            font-family: 'Orbitron'; text-align: center; margin: 20px 0; font-size: 18px;
+            --bg-dark: #0A192F;
+            --card-bg: #162B46;
+            --accent-gold: #FFD700;
+            --accent-green: #4CAF50;
+            --text-light: #E2E8F0;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
         }
 
-        .header { display: flex; justify-content: center; align-items: center; gap: 12px; margin: 15px 0 30px 0; }
-        .header h1 { font-family: 'Orbitron', sans-serif; font-size: 20px; color: var(--neon-gold); text-shadow: 0 0 15px rgba(255, 215, 0, 0.7); letter-spacing: 2px; }
-        .main-display { background: var(--glass); backdrop-filter: blur(25px); border-radius: 35px; padding: 35px 20px; border: 1px solid var(--border-glow); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.7); margin-bottom: 25px; }
-        .coin-icon { width: 80px; height: 80px; background: linear-gradient(135deg, var(--neon-gold), #B8860B); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 40px; color: #000; box-shadow: 0 0 40px rgba(255, 215, 0, 0.6); margin-bottom: 18px; }
-        .balance-amount { font-family: 'Orbitron'; font-size: 44px; font-weight: 700; margin: 10px 0; text-shadow: 0 0 20px rgba(255, 255, 255, 0.35); }
-        .balance-usd { color: var(--neon-green); font-size: 20px; font-weight: 700; }
-        .action-btn { background: linear-gradient(180deg, var(--neon-green) 0%, #008F4C 100%); border: none; width: 100%; padding: 22px; border-radius: 25px; color: #000; font-family: 'Orbitron'; font-weight: 900; box-shadow: 0 10px 0 #005F32, 0 0 30px rgba(0, 255, 136, 0.5); cursor: pointer; position: relative; overflow: hidden; }
-        .action-btn:disabled { opacity: 0.5; filter: grayscale(1); }
-        
-        .page { display: none; animation: pageIn 0.4s ease-out; }
-        .page.active { display: block; }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
-        .stat-card { background: rgba(255,255,255,0.02); padding: 18px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.06); }
-        .nav-bar { position: fixed; bottom: 20px; left: 20px; right: 20px; background: rgba(10, 25, 47, 0.9); backdrop-filter: blur(30px); display: flex; justify-content: space-around; padding: 18px; border-radius: 35px; border: 1px solid rgba(255, 215, 0, 0.25); }
-        .nav-link { text-align: center; color: #64748B; font-size: 12px; flex: 1; transition: 0.3s; cursor: pointer; }
-        .nav-link.active { color: var(--neon-gold); transform: translateY(-5px); }
-        .nav-link i { font-size: 26px; display: block; margin-bottom: 6px; font-style: normal; }
+        body {
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at top, #1e3a5f 0%, #0A192F 100%);
+            color: var(--text-light);
+            font-family: 'Inter', sans-serif;
+            margin: 0; padding: 0; overflow-x: hidden;
+        }
+
+        .container { padding: 15px; padding-bottom: 100px; }
+
+        /* Üst Header */
+        .flags { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+        .flags img { width: 25px; border-radius: 3px; }
+        .brand-title { text-align: center; font-family: 'Orbitron'; color: var(--accent-gold); font-size: 18px; margin: 10px 0; letter-spacing: 2px; }
+
+        /* Ana Bakiye Kartı */
+        .balance-section { text-align: center; margin-bottom: 20px; }
+        .balance-amount { font-size: 36px; font-weight: 800; margin: 5px 0; }
+        .balance-usd { color: var(--accent-green); font-weight: 600; font-size: 18px; }
+
+        .mine-btn-container {
+            background: linear-gradient(180deg, #64DD17 0%, #388E3C 100%);
+            border-radius: 20px; padding: 12px; margin-top: 15px;
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.3); text-align: center; cursor: pointer;
+        }
+        .mine-btn-text { font-weight: 800; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
+
+        /* Orta Bölüm Grid */
+        .quick-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .action-card { background: var(--card-bg); padding: 12px; border-radius: 15px; text-align: center; font-size: 12px; border: 1px solid rgba(255,255,255,0.05); }
+
+        /* Ana Görev Grupları (3'lü yatay kartlar) */
+        .main-tasks { display: flex; gap: 10px; margin-bottom: 25px; }
+        .task-box { flex: 1; border-radius: 20px; padding: 15px; position: relative; overflow: hidden; height: 110px; display: flex; flex-direction: column; justify-content: space-between; }
+        .task-box.gold { background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%); color: #000; }
+        .task-box.blue { background: linear-gradient(135deg, #1E88E5 0%, #1565C0 100%); }
+        .task-box.green { background: linear-gradient(135deg, #43A047 0%, #2E7D32 100%); }
+        .task-box h4 { margin: 0; font-size: 13px; font-weight: 800; }
+        .task-box p { margin: 0; font-size: 11px; opacity: 0.9; }
+
+        .progress-mini { background: rgba(0,0,0,0.2); height: 6px; border-radius: 3px; margin-top: 5px; }
+        .progress-fill { background: var(--accent-green); height: 100%; border-radius: 3px; }
+
+        /* Liste Şeklinde Görevler */
+        .section-title { font-size: 16px; font-weight: 800; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .task-list-item { background: rgba(255,255,255,0.03); border-radius: 20px; padding: 15px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+        .task-info { display: flex; align-items: center; gap: 12px; }
+        .task-icon { font-size: 24px; }
+        .task-text h5 { margin: 0; font-size: 14px; }
+        .task-text p { margin: 0; font-size: 11px; color: #94A3B8; }
+        .btn-get { background: var(--accent-green); color: white; padding: 6px 15px; border-radius: 12px; font-weight: 800; font-size: 12px; border: none; }
+
+        /* Alt Navigasyon */
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #0F2038; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+        .nav-item { text-align: center; color: #64748B; transition: 0.3s; cursor: pointer; }
+        .nav-item.active { color: var(--accent-gold); }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; font-style: normal; }
+        .nav-item span { font-size: 11px; font-weight: 600; }
+        .nav-center { background: var(--accent-gold); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -35px; border: 5px solid var(--bg-dark); color: #000; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); }
+
     </style>
 </head>
 <body>
 
-<div id="onboarding-screen">
-    <h2 style="font-family:'Orbitron'; color:var(--neon-gold); text-align:center;">GİRİŞ YETKİSİ</h2>
-    <p style="color:#94A3B8; text-align:center;">Devam etmek için sizi davet eden kullanıcının kodunu giriniz.</p>
-    <input type="text" id="invite-input-field" class="invite-input" placeholder="DAVET KODU">
-    <button class="action-btn" onclick="submitInvite()">DOĞRULA VE GİRİŞ YAP</button>
-</div>
-
-<div class="container" id="main-container">
-    <div class="header">
+<div class="container">
+    <div class="flags">
         <img src="https://flagcdn.com/w40/tr.png">
-        <h1>GELİR EVRENİ</h1>
         <img src="https://flagcdn.com/w40/az.png">
     </div>
+    <div class="brand-title">GELİR EVRENİ</div>
 
-    <div id="home-page" class="page active">
-        <div class="main-display">
-            <div class="coin-icon">$</div>
-            <div class="balance-label">TOPLAM AVIN</div>
-            <div id="balance" class="balance-amount">0 GEP</div>
-            <div class="balance-usd">≈ $<span id="usd">0.00</span></div>
-            <div style="margin-top: 40px;">
-                <button class="action-btn" id="mbtn" onclick="mine()">🎯 MADENCİLİĞİ BAŞLAT</button>
-                <div id="timer" style="margin-top:18px; font-weight:bold; letter-spacing:3px; color:#64748B; font-family:'Orbitron'; font-size:14px;">SİSTEM ÇEVRİMİÇİ</div>
+    <div class="balance-section">
+        <div id="balance" class="balance-amount">400 GEP</div>
+        <div class="balance-usd">≈ $<span id="usd">0.04</span></div>
+        <div class="mine-btn-container" onclick="mine()">
+            <div class="mine-btn-text">
+                <span>⛏ MADENCİLİĞİ BAŞLAT</span>
+            </div>
+            <div id="timer" style="font-size: 12px; font-weight: 600; margin-top: 4px;">07:58:52</div>
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <div class="action-card">👑 Bakiye</div>
+        <div class="action-card">🏅 4. sıradasın!</div>
+        <div class="action-card">📊 Lider Tablosu</div>
+    </div>
+
+    <div class="main-tasks">
+        <div class="task-box gold">
+            <div>📋 <b>Görevler</b><br><small>3 Aktif</small></div>
+            <div><b>+ 150 GEP</b></div>
+        </div>
+        <div class="task-box blue">
+            <div>🎁 <b>Çekiliş</b> <span style="background:red; font-size:8px; padding:2px 4px; border-radius:5px;">Yeni!</span></div>
+            <div>
+                <p>Tamamlandı: %80</p>
+                <div class="progress-mini"><div class="progress-fill" style="width: 80%;"></div></div>
             </div>
         </div>
-        <div class="stat-grid">
-            <div class="stat-card"><small>Üretim Gücü</small><div id="speed">+50/s</div></div>
-            <div class="stat-card"><small>Sıralama</small><div id="rank">Hesaplanıyor...</div></div>
+        <div class="task-box green">
+            <div>👥 <b>Dostlarını Davet Et</b></div>
+            <div><small>+25% Bonus</small></div>
         </div>
     </div>
 
-    <div id="earn-page" class="page">
-        <h2 style="color:var(--neon-gold); font-family:'Orbitron'; font-size:20px; text-align:center;">OPERASYON MERKEZİ</h2>
-        <div class="task-list">
-            <div class="task-item" style="background:var(--glass); padding:20px; border-radius:25px; margin-bottom:15px; border:1px solid rgba(255,215,0,0.1);">
-                <h4 style="margin:0; color:var(--neon-gold);">Kendi Davet Kodun:</h4>
-                <p id="my-invite-code" style="font-family:'Orbitron'; font-size:22px; color:#fff; margin:10px 0;"></p>
-                <button class="action-btn" style="padding:10px; font-size:12px;" onclick="copyMyCode()">KODU KOPYALA</button>
+    <div class="section-title">🔥 Görev Sistemi</div>
+    
+    <div class="task-list-item">
+        <div class="task-info">
+            <div class="task-icon">📅</div>
+            <div class="task-text">
+                <h5>Günlük Görev</h5>
+                <p>Görevleri yap 50 GEP kazan</p>
             </div>
         </div>
+        <button class="btn-get">AL!</button>
     </div>
 
-    <div id="profile-page" class="page">
-        <h2 style="color:var(--neon-gold); font-family:'Orbitron'; font-size:20px; text-align:center;">KOMUTAN PROFİLİ</h2>
-        <div class="main-display" style="padding: 30px; border-color: rgba(0, 255, 136, 0.25);">
-            <div id="display-name" style="font-size:24px; font-weight:bold; color:var(--neon-gold); font-family:'Orbitron';">---</div>
-            <div id="display-userid" style="color:#94A3B8; margin-top:10px; letter-spacing:2px; font-size:12px;">ID: ---</div>
+    <div class="task-list-item">
+        <div class="task-info">
+            <div class="task-icon">👥</div>
+            <div class="task-text">
+                <h5>Referans Görevi</h5>
+                <p>2 arkadaşını davet et</p>
+                <div class="progress-mini" style="width: 100px;"><div class="progress-fill" style="width: 100%;"></div></div>
+            </div>
         </div>
+        <div style="font-size: 12px; font-weight: 800; color: var(--accent-gold);">2/2</div>
     </div>
+
+    <div class="task-list-item">
+        <div class="task-info">
+            <div class="task-icon">🌍</div>
+            <div class="task-text">
+                <h5>Herkese Açık Görev</h5>
+                <p>10 paylaşım yap, +100 GEP</p>
+            </div>
+        </div>
+        <button class="btn-get" style="background: rgba(255,215,0,0.8); color: black;">+ AL!</button>
+    </div>
+
+    <div style="text-align: center; color: var(--accent-gold); font-weight: 800; font-size: 14px; margin-top: 10px;">
+        Görevleri Tamamla >
+    </div>
+
 </div>
 
-<nav class="nav-bar">
-    <div class="nav-link active" onclick="switchPage('home', this)"><i>🏠</i>Üs</div>
-    <div class="nav-link" onclick="switchPage('earn', this)"><i>🎯</i>Görev</div>
-    <div class="nav-link" onclick="switchPage('profile', this)"><i>👤</i>Profil</div>
-</nav>
+<div class="nav-bar">
+    <div class="nav-item">
+        <i>🏠</i>
+        <span>Ana Sayfa</span>
+    </div>
+    <div class="nav-item active">
+        <div class="nav-center"><i>$</i></div>
+        <span>Kazanç</span>
+    </div>
+    <div class="nav-item">
+        <i>👤</i>
+        <span>Profil</span>
+    </div>
+</div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    tg.ready();
 
-    // Telegram'dan kullanıcı verilerini çek
-    const user = tg.initDataUnsafe.user || {};
-    const tUserId = user.id;
-    const tUsername = user.username || `ID_${tUserId}`; // Username yoksa ID'yi kullan
-    
-    const timestamp = new Date().getTime();
-
-    async function init() {
-        try {
-            // Backend'den kullanıcı kontrolü
-            const res = await fetch(`/api/user/${tUserId}?t=${timestamp}`);
-            const data = await res.json();
-
-            // Eğer kullanıcı kayıtlı değilse davet ekranını göster
-            if (!data.isRegistered) {
-                document.getElementById('onboarding-screen').style.display = 'flex';
-                document.getElementById('main-container').style.display = 'none';
-            } else {
-                updateUI(data);
-            }
-        } catch (e) {
-            console.error("Başlatma hatası:", e);
-            // Hata durumunda bile profil bilgilerini yerleştir
-            document.getElementById('display-name').innerText = user.first_name || "Komutan";
-        }
-    }
-
-    function updateUI(data) {
-        document.getElementById('balance').innerText = Math.floor(data.balance || 0).toLocaleString() + ' GEP';
-        document.getElementById('usd').innerText = ((data.balance || 0) * 0.0001).toFixed(2);
-        document.getElementById('speed').innerText = '+' + (data.speed || 50) + '/s';
-        document.getElementById('display-name').innerText = user.first_name || "Komutan";
-        document.getElementById('display-userid').innerText = 'ID: ' + tUserId;
-        document.getElementById('my-invite-code').innerText = tUsername;
-        
-        if (data.lastMined) {
-            const diff = Date.now() - new Date(data.lastMined).getTime();
-            if (diff < 28800000) {
-                document.getElementById('mbtn').disabled = true;
-                runTimer(28800000 - diff);
-            }
-        }
-    }
-
-    async function submitInvite() {
-        const code = document.getElementById('invite-input-field').value.trim();
-        if (!code) return tg.showAlert("Lütfen geçerli bir davet kodu giriniz.");
-
-        try {
-            const res = await fetch('/api/register', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    userId: tUserId,
-                    username: tUsername,
-                    fullName: user.first_name + (user.last_name ? " " + user.last_name : ""),
-                    referredBy: code
-                })
-            });
-            
-            if (res.ok) {
-                tg.HapticFeedback.notificationOccurred('success');
-                location.reload();
-            } else {
-                tg.showAlert("Davet kodu geçersiz!");
-            }
-        } catch (e) { tg.showAlert("Sistem hatası. Lütfen tekrar deneyin."); }
-    }
-
-    function runTimer(ms) {
-        let t = ms / 1000;
-        const timerObj = setInterval(() => {
-            let h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = Math.floor(t%60);
-            document.getElementById('timer').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            if (--t < 0) { clearInterval(timerObj); location.reload(); }
-        }, 1000);
-    }
-
-    async function mine() {
+    function mine() {
         tg.HapticFeedback.notificationOccurred('success');
-        await fetch('/api/mine', { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ userId: tUserId })
-        });
-        location.reload();
+        // Madencilik lojiği buraya gelecek
     }
 
-    function switchPage(page, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-        document.getElementById(page + '-page').classList.add('active');
-        el.classList.add('active');
-        tg.HapticFeedback.impactOccurred('light');
-    }
-
-    function copyMyCode() {
-        navigator.clipboard.writeText(tUsername);
-        tg.showAlert("Davet kodun kopyalandı: " + tUsername);
-    }
-
-    init();
+    // Sayfa geçişleri ve diğer dinamik veriler buraya eklenecek
 </script>
+
 </body>
 </html>
