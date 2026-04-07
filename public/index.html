@@ -3,267 +3,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gelir Evreni</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <title>Gelir Evreni - Ultimate Hunt</title>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js?v=3.1"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --bg-dark: #0A192F; --card-bg: #162B46; --accent-gold: #FFD700; --accent-green: #4CAF50; }
-        body { background: var(--bg-dark); color: #E2E8F0; font-family: 'Inter', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
-        .container { padding: 15px; padding-bottom: 120px; display: none; }
-        #gatekeeper { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg-dark); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
-        .gate-input { background: rgba(255,255,255,0.05); border: 2px solid var(--accent-gold); padding: 15px; border-radius: 12px; color: white; width: 100%; text-align: center; margin-bottom: 20px; font-size: 18px; }
-        .brand-title { text-align: center; font-family: 'Orbitron'; color: var(--accent-gold); font-size: 20px; margin: 20px 0; }
-        .balance-amount { font-size: 42px; font-weight: 800; text-align: center; margin: 10px 0; }
-        .mine-btn { background: var(--accent-green); border-radius: 20px; padding: 18px; width: 100%; border: none; color: white; font-weight: 800; font-size: 18px; cursor: pointer; margin-bottom: 20px; transition: 0.3s; }
-        .mine-btn:disabled { background: #1E293B; opacity: 0.8; cursor: not-allowed; }
-        
-        /* Çark Tasarımı (Ana Sayfa) */
-        .wheel-box { background: var(--card-bg); border-radius: 25px; padding: 20px; margin: 20px 0; text-align: center; border: 1px solid rgba(255,215,0,0.3); }
-        .wheel-wrap { position: relative; width: 240px; height: 240px; margin: 0 auto 15px; }
-        #wheel { width: 100%; height: 100%; border-radius: 50%; border: 10px solid #0F2038; transition: transform 4s cubic-bezier(0.1, 0, 0.2, 1); background: conic-gradient(from 0deg, #FFD700 0deg 36deg, #162B46 36deg 72deg, #FFD700 72deg 108deg, #162B46 108deg 144deg, #FFD700 144deg 180deg, #162B46 180deg 216deg, #FFD700 216deg 252deg, #162B46 252deg 288deg, #FFD700 288deg 324deg, #162B46 324deg 360deg); position: relative; }
-        .wheel-num { position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
-        .wheel-num span { position: absolute; left: 50%; transform-origin: 50% 120px; transform: translateX(-50%); font-weight: 800; font-size: 14px; color: #0A192F; padding-top: 15px; }
-        .wheel-num span:nth-child(even) { color: #fff; }
-        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 30px; height: 40px; background: #FF4444; clip-path: polygon(50% 100%, 0 0, 100% 0); z-index: 10; filter: drop-shadow(0 2px 5px #000); }
+        :root {
+            --neon-gold: #FFD700;
+            --neon-green: #00FF88;
+            --space-black: #05070A;
+            --deep-blue: #0A192F;
+            --glass: rgba(255, 255, 255, 0.04);
+            --border-glow: rgba(255, 215, 0, 0.25);
+        }
 
-        .main-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .card { border-radius: 25px; padding: 20px; cursor: pointer; min-height: 100px; display: flex; flex-direction: column; justify-content: center; }
-        .card.yellow { background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%); color: #000; }
-        .card.blue { background: var(--card-bg); color: #fff; }
-        
-        .task-item { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-action { background: var(--accent-green); color: white; padding: 8px 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-action:disabled { background: #475569; color: #94a3b8; }
-        
-        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #0F2038; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid rgba(255,255,255,0.1); z-index: 100; }
-        .nav-item { color: #64748B; font-size: 12px; cursor: pointer; text-align: center; text-transform: uppercase; font-weight: 800; }
-        .nav-item.active { color: var(--accent-gold); }
-        .page { display: none; }
+        body {
+            background: radial-gradient(circle at top right, #0A192F, #05070A), 
+                        radial-gradient(circle at bottom left, rgba(0, 255, 136, 0.08), transparent 45%);
+            color: #E2E8F0;
+            font-family: 'Rajdhani', sans-serif;
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .container { padding: 20px; padding-bottom: 120px; }
+
+        /* --- ÜST ALAN (HEADER) --- */
+        .header { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 15px 0 35px 0; }
+        .header img { width: 24px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.3)); }
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px; font-weight: 900;
+            color: var(--neon-gold);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.7), 0 0 30px rgba(255, 215, 0, 0.4);
+            letter-spacing: 2.5px; margin: 0;
+        }
+
+        /* --- ANA PANEL (MAIN HUB) --- */
+        .main-display {
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            border-radius: 40px;
+            padding: 40px 20px;
+            border: 1px solid var(--border-glow);
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 25px rgba(255, 215, 0, 0.1);
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        /* Dönen Hazine Sandığı (Ana Görsel) */
+        .chest-icon {
+            font-size: 80px; margin-bottom: 20px; display: inline-block;
+            filter: drop-shadow(0 0 30px var(--neon-gold));
+            animation: chestSpin 5s infinite ease-in-out;
+        }
+        @keyframes chestSpin { 0%, 100% { transform: rotateY(0deg); } 50% { transform: rotateY(180deg); } }
+
+        .balance-label { font-size: 14px; text-transform: uppercase; letter-spacing: 4px; color: #94A3B8; font-weight: 700; }
+        .balance-amount { 
+            font-family: 'Orbitron'; font-size: 48px; font-weight: 900; margin: 10px 0; color: #FFF;
+            text-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+        }
+        .balance-usd { color: var(--neon-green); font-size: 21px; font-weight: 700; text-shadow: 0 0 15px rgba(0, 255, 136, 0.6); }
+
+        /* Hız Göstergesi (Yeni Eklendi) */
+        .speed-badge {
+            background: rgba(0, 255, 136, 0.1); border: 1px solid var(--neon-green);
+            color: var(--neon-green); padding: 8px 18px; border-radius: 20px;
+            font-size: 14px; font-weight: 700; font-family: 'Orbitron';
+            display: inline-flex; align-items: center; gap: 8px; margin-top: 15px;
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+
+        /* --- KAZAN BUTONU VE SAYAÇ --- */
+        .action-btn {
+            background: linear-gradient(180deg, var(--neon-green) 0%, #008F4C 100%);
+            border: none; width: 100%; padding: 25px; border-radius: 25px;
+            color: #000; font-family: 'Orbitron'; font-weight: 900; font-size: 18px;
+            box-shadow: 0 10px 0 #005F32, 0 0 35px rgba(0, 255, 136, 0.5);
+            cursor: pointer; transition: 0.15s; text-transform: uppercase;
+            letter-spacing: 1.5px; position: relative; overflow: hidden; margin-top: 40px;
+        }
+        .action-btn:active { transform: translateY(4px); box-shadow: 0 6px 0 #005F32; }
+        .action-btn:disabled { background: #1E293B; box-shadow: 0 10px 0 #0F172A; color: #475569; opacity: 0.8; }
+
+        /* Buton Shine Efekti (Gaming Glow) */
+        .action-btn::after {
+            content: ''; position: absolute; top: -50%; left: -60%; width: 25%; height: 200%;
+            background: rgba(255, 255, 255, 0.4); transform: rotate(30deg);
+            transition: all 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+            animation: moveLight 4s infinite;
+        }
+        @keyframes moveLight { 0% { left: -60%; } 25% { left: 130%; } 100% { left: 130%; } }
+
+        /* Geri Sayım Sayacı (Ana Butonun Altında) */
+        #timer {
+            margin-top: 20px; font-weight: 700; letter-spacing: 4px; color: #64748B;
+            font-family: 'Orbitron'; font-size: 15px; text-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        /* --- SAYFA YAPILARI --- */
+        .page { display: none; animation: pageIn 0.4s ease-out; }
         .page.active { display: block; }
-        .rank-row { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .withdraw-box { background: rgba(76, 175, 80, 0.1); border: 1px solid var(--accent-green); border-radius: 20px; padding: 20px; margin-top: 30px; text-align: center; }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- GÖREVLER VE İLERLEME (TASKS) --- */
+        .section-title { color: var(--neon-gold); font-family: 'Orbitron'; font-size: 20px; text-align: center; letter-spacing: 3px; margin-bottom: 30px; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+        
+        .task-list { margin-top: 20px; }
+        .task-item {
+            background: var(--glass); padding: 22px; border-radius: 25px; margin-bottom: 15px;
+            display: flex; align-items: center; border: 1px solid rgba(255,215,0,0.1);
+            transition: 0.3s;
+        }
+        .task-item:active { transform: scale(0.98); background: rgba(255,215,0,0.06); }
+        .task-icon { font-size: 32px; margin-right: 20px; filter: drop-shadow(0 0 10px var(--neon-gold)); }
+        .task-info { flex: 1; }
+        .task-info h4 { margin: 0; font-size: 17px; color: #FFF; font-family: 'Orbitron'; }
+        .task-info p { margin: 0; font-size: 13px; color: #94A3B8; margin-top: 5px; }
+
+        /* İlerleme Çubuğu (Geliştirildi) */
+        .progress-wrap { background: #162B46; border-radius: 10px; height: 10px; margin-top: 15px; overflow: hidden; border: 1px solid rgba(255,215,0,0.15); }
+        .progress-bar { background: linear-gradient(90deg, var(--neon-gold), #B8860B); height: 100%; width: 0%; transition: width 0.5s ease; box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
+
+        /* --- ÇEKİLİŞ (WHEEL / DRAW) --- */
+        .wheel-box { background: rgba(10, 25, 47, 0.6); border-radius: 30px; padding: 25px; margin: 30px 0; text-align: center; border: 2px solid var(--border-glow); box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
+        
+        /* --- LİDER TABLOSU (LEADERBOARD) --- */
+        .lb-card { background: var(--glass); border-radius: 25px; padding: 25px; border: 1px solid rgba(0, 255, 136, 0.2); box-shadow: 0 15px 35px rgba(0,0,0,0.6); margin-top: 25px; }
+        .lb-card .card-label { font-size: 13px; color: var(--neon-green); text-transform: uppercase; letter-spacing: 2px; font-weight: 700; margin-bottom: 10px; display: block; text-shadow: 0 0 10px var(--neon-green); }
+        
+        .rank-list { margin-top: 20px; }
+        .rank-row { display: flex; justify-content: space-between; padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 16px; font-weight: 500; }
+        .rank-row.user-rank { background: rgba(255, 215, 0, 0.08); border-radius: 10px; color: var(--neon-gold); font-weight: 700; border: 1px solid var(--neon-gold); }
+        .rank-num { font-family: 'Orbitron'; color: var(--neon-gold); margin-right: 15px; width: 30px; display: inline-block; text-align: center; }
+
+        /* --- ALT MENÜ (NAV BAR) --- */
+        .nav-bar {
+            position: fixed; bottom: 25px; left: 25px; right: 25px;
+            background: rgba(10, 25, 47, 0.95); backdrop-filter: blur(35px);
+            display: flex; justify-content: space-around; padding: 20px;
+            border-radius: 40px; border: 1px solid rgba(255, 215, 0, 0.25);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 20px rgba(255, 215, 0, 0.1);
+            z-index: 100;
+        }
+        .nav-link { text-align: center; color: #64748B; text-decoration: none; font-size: 13px; font-weight: 700; flex: 1; transition: 0.3s; }
+        .nav-link.active { color: var(--neon-gold); transform: translateY(-6px); }
+        .nav-link i { font-size: 28px; display: block; margin-bottom: 8px; font-style: normal; transition: 0.3s; }
+        .nav-link.active i { text-shadow: 0 0 20px rgba(255, 215, 0, 1); }
+
     </style>
 </head>
 <body>
 
-<div id="gatekeeper">
-    <div style="font-family:'Orbitron'; color:var(--accent-gold); font-size:22px; margin-bottom:20px;">GİRİŞ YETKİSİ</div>
-    <input type="text" id="invite-code" class="gate-input" placeholder="DAVET KODU">
-    <button class="mine-btn" style="border-radius:12px;" onclick="register()">SİSTEME GİRİŞ YAP</button>
-</div>
+<div class="container">
+    <div class="header">
+        <img src="https://flagcdn.com/w40/tr.png" alt="TR">
+        <h1>GELİR EVRENİ</h1>
+        <img src="https://flagcdn.com/w40/az.png" alt="AZ">
+    </div>
 
-<div class="container" id="app-container">
-    <div class="brand-title">GELİR EVRENİ</div>
-
-    <div id="earn-page" class="page active">
-        <div class="balance-amount" id="balance">0 GEP</div>
-        <button id="mine-btn" class="mine-btn" onclick="startMining()">⛏ MADENCİLİĞİ BAŞLAT</button>
-        <p id="timer" style="text-align:center; font-size:14px; margin-top:-15px; margin-bottom:20px; color:var(--accent-gold);">HAZIR</p>
-        
-        <div class="wheel-box">
-            <h4 style="margin:0 0 15px 0; font-family:'Orbitron'; color:var(--accent-gold);">🎡 GÜNLÜK ŞANS ÇARKI</h4>
-            <div class="wheel-wrap">
-                <div class="pointer"></div>
-                <div id="wheel">
-                    <div class="wheel-num">
-                        <span style="transform: rotate(0deg) translateX(-50%)">500</span>
-                        <span style="transform: rotate(36deg) translateX(-50%)">50</span>
-                        <span style="transform: rotate(72deg) translateX(-50%)">450</span>
-                        <span style="transform: rotate(108deg) translateX(-50%)">100</span>
-                        <span style="transform: rotate(144deg) translateX(-50%)">400</span>
-                        <span style="transform: rotate(180deg) translateX(-50%)">150</span>
-                        <span style="transform: rotate(216deg) translateX(-50%)">350</span>
-                        <span style="transform: rotate(252deg) translateX(-50%)">200</span>
-                        <span style="transform: rotate(288deg) translateX(-50%)">300</span>
-                        <span style="transform: rotate(324deg) translateX(-50%)">250</span>
-                    </div>
-                </div>
+    <div id="home-page" class="page active">
+        <div class="main-display">
+            <div class="chest-icon">🎁</div>
+            
+            <div class="balance-label">TOPLAM AVIN</div>
+            <div id="balance" class="balance-amount">0 GEP</div>
+            <div class="balance-usd">≈ $<span id="usd">0.00</span></div>
+            
+            <div class="speed-badge">
+                <span style="font-size:18px;">⚡</span>
+                <span id="speed-calc">+50 GEP / Saat</span>
             </div>
-            <button id="spin-btn" class="mine-btn" style="padding:12px; font-size:14px; width:80%;" onclick="spinWheel()">ŞANSINI DENE</button>
+            
+            <div style="margin-top: 15px;">
+                <button class="action-btn" id="mbtn" onclick="mine()">🎯 HEMEN KAZAN <span style="font-size:14px; opacity:0.8; font-weight:400;">(+50 GEP/sa)</span></button>
+                <div id="timer">SİSTEM ÇEVRİMİÇİ</div>
+            </div>
         </div>
 
-        <div class="main-cards">
-            <div class="card yellow" onclick="switchPage('tasks')">
-                <div style="font-weight:800; font-size:18px;">📋 Görevler</div>
-                <div style="font-size:13px;">Görev Başı 1000 GEP</div>
-            </div>
-            <div class="card blue" onclick="copyRef()">
-                <div style="font-weight:800; font-size:18px;">👥 Davet</div>
-                <div style="font-size:13px;">%25 Kazanç Bonusu</div>
-            </div>
+        <div class="lb-card">
+            <span class="card-label">🏆 BUGÜNÜN EN ÇOK KAZANANI</span>
+            <div style="font-size:22px; font-weight:bold; color:#FFF; font-family:'Orbitron';">Komutan Alperen</div>
+            <div style="color:var(--neon-gold); margin-top:6px; letter-spacing:1px; font-size:14px;">12.500 GEP Avladı</div>
         </div>
     </div>
 
-    <div id="tasks-page" class="page">
-        <h3 style="text-align:center; color:var(--accent-gold);">SOSYAL GÖREVLER</h3>
-        <div id="task-list">
-            <div class="task-item" id="t-ref"><div><b>Referans Linkim</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/referanslinkim','ref')">KATIL</button></div>
-            <div class="task-item" id="t-kt"><div><b>Kripto Tayfa</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/kriptotayfa','kt')">KATIL</button></div>
-            <div class="task-item" id="t-gep"><div><b>Gelir Evreni Proje</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/gelirevreniproje','gep')">KATIL</button></div>
-            <div class="task-item" id="t-ge"><div><b>Gelir Evreni</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/gelirevreni','ge')">KATIL</button></div>
-            <div class="task-item" id="t-ga"><div><b>Gelir Evreni Airdrop</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/gelirevreniairdrop','ga')">KATIL</button></div>
-            <div class="task-item" id="t-gex"><div><b>Gelir Evreni X</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://x.com/gelirevreni','gex')">TAKİP ET</button></div>
+    <div id="earn-page" class="page">
+        <h2 class="section-title">GÖREV GALAKSİSİ</h2>
+        
+        <div class="task-list">
+            <div class="task-item" onclick="copyRef()">
+                <div class="task-icon">🚀</div>
+                <div class="task-info">
+                    <h4>Ekibi Büyüt</h4>
+                    <p>Her davet için 1000 GEP</p>
+                    <div class="progress-wrap">
+                        <div id="p-ref" class="progress-bar" style="width: 40%;"></div> </div>
+                    <small style="color:#64748B; font-size:11px; display:block; margin-top:6px;">4 / 10 Avcı Davet Edildi</small>
+                </div>
+            </div>
+            
+            <div class="task-item">
+                <div class="task-icon">💎</div>
+                <div class="task-info"><h4>Günlük Bonus</h4><p>24 saatte bir +100 GEP</p></div>
+            </div>
+            <div class="task-item">
+                <div class="task-icon">🛸</div>
+                <div class="task-info"><h4>Sosyal Takip</h4><p>X kanalını takip et (X)</p></div>
+            </div>
         </div>
-        <button class="mine-btn" style="background:#1E293B; margin-top:20px;" onclick="switchPage('earn')">ANA SAYFAYA DÖN</button>
     </div>
 
     <div id="profile-page" class="page">
-        <h3 style="text-align:center; color:var(--accent-gold);">LİDERLER SIRALAMASI</h3>
-        <div id="lb-list"></div>
-
-        <div class="withdraw-box">
-            <h4 style="color:var(--accent-green); margin:0;">💰 USDT ÇEKİM (BEP20)</h4>
-            <p style="font-size:12px; color:#94a3b8; margin:10px 0;">Minimum: 50.000 GEP ($5)</p>
-            <div id="withdraw-area" style="display:none;">
-                <input type="text" id="wallet-address" class="gate-input" style="padding:12px; font-size:14px; margin-bottom:10px;" placeholder="USDT BEP20 Adresiniz">
-                <button class="mine-btn" style="padding:12px; font-size:15px; margin:0;" onclick="requestWithdraw()">ÖDEME TALEP ET</button>
+        <h2 class="section-title">LİDER AVCI TABLOSU</h2>
+        
+        <div class="rank-list">
+            <div class="rank-row user-rank">
+                <span><span class="rank-num">#12</span> Sen (Zeki Yıldız)</span>
+                <span>8.250 GEP</span>
             </div>
-            <button id="withdraw-locked" class="mine-btn" style="background:#1E293B; font-size:14px; margin:0;" disabled>YETERSİZ BAKİYE</button>
+            
+            <div id="lb-list" class="rank-list" style="margin-top:20px; font-size:15px; color:#94A3B8;">
+                <div class="rank-row"><span><span class="rank-num">#1</span> Komutan Alperen</span><span>45.000 GEP</span></div>
+                <div class="rank-row"><span><span class="rank-num">#2</span> Avcı Mehmet</span><span>42.500 GEP</span></div>
+                <div class="rank-row"><span><span class="rank-num">#3</span> Kripto Fatih</span><span>39.000 GEP</span></div>
+                </div>
         </div>
     </div>
 </div>
 
-<div class="nav-bar" id="nav-bar" style="display:none;">
-    <div class="nav-item active" id="nav-earn" onclick="switchPage('earn')">ANA SAYFA</div>
-    <div class="nav-item" id="nav-profile" onclick="switchPage('profile')">LİDERLER</div>
+<div class="nav-bar">
+    <div class="nav-link active" onclick="switchPage('home', this)"><i>🏠</i>Üs</div>
+    <div class="nav-link" onclick="switchPage('earn', this)"><i>💰</i>Kazanç</div>
+    <div class="nav-link" onclick="switchPage('profile', this)"><i>👤</i>Liderler</div>
 </div>
 
 <script>
+    // CACHE BUSTER HİLESİ (Backend'den veri çekerken cache bypass)
+    const timestamp = new Date().getTime();
     const tg = window.Telegram.WebApp;
-    tg.ready(); tg.expand();
+    tg.expand();
+    tg.ready();
 
-    const tUserId = (tg.initDataUnsafe.user?.id || "123").toString();
-    let miningInterval;
+    // Telegram'dan UserID çek, yoksa test (99)
+    const userId = new URLSearchParams(window.location.search).get('userid') || "99";
 
-    async function loadUserData() {
+    async function init() {
         try {
-            const res = await fetch(`/api/user/${tUserId}`);
+            // Veri çekerken her seferinde farklı URL (t=zaman) kullanarak cache'i kırdım
+            const res = await fetch(`/api/user/${userId}?t=${timestamp}`);
+            if (!res.ok) throw new Error("Avcı bulunamadı");
             const data = await res.json();
-            if (data.isRegistered) {
-                document.getElementById('gatekeeper').style.display = 'none';
-                document.getElementById('app-container').style.display = 'block';
-                document.getElementById('nav-bar').style.display = 'flex';
-                document.getElementById('balance').innerText = data.balance.toLocaleString() + ' GEP';
-                
-                checkMiningStatus(data.lastMined);
-                checkSpinStatus(data.lastSpin);
+            
+            // Bakiye ve Dolar Karşılığı ( index.js'den gelen veri)
+            document.getElementById('balance').innerText = Math.floor(data.balance).toLocaleString() + ' GEP';
+            document.getElementById('usd').innerText = (data.balance * 0.0001).toFixed(2);
+            
+            // Hız Hesaplaması ( index.js'den gelen hız formülü: 50 + refCount * 25)
+            const speed = (data.speed || 50) + (data.refCount || 0) * 25;
+            document.getElementById('speed-calc').innerText = `+${speed} GEP / Saat`;
+            
+            // Kullanıcı Adı (Profil)
+            // document.getElementById('username').innerText = data.username || "Komutan";
+            // document.getElementById('userid').innerText = 'ID: ' + (data.userId || userId);
 
-                // ÖDEME KONTROLÜ
-                const wArea = document.getElementById('withdraw-area');
-                const wLocked = document.getElementById('withdraw-locked');
-                if(data.balance >= 50000) {
-                    wArea.style.display = 'block';
-                    wLocked.style.display = 'none';
-                } else {
-                    wArea.style.display = 'none';
-                    wLocked.style.display = 'block';
+            // Geri Sayım Sayacı (8 Saat)
+            if (data.lastMined) {
+                const diff = Date.now() - new Date(data.lastMined).getTime();
+                const cooldown = 28800000; // 8 Saat
+                if (diff < cooldown) {
+                    document.getElementById('mbtn').disabled = true;
+                    runTimer(cooldown - diff);
                 }
-
-                if(data.completedTasks) {
-                    data.completedTasks.forEach(id => {
-                        const btn = document.querySelector(`#t-${id} button`);
-                        if(btn) { btn.innerText = "ALINDI"; btn.disabled = true; btn.style.background = "#475569"; }
-                    });
-                }
-            } else { document.getElementById('gatekeeper').style.display = 'flex'; }
-        } catch (e) { console.error(e); }
-    }
-
-    // MADENCİLİK (8 Saat)
-    function checkMiningStatus(lastMined) {
-        clearInterval(miningInterval);
-        const btn = document.getElementById('mine-btn');
-        const timerTxt = document.getElementById('timer');
-        if (!lastMined) return;
-        const diff = (8 * 60 * 60 * 1000) - (new Date() - new Date(lastMined));
-        if (diff > 0) {
-            btn.disabled = true;
-            updateTimer(diff);
-            miningInterval = setInterval(() => {
-                const newDiff = (8 * 60 * 60 * 1000) - (new Date() - new Date(lastMined));
-                if (newDiff <= 0) { clearInterval(miningInterval); btn.disabled = false; btn.innerText = "⛏ MADENCİLİĞİ BAŞLAT"; timerTxt.innerText = "HAZIR"; }
-                else { updateTimer(newDiff); }
-            }, 1000);
-        }
-    }
-    function updateTimer(ms) {
-        const h = Math.floor(ms / 3600000); const m = Math.floor((ms % 3600000) / 60000); const s = Math.floor((ms % 60000) / 1000);
-        document.getElementById('timer').innerText = `KALAN SÜRE: ${h}s ${m}d ${s}s`;
-        document.getElementById('mine-btn').innerText = "KAZIM YAPILIYOR...";
-    }
-    async function startMining() {
-        await fetch('/api/mine', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId }) });
-        loadUserData();
-    }
-
-    // ŞANS ÇARKISI (Ana Sayfa)
-    async function spinWheel() {
-        const btn = document.getElementById('spin-btn');
-        const wheel = document.getElementById('wheel');
-        const rewards = [500, 50, 450, 100, 400, 150, 350, 200, 300, 250];
-        const randomIdx = Math.floor(Math.random() * rewards.length);
-        const winAmount = rewards[randomIdx];
-        
-        // Animasyon Ayarı: En az 5 tur + hedef dilim (36 derece her dilim)
-        const totalRotation = 1800 + (360 - (randomIdx * 36)); 
-        
-        btn.disabled = true;
-        wheel.style.transform = `rotate(${totalRotation}deg)`;
-
-        setTimeout(async () => {
-            const res = await fetch('/api/spin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId, winAmount: winAmount }) });
-            if(res.ok) { tg.showAlert(`TEBRİKLER! ${winAmount} GEP KAZANDINIZ!`); loadUserData(); }
-        }, 4100);
-    }
-    function checkSpinStatus(lastSpin) {
-        if (!lastSpin) return;
-        const diff = (24 * 60 * 60 * 1000) - (new Date() - new Date(lastSpin));
-        if (diff > 0) { 
-            const btn = document.getElementById('spin-btn');
-            btn.disabled = true; btn.innerText = "YARIN TEKRAR GEL"; 
-        }
-    }
-
-    // ÇEKİM
-    async function requestWithdraw() {
-        const addr = document.getElementById('wallet-address').value;
-        if(addr.length < 10) return tg.showAlert("Geçerli bir USDT BEP20 adresi girin!");
-        const res = await fetch('/api/withdraw', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId, walletAddress: addr }) });
-        if(res.ok) tg.showAlert("Talebiniz USDT (BEP20) olarak alındı!");
-    }
-
-    // SAYFA GEÇİŞLERİ
-    function switchPage(p) {
-        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(ni => ni.classList.remove('active'));
-        document.getElementById(p + '-page').classList.add('active');
-        if(p === 'earn') document.getElementById('nav-earn').classList.add('active');
-        if(p === 'profile') { document.getElementById('nav-profile').classList.add('active'); loadLB(); }
-    }
-    async function loadLB() {
-        const res = await fetch(`/api/leaderboard/${tUserId}`);
-        const data = await res.json();
-        document.getElementById('lb-list').innerHTML = data.top50.map((u,i) => `<div class="rank-row"><span>${i+1}. ${u.fullName}</span><span>${u.balance.toLocaleString()} GEP</span></div>`).join('');
-    }
-    async function doTask(link, id) {
-        tg.openLink(link);
-        tg.showConfirm("Görevi tamamladınız mı?", async (ok) => {
-            if(ok) {
-                const res = await fetch('/api/complete-single-task', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId, taskId: id }) });
-                if(res.ok) loadUserData();
             }
+        } catch (e) { console.error("Sistem Başlatılamadı:", e); }
+    }
+
+    // Sayaç Fonksiyonu
+    function runTimer(ms) {
+        let t = ms / 1000;
+        const timerObj = setInterval(() => {
+            let h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = Math.floor(t%60);
+            document.getElementById('timer').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            if (--t < 0) { 
+                clearInterval(timerObj); 
+                document.getElementById('mbtn').disabled = false;
+                document.getElementById('timer').innerText = "SİSTEM HAZIR";
+            }
+        }, 1000);
+    }
+
+    // Hemen Kazan Butonu
+    async function mine() {
+        tg.HapticFeedback.notificationOccurred('success'); // Hafif titreşim (hissiyat)
+        await fetch('/api/mine', { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({ userId, t: timestamp }) // POST'a da ekledik cache bypass için
         });
+        location.reload(true); // Sert yenileme
     }
-    async function register() {
-        const res = await fetch('/api/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId, username: tg.initDataUnsafe.user?.username, fullName: tg.initDataUnsafe.user?.first_name, referredBy: document.getElementById('invite-code').value }) });
-        if(res.ok) loadUserData(); else tg.showAlert("Kod Hatalı!");
+
+    // Sayfa Değiştirici
+    function switchPage(page, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+        document.getElementById(page + '-page').classList.add('active');
+        el.classList.add('active');
+        tg.HapticFeedback.impactOccurred('medium'); // Sayfa geçiş hissi
     }
+
+    // Referans Kodu Kopyala
     function copyRef() {
-        const code = tg.initDataUnsafe.user?.username || tUserId;
-        navigator.clipboard.writeText(code);
-        tg.showAlert("Davet kodun kopyalandı!");
+        const link = `https://t.me/gelir_evreni_bot?start=${userId}`;
+        const i = document.createElement('input'); 
+        i.value = link; document.body.appendChild(i); i.select(); 
+        document.execCommand('copy'); document.body.removeChild(i);
+        tg.showAlert("Koordinatlar Kopyalandı! Yeni avcıları davet et.");
     }
-    loadUserData();
+
+    init();
 </script>
 </body>
 </html>
