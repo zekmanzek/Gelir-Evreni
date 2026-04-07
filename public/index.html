@@ -3,82 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>Gelir Evreni - Premium</title>
-    <script src="https://telegram.org/js/telegram-web-app.js?v=999"></script>
+    <title>Gelir Evreni</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-dark: #0A192F; --card-bg: #162B46; --accent-gold: #FFD700; --accent-green: #4CAF50; --text-light: #E2E8F0; }
-        body { background-color: var(--bg-dark); background-image: radial-gradient(circle at top, #1e3a5f 0%, #0A192F 100%); color: var(--text-light); font-family: 'Inter', sans-serif; margin: 0; padding: 0; min-height: 100vh; }
-        .container { padding: 15px; padding-bottom: 110px; display: none; }
-        #gatekeeper { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg-dark); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; box-sizing: border-box; }
-        .gate-input { background: rgba(255,255,255,0.05); border: 2px solid var(--accent-gold); padding: 18px; border-radius: 15px; color: white; width: 100%; text-align: center; font-family: 'Orbitron'; font-size: 18px; margin-bottom: 20px; }
-        .brand-title { text-align: center; font-family: 'Orbitron'; color: var(--accent-gold); font-size: 18px; margin: 15px 0; letter-spacing: 2px; }
-        .balance-section { text-align: center; margin-bottom: 20px; }
-        .balance-amount { font-size: 36px; font-weight: 800; margin: 5px 0; }
-        .mine-btn-container { background: linear-gradient(180deg, #64DD17 0%, #388E3C 100%); border-radius: 20px; padding: 15px; margin-top: 15px; width:100%; border:none; cursor: pointer; color:white; font-weight:800; }
-        .mine-btn-container:disabled { filter: grayscale(1); opacity: 0.7; }
-        .main-tasks { display: flex; gap: 10px; margin-bottom: 25px; }
-        .task-box { flex: 1; border-radius: 20px; padding: 15px; height: 100px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
-        .task-box.gold { background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%); color: #000; }
-        .task-list-item { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(255,255,255,0.1); }
-        .btn-get { background: var(--accent-green); color: white; padding: 8px 18px; border-radius: 12px; font-weight: 800; font-size: 12px; border: none; cursor: pointer; }
-        .btn-get:disabled { background: #64748B; cursor: not-allowed; }
-        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #0F2038; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid rgba(255,255,255,0.05); }
-        .nav-item { text-align: center; color: #64748B; font-size: 11px; cursor: pointer; }
+        :root { --bg-dark: #0A192F; --card-bg: #162B46; --accent-gold: #FFD700; --accent-green: #4CAF50; }
+        body { background: var(--bg-dark); color: #E2E8F0; font-family: 'Inter', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        .container { padding: 15px; padding-bottom: 100px; display: none; }
+        #gatekeeper { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg-dark); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        .gate-input { background: rgba(255,255,255,0.05); border: 2px solid var(--accent-gold); padding: 15px; border-radius: 12px; color: white; width: 100%; text-align: center; margin-bottom: 20px; font-size: 18px; }
+        .brand-title { text-align: center; font-family: 'Orbitron'; color: var(--accent-gold); font-size: 20px; margin: 20px 0; }
+        .balance-amount { font-size: 42px; font-weight: 800; text-align: center; margin: 10px 0; }
+        .mine-btn { background: var(--accent-green); border-radius: 20px; padding: 18px; width: 100%; border: none; color: white; font-weight: 800; font-size: 18px; cursor: pointer; margin-bottom: 20px; }
+        .mine-btn:disabled { opacity: 0.6; filter: grayscale(1); }
+        .main-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .card { border-radius: 25px; padding: 20px; cursor: pointer; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between; }
+        .card.yellow { background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%); color: #000; }
+        .card.blue { background: var(--card-bg); color: #fff; }
+        .task-item { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-action { background: var(--accent-green); color: white; padding: 8px 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-action:disabled { background: #475569; }
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #0F2038; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid rgba(255,255,255,0.1); }
+        .nav-item { color: #64748B; font-size: 12px; cursor: pointer; text-align: center; text-transform: uppercase; font-weight: 800; }
         .nav-item.active { color: var(--accent-gold); }
         .page { display: none; }
         .page.active { display: block; }
-        .rank-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .rank-row { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     </style>
 </head>
 <body>
 
 <div id="gatekeeper">
-    <div style="font-family:'Orbitron'; color:var(--accent-gold); font-size:24px; margin-bottom:20px;">GİRİŞ YETKİSİ</div>
+    <div style="font-family:'Orbitron'; color:var(--accent-gold); font-size:22px; margin-bottom:20px;">GİRİŞ YETKİSİ</div>
     <input type="text" id="invite-code" class="gate-input" placeholder="DAVET KODU">
-    <button class="btn-get" style="width:100%; padding:20px;" onclick="register()">DOĞRULA</button>
+    <button class="mine-btn" style="border-radius:12px;" onclick="register()">SİSTEME GİRİŞ YAP</button>
 </div>
 
 <div class="container" id="app-container">
     <div class="brand-title">GELİR EVRENİ</div>
 
     <div id="earn-page" class="page active">
-        <div class="balance-section">
-            <div id="balance" class="balance-amount">0 GEP</div>
-            <button id="mine-btn" class="mine-btn-container" onclick="startMining()">⛏ MADENCİLİĞİ BAŞLAT</button>
-            <div id="timer" style="margin-top:5px; font-size:12px;">HAZIR</div>
-        </div>
-        <div class="main-tasks">
-            <div class="task-box gold" onclick="switchPage('tasks')"><b>📋 Görevler</b><span>Görev Başı 1000 GEP</span></div>
-            <div class="task-box gold" style="background:var(--card-bg); color:white;" onclick="copyRef()"><b>👥 Davet</b><span>%25 Bonus</span></div>
+        <div class="balance-amount" id="balance">0 GEP</div>
+        <button id="mine-btn" class="mine-btn" onclick="startMining()">⛏ MADENCİLİĞİ BAŞLAT</button>
+        <p id="timer" style="text-align:center; font-size:14px; margin-top:-15px; margin-bottom:20px;">HAZIR</p>
+        
+        <div class="main-cards">
+            <div class="card yellow" onclick="switchPage('tasks')">
+                <div style="font-weight:800; font-size:18px;">📋 Görevler</div>
+                <div style="font-size:14px;">Görev Başı 1000 GEP</div>
+            </div>
+            <div class="card blue" onclick="copyRef()">
+                <div style="font-weight:800; font-size:18px;">👥 Davet</div>
+                <div style="font-size:14px;">%25 Bonus Al</div>
+            </div>
         </div>
     </div>
 
     <div id="tasks-page" class="page">
         <h3 style="text-align:center; color:var(--accent-gold);">SOSYAL GÖREVLER</h3>
         <div id="task-list">
-            <div class="task-list-item" id="t-ref"><div><b>Referans Linkim</b><p>1000 GEP</p></div><button class="btn-get" onclick="doTask('https://t.me/referanslinkim','ref')">KATIL</button></div>
-            <div class="task-list-item" id="t-kt"><div><b>Kripto Tayfa</b><p>1000 GEP</p></div><button class="btn-get" onclick="doTask('https://t.me/kriptotayfa','kt')">KATIL</button></div>
-            <div class="task-list-item" id="t-gep"><div><b>Gelir Evreni Proje</b><p>1000 GEP</p></div><button class="btn-get" onclick="doTask('https://t.me/gelirevreniproje','gep')">KATIL</button></div>
-            <div class="task-list-item" id="t-ge"><div><b>Gelir Evreni</b><p>1000 GEP</p></div><button class="btn-get" onclick="doTask('https://t.me/gelirevreni','ge')">KATIL</button></div>
-            <div class="task-list-item" id="t-ga"><div><b>Gelir Evreni Airdrop</b><p>1000 GEP</p></div><button class="btn-get" onclick="doTask('https://t.me/gelirevreniairdrop','ga')">KATIL</button></div>
-            <div class="task-list-item" id="t-kty"><div><b>Kripto Tayfa (Yedek)</b><p>1000 GEP</p></div><button class="btn-get" onclick="doTask('https://t.me/kripto_tayfa','kty')">KATIL</button></div>
-            <div class="task-list-item" id="t-gex"><div><b>Gelir Evreni X</b><p>1000 GEP</p></div><button class="btn-get" onclick="doTask('https://x.com/gelirevreni','gex')">TAKİP ET</button></div>
-            <div class="task-list-item" id="t-ktx"><div><b>Kripto Tayfa X</b><p>1000 GEP</p></div><button class="btn-get" onclick="doTask('https://x.com/kriptotayfa','ktx')">TAKİP ET</button></div>
+            <div class="task-item" id="t-ref"><div><b>Referans Linkim</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/referanslinkim','ref')">KATIL</button></div>
+            <div class="task-item" id="t-kt"><div><b>Kripto Tayfa</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/kriptotayfa','kt')">KATIL</button></div>
+            <div class="task-item" id="t-gep"><div><b>Gelir Evreni Proje</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/gelirevreniproje','gep')">KATIL</button></div>
+            <div class="task-item" id="t-ge"><div><b>Gelir Evreni</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/gelirevreni','ge')">KATIL</button></div>
+            <div class="task-item" id="t-ga"><div><b>Gelir Evreni Airdrop</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/gelirevreniairdrop','ga')">KATIL</button></div>
+            <div class="task-item" id="t-kty"><div><b>Kripto Tayfa (Yedek)</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/kripto_tayfa','kty')">KATIL</button></div>
+            <div class="task-item" id="t-gex"><div><b>Gelir Evreni X</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://x.com/gelirevreni','gex')">TAKİP ET</button></div>
+            <div class="task-item" id="t-ktx"><div><b>Kripto Tayfa X</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://x.com/kriptotayfa','ktx')">TAKİP ET</button></div>
         </div>
+        <button class="mine-btn" style="background:#1E293B; margin-top:20px;" onclick="switchPage('earn')">GERİ DÖN</button>
     </div>
 
     <div id="profile-page" class="page">
-        <h3 style="text-align:center;">LİDERLER</h3>
-        <div id="leaderboard-list"></div>
+        <h3 style="text-align:center; color:var(--accent-gold);">LİDERLER</h3>
+        <div id="lb-list"></div>
     </div>
 </div>
 
 <div class="nav-bar" id="nav-bar" style="display:none;">
-    <div class="nav-item active" onclick="switchPage('earn')">ANA SAYFA</div>
-    <div class="nav-item" onclick="switchPage('tasks')">GÖREVLER</div>
-    <div class="nav-item" onclick="switchPage('profile')">LİDERLER</div>
+    <div class="nav-item active" id="nav-earn" onclick="switchPage('earn')">ANA SAYFA</div>
+    <div class="nav-item" id="nav-profile" onclick="switchPage('profile')">LİDERLER</div>
 </div>
 
 <script>
@@ -92,7 +96,7 @@
             document.getElementById('gatekeeper').style.display = 'none';
             document.getElementById('app-container').style.display = 'block';
             document.getElementById('nav-bar').style.display = 'flex';
-            document.getElementById('balance').innerText = data.balance + ' GEP';
+            document.getElementById('balance').innerText = data.balance.toLocaleString() + ' GEP';
             if(data.completedTasks) data.completedTasks.forEach(id => {
                 const btn = document.querySelector(`#t-${id} button`);
                 if(btn) { btn.innerText = "ALINDI"; btn.disabled = true; }
@@ -100,26 +104,26 @@
         }
     }
 
+    function switchPage(p) {
+        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(ni => ni.classList.remove('active'));
+        document.getElementById(p + '-page').classList.add('active');
+        if(p === 'earn') document.getElementById('nav-earn').classList.add('active');
+        if(p === 'profile') { document.getElementById('nav-profile').classList.add('active'); loadLB(); }
+    }
+
     async function doTask(link, id) {
         if(link.includes('t.me')) tg.openTelegramLink(link); else tg.openLink(link);
-        tg.showConfirm("Görevi yaptıysanız 1000 GEP almak için onaylayın.", async (ok) => {
+        tg.showConfirm("Görevi tamamladıysanız onaylayın.", async (ok) => {
             if(ok) {
-                const res = await fetch('/api/complete-single-task', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ userId: tUserId, taskId: id })
-                });
-                if(res.ok) location.reload(); else tg.showAlert("Hata oluştu!");
+                const res = await fetch('/api/complete-single-task', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId, taskId: id }) });
+                if(res.ok) location.reload();
             }
         });
     }
 
     async function register() {
-        const res = await fetch('/api/register', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ userId: tUserId, username: tg.initDataUnsafe.user?.username, fullName: tg.initDataUnsafe.user?.first_name, referredBy: document.getElementById('invite-code').value })
-        });
+        const res = await fetch('/api/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId, username: tg.initDataUnsafe.user?.username, fullName: tg.initDataUnsafe.user?.first_name, referredBy: document.getElementById('invite-code').value }) });
         if(res.ok) location.reload(); else tg.showAlert("Geçersiz Kod!");
     }
 
@@ -128,22 +132,16 @@
         location.reload();
     }
 
-    function switchPage(p) {
-        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
-        document.getElementById(p + '-page').classList.add('active');
-        if(p === 'profile') loadLB();
-    }
-
     async function loadLB() {
         const res = await fetch(`/api/leaderboard/${tUserId}`);
         const data = await res.json();
-        document.getElementById('leaderboard-list').innerHTML = data.top50.map((u,i) => `<div class="rank-item"><span>${i+1}. ${u.fullName}</span><span>${u.balance} GEP</span></div>`).join('');
+        document.getElementById('lb-list').innerHTML = data.top50.map((u,i) => `<div class="rank-row"><span>${i+1}. ${u.fullName}</span><span>${u.balance.toLocaleString()} GEP</span></div>`).join('');
     }
 
     function copyRef() {
         const code = tg.initDataUnsafe.user?.username || tUserId;
         navigator.clipboard.writeText(code);
-        tg.showAlert("Kodun kopyalandı: " + code);
+        tg.showAlert("Davet kodun kopyalandı!");
     }
 
     init();
