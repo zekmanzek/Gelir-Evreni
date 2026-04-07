@@ -8,6 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// CACHE KONTROLÜ
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     next();
@@ -106,7 +107,6 @@ app.post('/api/withdraw', async (req, res) => {
             return res.status(400).json({ error: "Minimum 50.000 GEP gereklidir." });
         }
 
-        // Bildirim sana USDT BEP20 olarak gelir
         const message = `💰 **YENİ ÖDEME TALEBİ**\n\n` +
                         `👤 **Kullanıcı:** ${user.fullName} (@${user.username})\n` +
                         `💵 **Miktar:** ${user.balance} GEP ($${(user.balance / 10000).toFixed(2)})\n` +
@@ -114,14 +114,11 @@ app.post('/api/withdraw', async (req, res) => {
                         `📍 **Adres:** \`${walletAddress}\``;
 
         bot.sendMessage('644464525', message, { parse_mode: 'Markdown' });
-        
-        // Talepten sonra bakiyeyi düşürmek istersen burayı açabilirsin:
-        // user.balance = 0; await user.save();
-
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Liderlik Tablosu
 app.get('/api/leaderboard/:id', async (req, res) => {
     try {
         const allUsers = await User.find().sort({ balance: -1 });
@@ -130,15 +127,16 @@ app.get('/api/leaderboard/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/complete-single-task', async (req, res) => {
+// --- YENİ SOSYAL GÖREV SİSTEMİ (BAŞINA 500 GEP) ---
+app.post('/api/complete-social-task', async (req, res) => {
     const { userId, taskId } = req.body;
     try {
         let user = await User.findOne({ userId });
         if (user && !user.completedTasks.includes(taskId)) {
-            user.balance += 1000; 
+            user.balance += 500; // Sosyal görev ödülü
             user.completedTasks.push(taskId); 
             await user.save();
-            return res.json({ success: true });
+            return res.json({ success: true, balance: user.balance });
         }
         res.status(400).json({ error: "Zaten alındı" });
     } catch (e) { res.status(500).json({ error: e.message }); }
