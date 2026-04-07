@@ -16,28 +16,32 @@
         .balance-amount { font-size: 42px; font-weight: 800; text-align: center; margin: 10px 0; }
         .mine-btn { background: var(--accent-green); border-radius: 20px; padding: 18px; width: 100%; border: none; color: white; font-weight: 800; font-size: 18px; cursor: pointer; margin-bottom: 20px; transition: 0.3s; }
         .mine-btn:disabled { background: #1E293B; opacity: 0.8; cursor: not-allowed; }
+        
+        /* Çark Tasarımı (Ana Sayfa) */
+        .wheel-box { background: var(--card-bg); border-radius: 25px; padding: 20px; margin: 20px 0; text-align: center; border: 1px solid rgba(255,215,0,0.3); }
+        .wheel-wrap { position: relative; width: 240px; height: 240px; margin: 0 auto 15px; }
+        #wheel { width: 100%; height: 100%; border-radius: 50%; border: 10px solid #0F2038; transition: transform 4s cubic-bezier(0.1, 0, 0.2, 1); background: conic-gradient(from 0deg, #FFD700 0deg 36deg, #162B46 36deg 72deg, #FFD700 72deg 108deg, #162B46 108deg 144deg, #FFD700 144deg 180deg, #162B46 180deg 216deg, #FFD700 216deg 252deg, #162B46 252deg 288deg, #FFD700 288deg 324deg, #162B46 324deg 360deg); position: relative; }
+        .wheel-num { position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
+        .wheel-num span { position: absolute; left: 50%; transform-origin: 50% 120px; transform: translateX(-50%); font-weight: 800; font-size: 14px; color: #0A192F; padding-top: 15px; }
+        .wheel-num span:nth-child(even) { color: #fff; }
+        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 30px; height: 40px; background: #FF4444; clip-path: polygon(50% 100%, 0 0, 100% 0); z-index: 10; filter: drop-shadow(0 2px 5px #000); }
+
         .main-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .card { border-radius: 25px; padding: 20px; cursor: pointer; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between; }
+        .card { border-radius: 25px; padding: 20px; cursor: pointer; min-height: 100px; display: flex; flex-direction: column; justify-content: center; }
         .card.yellow { background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%); color: #000; }
         .card.blue { background: var(--card-bg); color: #fff; }
+        
         .task-item { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-action { background: var(--accent-green); color: white; padding: 8px 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
         .btn-action:disabled { background: #475569; color: #94a3b8; }
+        
         .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #0F2038; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid rgba(255,255,255,0.1); z-index: 100; }
         .nav-item { color: #64748B; font-size: 12px; cursor: pointer; text-align: center; text-transform: uppercase; font-weight: 800; }
         .nav-item.active { color: var(--accent-gold); }
         .page { display: none; }
         .page.active { display: block; }
         .rank-row { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-
-        /* ŞANS ÇARKISI */
-        .wheel-section { background: var(--card-bg); border-radius: 25px; padding: 20px; margin-top: 30px; text-align: center; border: 2px solid var(--accent-gold); position: relative; }
-        .wheel-container { position: relative; width: 220px; height: 220px; margin: 0 auto 20px; }
-        #wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid var(--accent-gold); transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); background: conic-gradient(from 0deg, #FFD700 0% 10%, #162B46 10% 20%, #FFD700 20% 30%, #162B46 30% 40%, #FFD700 40% 50%, #162B46 50% 60%, #FFD700 60% 70%, #162B46 70% 80%, #FFD700 80% 90%, #162B46 90% 100%); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; overflow: hidden; }
-        .wheel-pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 25px; height: 35px; background: #FF4444; clip-path: polygon(50% 100%, 0 0, 100% 0); z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        
-        /* ÇEKİM PANELİ */
-        .withdraw-section { background: rgba(76, 175, 80, 0.05); border: 1px solid var(--accent-green); border-radius: 20px; padding: 20px; margin-top: 30px; text-align: center; }
+        .withdraw-box { background: rgba(76, 175, 80, 0.1); border: 1px solid var(--accent-green); border-radius: 20px; padding: 20px; margin-top: 30px; text-align: center; }
     </style>
 </head>
 <body>
@@ -56,14 +60,36 @@
         <button id="mine-btn" class="mine-btn" onclick="startMining()">⛏ MADENCİLİĞİ BAŞLAT</button>
         <p id="timer" style="text-align:center; font-size:14px; margin-top:-15px; margin-bottom:20px; color:var(--accent-gold);">HAZIR</p>
         
+        <div class="wheel-box">
+            <h4 style="margin:0 0 15px 0; font-family:'Orbitron'; color:var(--accent-gold);">🎡 GÜNLÜK ŞANS ÇARKI</h4>
+            <div class="wheel-wrap">
+                <div class="pointer"></div>
+                <div id="wheel">
+                    <div class="wheel-num">
+                        <span style="transform: rotate(0deg) translateX(-50%)">500</span>
+                        <span style="transform: rotate(36deg) translateX(-50%)">50</span>
+                        <span style="transform: rotate(72deg) translateX(-50%)">450</span>
+                        <span style="transform: rotate(108deg) translateX(-50%)">100</span>
+                        <span style="transform: rotate(144deg) translateX(-50%)">400</span>
+                        <span style="transform: rotate(180deg) translateX(-50%)">150</span>
+                        <span style="transform: rotate(216deg) translateX(-50%)">350</span>
+                        <span style="transform: rotate(252deg) translateX(-50%)">200</span>
+                        <span style="transform: rotate(288deg) translateX(-50%)">300</span>
+                        <span style="transform: rotate(324deg) translateX(-50%)">250</span>
+                    </div>
+                </div>
+            </div>
+            <button id="spin-btn" class="mine-btn" style="padding:12px; font-size:14px; width:80%;" onclick="spinWheel()">ŞANSINI DENE</button>
+        </div>
+
         <div class="main-cards">
             <div class="card yellow" onclick="switchPage('tasks')">
                 <div style="font-weight:800; font-size:18px;">📋 Görevler</div>
-                <div style="font-size:14px;">+ Şans Çarkı</div>
+                <div style="font-size:13px;">Görev Başı 1000 GEP</div>
             </div>
             <div class="card blue" onclick="copyRef()">
                 <div style="font-weight:800; font-size:18px;">👥 Davet</div>
-                <div style="font-size:14px;">%25 Kazanç</div>
+                <div style="font-size:13px;">%25 Kazanç Bonusu</div>
             </div>
         </div>
     </div>
@@ -76,32 +102,8 @@
             <div class="task-item" id="t-gep"><div><b>Gelir Evreni Proje</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/gelirevreniproje','gep')">KATIL</button></div>
             <div class="task-item" id="t-ge"><div><b>Gelir Evreni</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/gelirevreni','ge')">KATIL</button></div>
             <div class="task-item" id="t-ga"><div><b>Gelir Evreni Airdrop</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/gelirevreniairdrop','ga')">KATIL</button></div>
-            <div class="task-item" id="t-kty"><div><b>Kripto Tayfa (Yedek)</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://t.me/kripto_tayfa','kty')">KATIL</button></div>
             <div class="task-item" id="t-gex"><div><b>Gelir Evreni X</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://x.com/gelirevreni','gex')">TAKİP ET</button></div>
-            <div class="task-item" id="t-ktx"><div><b>Kripto Tayfa X</b><p>1000 GEP</p></div><button class="btn-action" onclick="doTask('https://x.com/kriptotayfa','ktx')">TAKİP ET</button></div>
         </div>
-
-        <div class="wheel-section">
-            <h3 style="color:var(--accent-gold); margin-top:0; font-family:'Orbitron'; font-size:16px;">🎡 GÜNLÜK ŞANS ÇARKI</h3>
-            <div class="wheel-container">
-                <div class="wheel-pointer"></div>
-                <div id="wheel">
-                    <span style="transform:rotate(18deg) translateY(-80px)">500</span>
-                    <span style="transform:rotate(54deg) translateY(-80px)">50</span>
-                    <span style="transform:rotate(90deg) translateY(-80px)">450</span>
-                    <span style="transform:rotate(126deg) translateY(-80px)">100</span>
-                    <span style="transform:rotate(162deg) translateY(-80px)">400</span>
-                    <span style="transform:rotate(198deg) translateY(-80px)">150</span>
-                    <span style="transform:rotate(234deg) translateY(-80px)">350</span>
-                    <span style="transform:rotate(270deg) translateY(-80px)">200</span>
-                    <span style="transform:rotate(306deg) translateY(-80px)">300</span>
-                    <span style="transform:rotate(342deg) translateY(-80px)">250</span>
-                </div>
-            </div>
-            <button id="spin-btn" class="mine-btn" style="padding:12px; font-size:15px; margin-bottom:10px;" onclick="spinWheel()">ÇARKI ÇEVİR</button>
-            <p id="spin-timer" style="font-size:12px; color:#64748B;">Günde 1 kez şansını dene!</p>
-        </div>
-
         <button class="mine-btn" style="background:#1E293B; margin-top:20px;" onclick="switchPage('earn')">ANA SAYFAYA DÖN</button>
     </div>
 
@@ -109,11 +111,14 @@
         <h3 style="text-align:center; color:var(--accent-gold);">LİDERLER SIRALAMASI</h3>
         <div id="lb-list"></div>
 
-        <div class="withdraw-section">
-            <h4 style="color:var(--accent-green); margin:0; font-family:'Orbitron';">💰 USDT ÇEKİM (BEP20)</h4>
-            <p style="font-size:12px; color:#94a3b8; margin:10px 0;">Min: 50.000 GEP ($5)</p>
-            <input type="text" id="wallet-address" class="gate-input" style="padding:12px; font-size:13px; margin:10px 0; border-color:var(--accent-green);" placeholder="USDT BEP20 Adresinizi Yazın">
-            <button id="withdraw-btn" class="mine-btn" style="padding:12px; font-size:15px; margin:0;" onclick="requestWithdraw()" disabled>YETERSİZ BAKİYE</button>
+        <div class="withdraw-box">
+            <h4 style="color:var(--accent-green); margin:0;">💰 USDT ÇEKİM (BEP20)</h4>
+            <p style="font-size:12px; color:#94a3b8; margin:10px 0;">Minimum: 50.000 GEP ($5)</p>
+            <div id="withdraw-area" style="display:none;">
+                <input type="text" id="wallet-address" class="gate-input" style="padding:12px; font-size:14px; margin-bottom:10px;" placeholder="USDT BEP20 Adresiniz">
+                <button class="mine-btn" style="padding:12px; font-size:15px; margin:0;" onclick="requestWithdraw()">ÖDEME TALEP ET</button>
+            </div>
+            <button id="withdraw-locked" class="mine-btn" style="background:#1E293B; font-size:14px; margin:0;" disabled>YETERSİZ BAKİYE</button>
         </div>
     </div>
 </div>
@@ -143,10 +148,15 @@
                 checkMiningStatus(data.lastMined);
                 checkSpinStatus(data.lastSpin);
 
-                const wBtn = document.getElementById('withdraw-btn');
+                // ÖDEME KONTROLÜ
+                const wArea = document.getElementById('withdraw-area');
+                const wLocked = document.getElementById('withdraw-locked');
                 if(data.balance >= 50000) {
-                    wBtn.disabled = false; wBtn.innerText = "ÖDEME TALEP ET";
-                    wBtn.style.background = "var(--accent-green)";
+                    wArea.style.display = 'block';
+                    wLocked.style.display = 'none';
+                } else {
+                    wArea.style.display = 'none';
+                    wLocked.style.display = 'block';
                 }
 
                 if(data.completedTasks) {
@@ -178,25 +188,27 @@
     }
     function updateTimer(ms) {
         const h = Math.floor(ms / 3600000); const m = Math.floor((ms % 3600000) / 60000); const s = Math.floor((ms % 60000) / 1000);
-        document.getElementById('timer').innerText = `KALAN: ${h}s ${m}d ${s}s`;
-        document.getElementById('mine-btn').innerText = "KAZILIYOR...";
+        document.getElementById('timer').innerText = `KALAN SÜRE: ${h}s ${m}d ${s}s`;
+        document.getElementById('mine-btn').innerText = "KAZIM YAPILIYOR...";
     }
     async function startMining() {
-        const res = await fetch('/api/mine', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId }) });
-        if(res.ok) loadUserData();
+        await fetch('/api/mine', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId }) });
+        loadUserData();
     }
 
-    // ŞANS ÇARKISI
+    // ŞANS ÇARKISI (Ana Sayfa)
     async function spinWheel() {
         const btn = document.getElementById('spin-btn');
         const wheel = document.getElementById('wheel');
         const rewards = [500, 50, 450, 100, 400, 150, 350, 200, 300, 250];
         const randomIdx = Math.floor(Math.random() * rewards.length);
         const winAmount = rewards[randomIdx];
-        const spinDegree = 1800 + (randomIdx * 36); 
-
+        
+        // Animasyon Ayarı: En az 5 tur + hedef dilim (36 derece her dilim)
+        const totalRotation = 1800 + (360 - (randomIdx * 36)); 
+        
         btn.disabled = true;
-        wheel.style.transform = `rotate(${spinDegree}deg)`;
+        wheel.style.transform = `rotate(${totalRotation}deg)`;
 
         setTimeout(async () => {
             const res = await fetch('/api/spin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId, winAmount: winAmount }) });
@@ -217,10 +229,10 @@
         const addr = document.getElementById('wallet-address').value;
         if(addr.length < 10) return tg.showAlert("Geçerli bir USDT BEP20 adresi girin!");
         const res = await fetch('/api/withdraw', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId, walletAddress: addr }) });
-        if(res.ok) tg.showAlert("Talebiniz USDT (BEP20) olarak iletildi!");
+        if(res.ok) tg.showAlert("Talebiniz USDT (BEP20) olarak alındı!");
     }
 
-    // DİĞER
+    // SAYFA GEÇİŞLERİ
     function switchPage(p) {
         document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(ni => ni.classList.remove('active'));
@@ -235,7 +247,7 @@
     }
     async function doTask(link, id) {
         tg.openLink(link);
-        tg.showConfirm("Görevi yaptınız mı?", async (ok) => {
+        tg.showConfirm("Görevi tamamladınız mı?", async (ok) => {
             if(ok) {
                 const res = await fetch('/api/complete-single-task', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId, taskId: id }) });
                 if(res.ok) loadUserData();
@@ -244,7 +256,7 @@
     }
     async function register() {
         const res = await fetch('/api/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ userId: tUserId, username: tg.initDataUnsafe.user?.username, fullName: tg.initDataUnsafe.user?.first_name, referredBy: document.getElementById('invite-code').value }) });
-        if(res.ok) loadUserData(); else tg.showAlert("Geçersiz Kod!");
+        if(res.ok) loadUserData(); else tg.showAlert("Kod Hatalı!");
     }
     function copyRef() {
         const code = tg.initDataUnsafe.user?.username || tUserId;
