@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Önbellek Kapatma (Cache-Control)
+// Önbellek Kapatma
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     next();
@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const MONGO_URI = "mongodb+srv://mzybro_db_user:RrdTszJxirbFhHfm@zekman.bi8ty3t.mongodb.net/GelirEvreni?retryWrites=true&w=majority";
 mongoose.connect(MONGO_URI).then(() => console.log("💎 Gelir Evreni Veritabanı Aktif"));
 
-// Kullanıcı Şeması
+// Kullanıcı Şeması (Görev kontrolü eklendi)
 const UserSchema = new mongoose.Schema({
     userId: { type: String, unique: true, required: true },
     username: { type: String },
@@ -29,7 +29,8 @@ const UserSchema = new mongoose.Schema({
     refCount: { type: Number, default: 0 },
     referredBy: { type: String, default: null },
     isRegistered: { type: Boolean, default: false },
-    lastMined: { type: Date, default: null }
+    lastMined: { type: Date, default: null },
+    tasksCompleted: { type: Boolean, default: false } // 1000 GEP ödülünü alıp almadığı
 });
 
 const User = mongoose.model('User', UserSchema);
@@ -56,7 +57,6 @@ app.post('/api/register', async (req, res) => {
         let user = await User.findOne({ userId });
         if (!user) user = new User({ userId });
 
-        // Master Key Kontrolü
         if (referredBy === "MZY2026") {
             user.isRegistered = true;
             user.username = username;
@@ -65,11 +65,9 @@ app.post('/api/register', async (req, res) => {
             return res.json({ success: true });
         }
 
-        // Davet Edeni Bul (Username üzerinden)
         const inviter = await User.findOne({ username: referredBy });
         if (!inviter) return res.status(400).json({ error: "Geçersiz Davet Kodu" });
 
-        // Puan Ver
         inviter.balance += 1000;
         inviter.refCount += 1;
         await inviter.save();
@@ -84,7 +82,7 @@ app.post('/api/register', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 3. LİDERLİK TABLOSU VE SIRALAMA (VİDEODAKİ HATAYI ÇÖZEN KISIM)
+// 3. LİDERLİK TABLOSU VE SIRALAMA
 app.get('/api/leaderboard/:id', async (req, res) => {
     try {
         const allUsers = await User.find().sort({ balance: -1 });
@@ -104,6 +102,25 @@ app.post('/api/mine', async (req, res) => {
         user.lastMined = new Date();
         await user.save();
         res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 5. SOSYAL MEDYA GÖREVLERİ (YENİ!)
+app.post('/api/complete-social-tasks', async (req, res) => {
+    const { userId } = req.body;
+    try {
+        let user = await User.findOne({ userId });
+        if (!user) return res.status(404).json({ error: "Kullanıcı bulunamadı" });
+        
+        if (user.tasksCompleted) {
+            return res.status(400).json({ error: "Ödül zaten alındı!" });
+        }
+
+        user.balance += 1000;
+        user.tasksCompleted = true;
+        await user.save();
+        
+        res.json({ success: true, newBalance: user.balance });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
