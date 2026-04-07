@@ -27,7 +27,7 @@ const UserSchema = new mongoose.Schema({
     referredBy: { type: String, default: null },
     isRegistered: { type: Boolean, default: false },
     lastMined: { type: Date, default: null },
-    lastSpin: { type: Date, default: null }, // Günlük çark takibi için
+    lastSpin: { type: Date, default: null },
     completedTasks: { type: [String], default: [] }
 });
 
@@ -68,10 +68,8 @@ app.post('/api/mine', async (req, res) => {
         let user = await User.findOne({ userId });
         const now = new Date();
         
-        // 8 saat kontrolü (8 * 60 * 60 * 1000 ms)
         if (user.lastMined && (now - user.lastMined < 8 * 60 * 60 * 1000)) {
-            const diff = 8 * 60 * 60 * 1000 - (now - user.lastMined);
-            return res.status(400).json({ error: "Kilitli", timeLeft: diff });
+            return res.status(400).json({ error: "Kilitli" });
         }
 
         user.balance += (50 + (user.refCount * 25)) * 8;
@@ -89,30 +87,36 @@ app.post('/api/spin', async (req, res) => {
         const now = new Date();
 
         if (user.lastSpin && (now - user.lastSpin < 24 * 60 * 60 * 1000)) {
-            return res.status(400).json({ error: "Günde sadece 1 kez çevirebilirsin!" });
+            return res.status(400).json({ error: "Bugünlük hakkın doldu!" });
         }
 
-        user.balance += winAmount;
+        user.balance += parseInt(winAmount);
         user.lastSpin = now;
         await user.save();
         res.json({ success: true, balance: user.balance });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Para Çekme Talebi (50.000 GEP Limiti)
+// Para Çekme Talebi (USDT BEP20)
 app.post('/api/withdraw', async (req, res) => {
     const { userId, walletAddress } = req.body;
     try {
         let user = await User.findOne({ userId });
         if (user.balance < 50000) {
-            return res.status(400).json({ error: "Minimum 50.000 GEP ($5) gereklidir." });
+            return res.status(400).json({ error: "Minimum 50.000 GEP gereklidir." });
         }
 
-        // Talebi Telegram'dan sana bildirir
-        bot.sendMessage('644464525', `💰 **Ödeme Talebi!**\n\nKullanıcı: ${user.fullName} (@${user.username})\nBakiye: ${user.balance} GEP\nCüzdan: ${walletAddress}`);
+        // Bildirim sana USDT BEP20 olarak gelir
+        const message = `💰 **YENİ ÖDEME TALEBİ**\n\n` +
+                        `👤 **Kullanıcı:** ${user.fullName} (@${user.username})\n` +
+                        `💵 **Miktar:** ${user.balance} GEP ($${(user.balance / 10000).toFixed(2)})\n` +
+                        `🌐 **Ağ:** USDT (BEP20)\n` +
+                        `📍 **Adres:** \`${walletAddress}\``;
+
+        bot.sendMessage('644464525', message, { parse_mode: 'Markdown' });
         
-        // İsteğe bağlı: user.balance -= user.balance; // Bakiyeyi sıfırlamak istersen ekle
-        // await user.save();
+        // Talepten sonra bakiyeyi düşürmek istersen burayı açabilirsin:
+        // user.balance = 0; await user.save();
 
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -131,7 +135,9 @@ app.post('/api/complete-single-task', async (req, res) => {
     try {
         let user = await User.findOne({ userId });
         if (user && !user.completedTasks.includes(taskId)) {
-            user.balance += 1000; user.completedTasks.push(taskId); await user.save();
+            user.balance += 1000; 
+            user.completedTasks.push(taskId); 
+            await user.save();
             return res.json({ success: true });
         }
         res.status(400).json({ error: "Zaten alındı" });
