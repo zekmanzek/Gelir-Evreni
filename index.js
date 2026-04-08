@@ -25,7 +25,8 @@ const userSchema = new mongoose.Schema({
   points: { type: Number, default: 0 },
   completedTasks: [String],
   pendingTasks: [{ taskId: String, clickedAt: { type: Date, default: Date.now } }],
-  lastSpin: { type: Date, default: null }
+  lastSpin: { type: Date, default: null },
+  lastMining: { type: Date, default: null } // Madencilik için yeni alan
 });
 
 const taskSchema = new mongoose.Schema({
@@ -72,12 +73,28 @@ app.post("/api/user/auth", async (req, res) => {
         const params = new URLSearchParams(req.body.initData);
         const tgUser = JSON.parse(params.get("user"));
         const user = await User.findOne({ telegramId: String(tgUser.id) });
-        
-        // ÖNEMLİ: Linki yeni bot adresine (@gelirevreni_bot) göre güncelledim
         const refLink = `https://t.me/gelirevreni_bot?start=${tgUser.id}`;
-        
         res.json({ success: true, user, refLink });
     } catch (e) { res.status(500).json({ error: "Auth hatası" }); }
+});
+
+// MADENCİLİK (MINING) API
+app.post("/api/mining/claim", async (req, res) => {
+    try {
+        const { telegramId } = req.body;
+        const user = await User.findOne({ telegramId });
+        const now = new Date();
+        const waitTime = 8 * 60 * 60 * 1000; // 8 Saat
+
+        if (user.lastMining && now - user.lastMining < waitTime) {
+            return res.status(400).json({ error: "Madencilik henüz tamamlanmadı!" });
+        }
+
+        user.points += 100;
+        user.lastMining = now;
+        await user.save();
+        res.json({ success: true, reward: 100 });
+    } catch (err) { res.status(500).json({ error: "Madencilik hatası" }); }
 });
 
 app.get("/api/tasks", async (req, res) => {
