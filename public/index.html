@@ -9,46 +9,46 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #0b0e14; color: white; margin: 0; padding: 15px; }
         .stats-card { background: linear-gradient(135deg, #1c1f2e, #111420); padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; border: 1px solid #2d334a; }
         .points-val { font-size: 32px; font-weight: 800; color: #ffcc00; margin: 5px 0; }
-        
-        /* Çekim Butonu ve Bilgi */
-        .withdraw-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; margin-top: 10px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .withdraw-active { background: #238636; color: white; box-shadow: 0 0 15px rgba(35, 134, 54, 0.3); }
-        .withdraw-passive { background: #2d334a; color: #8b949e; cursor: not-allowed; opacity: 0.6; }
-        .min-limit-info { font-size: 11px; color: #8b949e; margin-top: 8px; display: block; }
+        .withdraw-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        .withdraw-active { background: #238636; color: white; }
+        .withdraw-passive { background: #2d334a; color: #8b949e; opacity: 0.6; }
 
         .package-wrapper { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
-        .package-card { min-width: 100px; background: #1c1f2e; border: 2px solid #2d334a; border-radius: 15px; padding: 12px; text-align: center; cursor: pointer; flex-shrink: 0; }
+        .package-card { min-width: 100px; background: #1c1f2e; border: 2px solid #2d334a; border-radius: 15px; padding: 12px; text-align: center; cursor: pointer; }
         .package-card.active { border-color: #00d4ff; background: #162a3d; }
         .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        
+        .btn-yap { background: #ffcc00; color: #000; padding: 8px 18px; border-radius: 10px; border: none; font-weight: bold; }
+
+        /* 🎡 ÇARK TASARIMI 🎡 */
+        .wheel-container { position: relative; width: 260px; height: 260px; margin: 20px auto; border: 8px solid #2d334a; border-radius: 50%; box-shadow: 0 0 20px rgba(0,212,255,0.2); overflow: hidden; }
+        .wheel { width: 100%; height: 100%; position: relative; transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); border-radius: 50%; }
+        .wheel-pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid #ffcc00; z-index: 10; }
+        .segment { position: absolute; width: 50%; height: 50%; transform-origin: 100% 100%; text-align: center; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: white; }
+        /* Dilim renkleri */
+        .segment:nth-child(1) { background: #1c1f2e; transform: rotate(0deg) skewY(-30deg); }
+        .segment:nth-child(2) { background: #162a3d; transform: rotate(60deg) skewY(-30deg); }
+        .segment:nth-child(3) { background: #1c1f2e; transform: rotate(120deg) skewY(-30deg); }
+        .segment:nth-child(4) { background: #162a3d; transform: rotate(180deg) skewY(-30deg); }
+        .segment:nth-child(5) { background: #1c1f2e; transform: rotate(240deg) skewY(-30deg); }
+        .segment:nth-child(6) { background: #162a3d; transform: rotate(300deg) skewY(-30deg); }
+        .segment span { transform: skewY(30deg) rotate(30deg); position: absolute; right: 20px; top: 40px; }
+
         #withdraw-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: #1c1f2e; padding: 25px; border-radius: 20px; width: 85%; text-align: center; border: 1px solid #2d334a; }
-        .modal-content input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #30363d; background: #0b0e14; color: white; text-align: center; }
+        .modal-content { background: #1c1f2e; padding: 25px; border-radius: 20px; width: 85%; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="stats-card">
-        <div style="font-size: 11px; color: #8b949e; letter-spacing: 1px;">GEP BAKİYE</div>
+        <div style="font-size: 11px; color: #8b949e;">GEP BAKİYE</div>
         <div class="points-val" id="user-points">0</div>
         <div style="font-size: 12px; color: #00d4ff;" id="usd-val">≈ 0.00 USDT</div>
-        
         <button id="main-withdraw-btn" class="withdraw-btn withdraw-passive" onclick="openWithdrawModal()">💸 Para Çekme Talebi</button>
-        <span class="min-limit-info">⚠️ Minimum çekim limiti: 500,000 GEP (5 USDT)</span>
+        <span style="font-size: 10px; color: #8b949e; display: block; margin-top: 5px;">⚠️ Minimum: 500,000 GEP</span>
     </div>
 
     <div class="package-wrapper" id="package-list"></div>
     <div id="tasks-container"></div>
-
-    <div id="withdraw-modal">
-        <div class="modal-content">
-            <h3 style="margin:0; color:#ffcc00;">Talebi Gönder</h3>
-            <p style="font-size: 12px; color: #8b949e; margin-top:10px;">USDT BEP-20 (Binance Smart Chain) cüzdan adresinizi giriniz.</p>
-            <input type="text" id="wallet-addr" placeholder="0x...">
-            <button class="withdraw-btn withdraw-active" style="width:100%;" onclick="submitWithdraw()">ONAYLA</button>
-            <button style="background:none; border:none; color:#8b949e; margin-top:15px; cursor:pointer;" onclick="closeModal()">Vazgeç</button>
-        </div>
-    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -60,45 +60,17 @@
             const response = await fetch('/api/user/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ initData: tg.initData }) });
             const data = await response.json();
             userData = data.user;
-            
             document.getElementById('user-points').innerText = userData.points.toLocaleString();
-            document.getElementById('usd-val').innerText = `≈ ${(userData.points / 10000).toFixed(2)} USDT`;
-
+            document.getElementById('usd-val').innerText = `≈ ${(userData.points / 100000).toFixed(2)} USDT`;
+            
             const wBtn = document.getElementById('main-withdraw-btn');
-            if(userData.points >= 500000) {
-                wBtn.className = "withdraw-btn withdraw-active";
-            }
+            wBtn.className = userData.points >= 500000 ? "withdraw-btn withdraw-active" : "withdraw-btn withdraw-passive";
 
             const taskRes = await fetch('/api/tasks');
             const taskData = await taskRes.json();
             allTasks = taskData.tasks;
             renderPackages();
             renderTasks(activeCategory);
-        }
-
-        function openWithdrawModal() {
-            if(userData.points < 500000) {
-                tg.showAlert("⚠️ Çekim yapabilmek için 500,000 GEP bakiyeye ulaşmalısınız!");
-                return;
-            }
-            document.getElementById('withdraw-modal').style.display = 'flex';
-        }
-
-        function closeModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
-
-        async function submitWithdraw() {
-            const addr = document.getElementById('wallet-addr').value;
-            if(addr.length < 20) { tg.showAlert("❌ Lütfen geçerli bir cüzdan adresi girin!"); return; }
-
-            const res = await fetch('/api/withdraw', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegramId: userData.telegramId, walletAddress: addr, amount: userData.points })
-            });
-            if(res.ok) {
-                tg.showAlert("✅ Talebiniz başarıyla iletildi! Manuel kontrol sonrası ödemeniz yapılacaktır.");
-                closeModal();
-            }
         }
 
         function renderPackages() {
@@ -118,14 +90,62 @@
         function renderTasks(category) {
             const container = document.getElementById('tasks-container');
             container.innerHTML = '';
+            
+            if (category === "Sürpriz Görevler") {
+                container.innerHTML = `
+                    <div style="text-align:center;">
+                        <h4 style="margin:0;">Günlük Şans Çarkı</h4>
+                        <p style="font-size:12px; color:#8b949e;">Her gün bir kez çevir, ödülünü kap!</p>
+                        <div class="wheel-container">
+                            <div class="wheel-pointer"></div>
+                            <div class="wheel" id="main-wheel">
+                                <div class="segment"><span>50</span></div>
+                                <div class="segment"><span>100</span></div>
+                                <div class="segment"><span>150</span></div>
+                                <div class="segment"><span>200</span></div>
+                                <div class="segment"><span>250</span></div>
+                                <div class="segment"><span>500</span></div>
+                            </div>
+                        </div>
+                        <button class="btn-yap" style="width:100%; padding:15px;" id="spin-btn" onclick="startSpin()">ÇARKI ÇEVİR</button>
+                    </div>
+                `;
+                return;
+            }
+
             allTasks.filter(t => t.category === category).forEach(task => {
                 const isCompleted = userData.completedTasks.includes(task.taskId);
                 const div = document.createElement('div');
                 div.className = 'task-card';
                 div.innerHTML = `<div class="task-info"><h4>${task.title}</h4><p>+${task.reward} GEP</p></div>
-                <button class="btn ${isCompleted ? 'btn-tamam':'btn-yap'}" onclick="doTask('${task.taskId}','${task.target}')">${isCompleted ? '✅':'YAP'}</button>`;
+                <button class="btn-yap" ${isCompleted ? 'style="background:#238636;color:white"':''}>${isCompleted ? '✅':'YAP'}</button>`;
                 container.appendChild(div);
             });
+        }
+
+        async function startSpin() {
+            const btn = document.getElementById('spin-btn');
+            btn.disabled = true;
+            const res = await fetch('/api/spin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegramId: userData.telegramId })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                const wheel = document.getElementById('main-wheel');
+                const rotation = 3600 + (data.winIndex * 60); // En az 10 tur + ödül açısı
+                wheel.style.transform = `rotate(-${rotation}deg)`;
+                
+                setTimeout(() => {
+                    tg.showAlert(`🎉 Tebrikler! ${data.reward} GEP Kazandın!`);
+                    loadData();
+                }, 4100);
+            } else {
+                tg.showAlert(data.error);
+                btn.disabled = false;
+            }
         }
 
         loadData();
