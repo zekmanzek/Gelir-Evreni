@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 10000;
 const BOT_TOKEN = "8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s";
 const MONGO_URI = "mongodb+srv://mzybro_db_user:RrdTszJxirbFhHfm@zekman.bi8ty3t.mongodb.net/GelirEvreni?retryWrites=true&w=majority";
 const APP_URL = "https://gelir-evreni.onrender.com";
-const ADMIN_ID = "1469411131"; // BURAYA KENDİ TELEGRAM ID'Nİ YAZ MEHMET
+const ADMIN_ID = "1469411131"; // MEHMET GÜNCEL ADMIN ID
 
 app.use(cors());
 app.use(express.json());
@@ -46,7 +46,7 @@ const taskSchema = new mongoose.Schema({
 const User = mongoose.model("User", userSchema);
 const Task = mongoose.model("Task", taskSchema);
 
-// ─── GÖREV PAKETLERİNİ GÜNCELLEME ──────────────────────────────────────────────
+// ─── GÖREV PAKETLERİ ──────────────────────────────────────────────────────────
 const seedTasks = async () => {
   await Task.updateMany({}, { $set: { isActive: false } });
   const tasks = [
@@ -64,29 +64,9 @@ const seedTasks = async () => {
   }
 };
 
-// ─── BOT VE API ───────────────────────────────────────────────────────────────
+// ─── API VE ÇEKİM SİSTEMİ ─────────────────────────────────────────────────────
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-bot.onText(/\/start/, async (msg) => {
-  const telegramId = String(msg.from.id);
-  try {
-    let user = await User.findOne({ telegramId });
-    if (!user) {
-      user = await User.create({
-        telegramId,
-        username: msg.from.username,
-        firstName: msg.from.first_name,
-        inviteCode: crypto.randomBytes(3).toString('hex').toUpperCase()
-      });
-    }
-    bot.sendMessage(msg.chat.id, `🌟 *Gelir Evreni'ne Hoş Geldin!*`, {
-      parse_mode: "Markdown",
-      reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: APP_URL } }]] }
-    });
-  } catch (err) { console.log(err); }
-});
-
-// Çekim Talebi API
 app.post("/api/withdraw", async (req, res) => {
     try {
         const { telegramId, walletAddress, amount } = req.body;
@@ -96,58 +76,20 @@ app.post("/api/withdraw", async (req, res) => {
             return res.status(400).json({ error: "Yetersiz bakiye" });
         }
 
-        // Admin'e bildirim gönder
-        const message = `💰 *YENİ ÇEKİM TALEBİ*\n\n👤 Kullanıcı: ${user.firstName} (@${user.username || 'yok'})\n🆔 ID: ${user.telegramId}\n💵 Miktar: ${amount} GEP\n🏦 Cüzdan (BEP20): \`${walletAddress}\``;
-        
+        const message = `💰 *YENİ ÇEKİM TALEBİ*\n\n👤 Kullanıcı: ${user.firstName}\n🆔 ID: ${user.telegramId}\n💵 Miktar: ${amount} GEP\n🏦 Cüzdan: \`${walletAddress}\``;
         bot.sendMessage(ADMIN_ID, message, { parse_mode: "Markdown" });
-
-        res.json({ success: true, message: "Talebiniz iletildi!" });
-    } catch (err) {
-        res.status(500).json({ error: "Sistem hatası" });
-    }
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: "Hata" }); }
 });
 
 app.post("/api/user/auth", async (req, res) => {
-    try {
-      const { initData } = req.body;
-      const params = new URLSearchParams(initData);
-      const tgUser = JSON.parse(params.get("user"));
-      const telegramId = String(tgUser.id);
-      let user = await User.findOne({ telegramId });
-      if (!user) user = await User.create({ telegramId, firstName: tgUser.first_name, username: tgUser.username, inviteCode: crypto.randomBytes(3).toString('hex').toUpperCase() });
-
-      const now = new Date();
-      let updated = false;
-      if (user.pendingTasks) {
-          const stillPending = [];
-          for (const pTask of user.pendingTasks) {
-              if (now - new Date(pTask.clickedAt) >= 3600000) { 
-                  const task = await Task.findOne({ taskId: pTask.taskId });
-                  if (task && !user.completedTasks.includes(pTask.taskId)) {
-                      user.points += task.reward;
-                      user.completedTasks.push(pTask.taskId);
-                      updated = true;
-                  }
-              } else { stillPending.push(pTask); }
-          }
-          user.pendingTasks = stillPending;
-          if (updated) await user.save();
-      }
-      res.json({ success: true, user });
-    } catch (err) { res.status(500).json({ error: "Auth hatası" }); }
-});
-
-app.post("/api/tasks/start", async (req, res) => {
-    try {
-      const { telegramId, taskId } = req.body;
-      const user = await User.findOne({ telegramId });
-      if (user && !user.completedTasks.includes(taskId) && !user.pendingTasks.find(t => t.taskId === taskId)) {
-        user.pendingTasks.push({ taskId, clickedAt: new Date() });
-        await user.save();
-        return res.json({ success: true });
-      }
-      res.status(400).json({ error: "İşlem reddedildi" });
-    } catch (err) { res.status(500).json({ error: "Hata" }); }
+    const { initData } = req.body;
+    const params = new URLSearchParams(initData);
+    const tgUser = JSON.parse(params.get("user"));
+    const telegramId = String(tgUser.id);
+    let user = await User.findOne({ telegramId });
+    if (!user) user = await User.create({ telegramId, firstName: tgUser.first_name, username: tgUser.username, inviteCode: crypto.randomBytes(3).toString('hex').toUpperCase() });
+    res.json({ success: true, user });
 });
 
 app.get("/api/tasks", async (req, res) => {
@@ -155,4 +97,4 @@ app.get("/api/tasks", async (req, res) => {
   res.json({ success: true, tasks });
 });
 
-app.listen(PORT, () => console.log(`🚀 Sunucu Aktif: ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Aktif: ${PORT}`));
