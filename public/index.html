@@ -10,14 +10,12 @@
         .stats-card { background: linear-gradient(135deg, #1c1f2e, #111420); padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; border: 1px solid #2d334a; }
         .points-val { font-size: 32px; font-weight: 800; color: #ffcc00; margin: 5px 0; }
         
-        /* Yan Yana Paketler */
         .package-wrapper { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
         .package-wrapper::-webkit-scrollbar { display: none; }
         .package-card { min-width: 100px; background: #1c1f2e; border: 2px solid #2d334a; border-radius: 15px; padding: 12px; text-align: center; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
         .package-card.active { border-color: #00d4ff; background: #162a3d; }
         .package-card span { font-size: 11px; font-weight: bold; display: block; margin-top: 5px; }
 
-        /* Görev Listesi */
         .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .task-info h4 { margin: 0; font-size: 14px; color: #e6edf3; }
         .task-info p { margin: 4px 0 0; font-size: 12px; color: #ffcc00; }
@@ -38,7 +36,7 @@
 
     <div class="package-wrapper" id="package-list"></div>
 
-    <div style="font-size: 14px; color: #8b949e; margin-bottom: 15px; font-weight: bold;" id="cat-name">Görevler</div>
+    <div style="font-size: 14px; color: #8b949e; margin-bottom: 15px; font-weight: bold;" id="cat-name">Yükleniyor...</div>
     <div id="tasks-container"></div>
 
     <script>
@@ -64,11 +62,12 @@
 
         function renderPackages() {
             const container = document.getElementById('package-list');
-            const categories = [...new Set(allTasks.map(t => t.category))];
+            // Paket sırasını manuel sabitliyoruz ki Başlangıç en başta kalsın
+            const order = ["Başlangıç Görevleri", "Topluluğumuz", "Airdroplar", "Sürpriz Görevler"];
             const icons = {"Başlangıç Görevleri": "⭐", "Topluluğumuz": "👥", "Airdroplar": "🪂", "Sürpriz Görevler": "🎁"};
             
             container.innerHTML = '';
-            categories.forEach(cat => {
+            order.forEach(cat => {
                 const card = document.createElement('div');
                 card.className = `package-card ${activeCategory === cat ? 'active' : ''}`;
                 card.onclick = () => { activeCategory = cat; renderPackages(); renderTasks(cat); };
@@ -81,7 +80,9 @@
             document.getElementById('cat-name').innerText = category;
             const container = document.getElementById('tasks-container');
             container.innerHTML = '';
-            allTasks.filter(t => t.category === category).forEach(task => {
+            const filtered = allTasks.filter(t => t.category === category);
+            
+            filtered.forEach(task => {
                 const isCompleted = userData.completedTasks.includes(task.taskId);
                 const isPending = userData.pendingTasks.find(p => p.taskId === task.taskId);
                 const div = document.createElement('div');
@@ -95,8 +96,9 @@
         }
 
         async function doTask(taskId, url) {
+            if(url === "#") return;
             await fetch('/api/tasks/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telegramId: tg.initDataUnsafe.user.id.toString(), taskId }) });
-            if(url !== "#") window.open(url, '_blank');
+            window.open(url, '_blank');
             setTimeout(loadData, 1000);
         }
         loadData();
