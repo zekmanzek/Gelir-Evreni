@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// ─── VERİTABANI VE MODELLER ───────────────────────────────────────────────────
+// ─── VERİTABANI BAĞLANTISI ────────────────────────────────────────────────────
 mongoose.connect(MONGO_URI).then(() => {
     console.log("✅ MongoDB Bağlantısı Başarılı");
     seedTasks(); 
@@ -38,44 +38,38 @@ const taskSchema = new mongoose.Schema({
   title: String,
   reward: Number,
   target: String,
-  category: { type: String, default: "Genel" }, // Boş kalmaması için varsayılan değer
+  category: String,
   isActive: { type: Boolean, default: true }
 });
 
 const User = mongoose.model("User", userSchema);
 const Task = mongoose.model("Task", taskSchema);
 
-// ─── GÖREV PAKETLERİNİ DÜZENLEME ──────────────────────────────────────────────
+// ─── GÖREV PAKETLERİNİ YAPILANDIRMA ───────────────────────────────────────────
 const seedTasks = async () => {
-  // Önce kategorisi "undefined" veya boş olan eski görevleri "Sistem Görevleri" yap
+  // Eski bozuk kategorileri temizle
   await Task.updateMany(
-    { $or: [{ category: { $exists: false } }, { category: "" }, { category: null }] },
+    { $or: [{ category: { $exists: false } }, { category: "" }, { category: "undefined" }] },
     { $set: { category: "Başlangıç Görevleri" } }
   );
 
   const tasks = [
-    // --- TOPLULUĞUMUZ PAKETİ ---
     { taskId: "tg_proje", title: "Gelir Evreni Proje Katıl", reward: 100, target: "https://t.me/gelirevreniproje", category: "Topluluğumuz" },
     { taskId: "tg_evreni", title: "Gelir Evreni Katıl", reward: 100, target: "https://t.me/gelirevreni", category: "Topluluğumuz" },
     { taskId: "tg_tayfa_alt", title: "Kripto Tayfa Duyuru", reward: 100, target: "https://t.me/kripto_tayfa", category: "Topluluğumuz" },
     { taskId: "tg_tayfa_ana", title: "Kripto Tayfa Sohbet", reward: 100, target: "https://t.me/kriptotayfa", category: "Topluluğumuz" },
     { taskId: "tg_ref", title: "Referans Linkim Katıl", reward: 100, target: "https://t.me/referanslinkim", category: "Topluluğumuz" },
     { taskId: "x_tayfa", title: "Kripto Tayfa X Takip", reward: 100, target: "https://x.com/kriptotayfa", category: "Topluluğumuz" },
-
-    // --- AİRDROPLAR PAKETİ ---
-    { taskId: "airdrop_soon", title: "Yakında...", reward: 0, target: "#", category: "Airdroplar", isActive: true },
-
-    // --- SÜRPRİZ GÖREVLER PAKETİ ---
-    { taskId: "surprise_soon", title: "Yakında...", reward: 0, target: "#", category: "Sürpriz Görevler", isActive: true }
+    { taskId: "airdrop_soon", title: "Yakında Listelenecek", reward: 0, target: "#", category: "Airdroplar" },
+    { taskId: "surprise_soon", title: "Sürpriz Görev Yolda", reward: 0, target: "#", category: "Sürpriz Görevler" }
   ];
 
   for (const t of tasks) {
     await Task.findOneAndUpdate({ taskId: t.taskId }, t, { upsert: true });
   }
-  console.log("✅ Görev paketleri ve kategoriler temizlendi.");
 };
 
-// ─── BOT VE API DİĞER KISIMLAR (AYNI KALACAK) ─────────────────────────────────
+// ─── BOT VE API ───────────────────────────────────────────────────────────────
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 bot.onText(/\/start/, async (msg) => {
@@ -103,20 +97,12 @@ app.post("/api/user/auth", async (req, res) => {
       const params = new URLSearchParams(initData);
       const tgUser = JSON.parse(params.get("user"));
       const telegramId = String(tgUser.id);
-  
       let user = await User.findOne({ telegramId });
-      if (!user) {
-          user = await User.create({ 
-            telegramId, 
-            firstName: tgUser.first_name, 
-            username: tgUser.username, 
-            inviteCode: crypto.randomBytes(3).toString('hex').toUpperCase() 
-          });
-      }
-  
+      if (!user) user = await User.create({ telegramId, firstName: tgUser.first_name, username: tgUser.username, inviteCode: crypto.randomBytes(3).toString('hex').toUpperCase() });
+
       const now = new Date();
       let updated = false;
-      if (user.pendingTasks && user.pendingTasks.length > 0) {
+      if (user.pendingTasks) {
           const stillPending = [];
           for (const pTask of user.pendingTasks) {
               if (now - new Date(pTask.clickedAt) >= 3600000) { 
@@ -144,7 +130,7 @@ app.post("/api/tasks/start", async (req, res) => {
         await user.save();
         return res.json({ success: true });
       }
-      res.status(400).json({ error: "Zaten yapılıyor" });
+      res.status(400).json({ error: "İşlem reddedildi" });
     } catch (err) { res.status(500).json({ error: "Hata" }); }
 });
 
