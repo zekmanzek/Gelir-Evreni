@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
   completedTasks: [String],
   pendingTasks: [{ taskId: String, clickedAt: { type: Date, default: Date.now } }],
   lastSpin: { type: Date, default: null },
-  lastMining: { type: Date, default: null } // Madencilik için yeni alan
+  lastMining: { type: Date, default: null } 
 });
 
 const taskSchema = new mongoose.Schema({
@@ -78,13 +78,12 @@ app.post("/api/user/auth", async (req, res) => {
     } catch (e) { res.status(500).json({ error: "Auth hatası" }); }
 });
 
-// MADENCİLİK (MINING) API
 app.post("/api/mining/claim", async (req, res) => {
     try {
         const { telegramId } = req.body;
         const user = await User.findOne({ telegramId });
         const now = new Date();
-        const waitTime = 8 * 60 * 60 * 1000; // 8 Saat
+        const waitTime = 8 * 60 * 60 * 1000; 
 
         if (user.lastMining && now - user.lastMining < waitTime) {
             return res.status(400).json({ error: "Madencilik henüz tamamlanmadı!" });
