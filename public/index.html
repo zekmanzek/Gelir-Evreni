@@ -3,23 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gelir Evreni - Görevler</title>
+    <title>Gelir Evreni</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background-color: #0f111a; color: white; margin: 0; padding: 20px; }
-        .stats-card { background: linear-gradient(135deg, #1e1e2e, #2d2d44); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 25px; border: 1px solid #3d3d5c; }
-        .points-val { font-size: 32px; font-weight: bold; color: #ffcc00; margin: 10px 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0b0e14; color: white; margin: 0; padding: 15px; overflow-x: hidden; }
+        .stats-card { background: linear-gradient(135deg, #1c1f2e, #111420); padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; border: 1px solid #2d334a; }
+        .points-val { font-size: 32px; font-weight: 800; color: #ffcc00; margin: 5px 0; }
         
-        /* Paket Başlıkları */
-        .package-title { font-size: 18px; font-weight: bold; color: #00d4ff; margin: 25px 0 15px 5px; display: flex; align-items: center; }
-        .package-title::before { content: '📁'; margin-right: 8px; }
+        /* Yan Yana Paketler */
+        .package-wrapper { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
+        .package-wrapper::-webkit-scrollbar { display: none; }
+        .package-card { min-width: 100px; background: #1c1f2e; border: 2px solid #2d334a; border-radius: 15px; padding: 12px; text-align: center; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
+        .package-card.active { border-color: #00d4ff; background: #162a3d; }
+        .package-card span { font-size: 11px; font-weight: bold; display: block; margin-top: 5px; }
 
-        .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .task-info h4 { margin: 0; font-size: 14px; }
-        .task-info p { margin: 5px 0 0; font-size: 12px; color: #8b949e; }
+        /* Görev Listesi */
+        .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .task-info h4 { margin: 0; font-size: 14px; color: #e6edf3; }
+        .task-info p { margin: 4px 0 0; font-size: 12px; color: #ffcc00; }
         
-        .btn { padding: 8px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 13px; }
-        .btn-yap { background: transparent; border: 1px solid #ffcc00; color: #ffcc00; }
+        .btn { padding: 8px 18px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn-yap { background: #ffcc00; color: #000; }
         .btn-bekle { background: #30363d; color: #8b949e; cursor: not-allowed; }
         .btn-tamam { background: #238636; color: white; }
     </style>
@@ -27,87 +31,74 @@
 <body>
 
     <div class="stats-card">
-        <div style="font-size: 12px; color: #8b949e;">TOPLAM PUAN</div>
+        <div style="font-size: 11px; color: #8b949e;">GEP BAKİYE</div>
         <div class="points-val" id="user-points">0</div>
-        <div style="font-size: 12px; color: #8b949e;" id="usd-val">≈ 0.00 USDT</div>
+        <div style="font-size: 12px; color: #00d4ff;" id="usd-val">≈ 0.00 USDT</div>
     </div>
 
-    <div id="tasks-container">
-        <p style="text-align:center; color:#8b949e;">Görevler yükleniyor...</p>
-    </div>
+    <div class="package-wrapper" id="package-list"></div>
+
+    <div style="font-size: 14px; color: #8b949e; margin-bottom: 15px; font-weight: bold;" id="cat-name">Görevler</div>
+    <div id="tasks-container"></div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
+        let allTasks = [];
+        let userData = null;
+        let activeCategory = "Topluluğumuz";
 
         async function loadData() {
-            const response = await fetch('/api/user/auth', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ initData: tg.initData })
-            });
+            const response = await fetch('/api/user/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ initData: tg.initData }) });
             const data = await response.json();
-            const user = data.user;
-
-            document.getElementById('user-points').innerText = user.points;
-            document.getElementById('usd-val').innerText = `≈ ${(user.points / 10000).toFixed(2)} USDT`;
+            userData = data.user;
+            document.getElementById('user-points').innerText = userData.points.toLocaleString();
+            document.getElementById('usd-val').innerText = `≈ ${(userData.points / 10000).toFixed(2)} USDT`;
 
             const taskRes = await fetch('/api/tasks');
             const taskData = await taskRes.json();
-            renderTasks(taskData.tasks, user);
+            allTasks = taskData.tasks;
+            
+            renderPackages();
+            renderTasks(activeCategory);
         }
 
-        function renderTasks(tasks, user) {
+        function renderPackages() {
+            const container = document.getElementById('package-list');
+            const categories = [...new Set(allTasks.map(t => t.category))];
+            const icons = {"Başlangıç Görevleri": "⭐", "Topluluğumuz": "👥", "Airdroplar": "🪂", "Sürpriz Görevler": "🎁"};
+            
+            container.innerHTML = '';
+            categories.forEach(cat => {
+                const card = document.createElement('div');
+                card.className = `package-card ${activeCategory === cat ? 'active' : ''}`;
+                card.onclick = () => { activeCategory = cat; renderPackages(); renderTasks(cat); };
+                card.innerHTML = `<div>${icons[cat] || '📁'}</div><span>${cat}</span>`;
+                container.appendChild(card);
+            });
+        }
+
+        function renderTasks(category) {
+            document.getElementById('cat-name').innerText = category;
             const container = document.getElementById('tasks-container');
             container.innerHTML = '';
-
-            // Görevleri kategorilerine göre grupla
-            const groups = {};
-            tasks.forEach(t => {
-                if (!groups[t.category]) groups[t.category] = [];
-                groups[t.category].push(t);
+            allTasks.filter(t => t.category === category).forEach(task => {
+                const isCompleted = userData.completedTasks.includes(task.taskId);
+                const isPending = userData.pendingTasks.find(p => p.taskId === task.taskId);
+                const div = document.createElement('div');
+                div.className = 'task-card';
+                let btn = `<button class="btn btn-yap" onclick="doTask('${task.taskId}', '${task.target}')">YAP</button>`;
+                if (isCompleted) btn = `<button class="btn btn-tamam">✅</button>`;
+                else if (isPending) btn = `<button class="btn btn-bekle">⌛ BEKLE</button>`;
+                div.innerHTML = `<div class="task-info"><h4>${task.title}</h4><p>+${task.reward} GEP</p></div>${btn}`;
+                container.appendChild(div);
             });
-
-            // Her kategori için bir başlık ve görev listesi oluştur
-            for (const category in groups) {
-                const title = document.createElement('div');
-                title.className = 'package-title';
-                title.innerText = category;
-                container.appendChild(title);
-
-                groups[category].forEach(task => {
-                    const isCompleted = user.completedTasks.includes(task.taskId);
-                    const isPending = user.pendingTasks.find(p => p.taskId === task.taskId);
-
-                    const div = document.createElement('div');
-                    div.className = 'task-card';
-                    
-                    let buttonHtml = `<button class="btn btn-yap" onclick="doTask('${task.taskId}', '${task.target}')">YAP</button>`;
-                    if (isCompleted) buttonHtml = `<button class="btn btn-tamam">✅</button>`;
-                    else if (isPending) buttonHtml = `<button class="btn btn-bekle">⌛ BEKLE</button>`;
-
-                    div.innerHTML = `
-                        <div class="task-info">
-                            <h4>${task.title}</h4>
-                            <p>+${task.reward} GEP</p>
-                        </div>
-                        ${buttonHtml}
-                    `;
-                    container.appendChild(div);
-                });
-            }
         }
 
         async function doTask(taskId, url) {
-            await fetch('/api/tasks/start', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegramId: tg.initDataUnsafe.user.id.toString(), taskId })
-            });
+            await fetch('/api/tasks/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telegramId: tg.initDataUnsafe.user.id.toString(), taskId }) });
             if(url !== "#") window.open(url, '_blank');
-            loadData();
+            setTimeout(loadData, 1000);
         }
-
         loadData();
     </script>
 </body>
