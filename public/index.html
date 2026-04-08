@@ -1,135 +1,114 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Gelir Evreni</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
-  <style>
-    /* Senin şık tasarımın */
-    :root { --bg: #0a0a12; --card: #1a1a2e; --gold: #f5c542; --purple: #7c3aed; --text: #f1f5f9; --muted: #64748b; }
-    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; padding-bottom: 80px; }
-    
-    .balance-card { background: linear-gradient(135deg, #1e0845, #2d1b69); border-radius: 24px; padding: 24px; text-align: center; margin-bottom: 20px; border: 1px solid rgba(124,58,237,0.3); }
-    .balance-amount { font-family: 'Syne', sans-serif; font-size: 42px; font-weight: 800; color: var(--gold); }
-    
-    .task-card { background: var(--card); border: 1px solid rgba(255,255,255,0.07); border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; transition: 0.3s; }
-    .task-card.wait { border-color: #06b6d4; opacity: 0.8; }
-    .task-card.done { border-color: #10b981; opacity: 0.5; pointer-events: none; }
-    
-    .btn-status { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; padding: 8px 12px; border-radius: 10px; text-transform: uppercase; }
-    .status-go { color: var(--gold); border: 1px solid var(--gold); }
-    .status-wait { color: #06b6d4; border: 1px solid #06b6d4; }
-    .status-done { color: #10b981; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gelir Evreni - Görevler</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #0f111a; color: white; margin: 0; padding: 20px; }
+        .stats-card { background: linear-gradient(135deg, #1e1e2e, #2d2d44); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 25px; border: 1px solid #3d3d5c; }
+        .points-val { font-size: 32px; font-weight: bold; color: #ffcc00; margin: 10px 0; }
+        
+        /* Paket Başlıkları */
+        .package-title { font-size: 18px; font-weight: bold; color: #00d4ff; margin: 25px 0 15px 5px; display: flex; align-items: center; }
+        .package-title::before { content: '📁'; margin-right: 8px; }
 
-    #loading { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; }
-    .spinner { width: 40px; height: 40px; border: 3px solid rgba(124,58,237,0.2); border-top-color: var(--purple); border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
+        .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .task-info h4 { margin: 0; font-size: 14px; }
+        .task-info p { margin: 5px 0 0; font-size: 12px; color: #8b949e; }
+        
+        .btn { padding: 8px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .btn-yap { background: transparent; border: 1px solid #ffcc00; color: #ffcc00; }
+        .btn-bekle { background: #30363d; color: #8b949e; cursor: not-allowed; }
+        .btn-tamam { background: #238636; color: white; }
+    </style>
 </head>
 <body>
 
-<div id="loading"><div class="spinner"></div><p style="margin-top:15px; color:var(--muted)">Yükleniyor...</p></div>
+    <div class="stats-card">
+        <div style="font-size: 12px; color: #8b949e;">TOPLAM PUAN</div>
+        <div class="points-val" id="user-points">0</div>
+        <div style="font-size: 12px; color: #8b949e;" id="usd-val">≈ 0.00 USDT</div>
+    </div>
 
-<div id="main-content" style="display:none">
-  <div class="balance-card">
-    <div style="font-size:12px; opacity:0.6; letter-spacing:1px">TOPLAM PUAN</div>
-    <div class="balance-amount" id="balanceAmt">0</div>
-    <div id="balanceUsdt" style="font-size:13px; color:rgba(255,255,255,0.4); margin-top:5px">≈ 0.00 USDT</div>
-  </div>
+    <div id="tasks-container">
+        <p style="text-align:center; color:#8b949e;">Görevler yükleniyor...</p>
+    </div>
 
-  <h3 style="font-family:'Syne'; margin-bottom:15px">📋 Görevler</h3>
-  <div id="tasksList"></div>
-</div>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
-<script>
-  const tg = window.Telegram.WebApp;
-  let currentUser = null;
+        async function loadData() {
+            const response = await fetch('/api/user/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ initData: tg.initData })
+            });
+            const data = await response.json();
+            const user = data.user;
 
-  async function init() {
-    try {
-      const res = await fetch('/api/user/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData: tg.initData })
-      });
-      const data = await res.json();
-      if(data.success) {
-        currentUser = data.user;
-        renderUI();
-      }
-    } catch (e) {
-      console.error("Başlatma hatası:", e);
-    } finally {
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('main-content').style.display = 'block';
-    }
-  }
+            document.getElementById('user-points').innerText = user.points;
+            document.getElementById('usd-val').innerText = `≈ ${(user.points / 10000).toFixed(2)} USDT`;
 
-  function renderUI() {
-    document.getElementById('balanceAmt').innerText = currentUser.points.toLocaleString('tr');
-    document.getElementById('balanceUsdt').innerText = `≈ ${(currentUser.points / 1000).toFixed(2)} USDT`;
-    loadTasks();
-  }
+            const taskRes = await fetch('/api/tasks');
+            const taskData = await taskRes.json();
+            renderTasks(taskData.tasks, user);
+        }
 
-  async function loadTasks() {
-    const res = await fetch('/api/tasks');
-    const data = await res.json();
-    const container = document.getElementById('tasksList');
-    container.innerHTML = "";
+        function renderTasks(tasks, user) {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = '';
 
-    data.tasks.forEach(task => {
-      const isDone = currentUser.completedTasks.includes(task.taskId);
-      const isPending = currentUser.pendingTasks.find(t => t.taskId === task.taskId);
-      
-      let statusClass = "";
-      let statusText = "YAP";
-      let statusStyle = "status-go";
+            // Görevleri kategorilerine göre grupla
+            const groups = {};
+            tasks.forEach(t => {
+                if (!groups[t.category]) groups[t.category] = [];
+                groups[t.category].push(t);
+            });
 
-      if (isDone) {
-        statusClass = "done";
-        statusText = "✓ BİTTİ";
-        statusStyle = "status-done";
-      } else if (isPending) {
-        statusClass = "wait";
-        statusText = "⏳ BEKLE";
-        statusStyle = "status-wait";
-      }
+            // Her kategori için bir başlık ve görev listesi oluştur
+            for (const category in groups) {
+                const title = document.createElement('div');
+                title.className = 'package-title';
+                title.innerText = category;
+                container.appendChild(title);
 
-      container.innerHTML += `
-        <div class="task-card ${statusClass}" onclick="handleTask('${task.taskId}', '${task.target}')">
-          <div>
-            <div style="font-weight:600; font-size:15px">${task.title}</div>
-            <div style="font-size:12px; color:var(--gold); margin-top:4px">+${task.reward} Puan</div>
-          </div>
-          <div class="btn-status ${statusStyle}">${statusText}</div>
-        </div>`;
-    });
-  }
+                groups[category].forEach(task => {
+                    const isCompleted = user.completedTasks.includes(task.taskId);
+                    const isPending = user.pendingTasks.find(p => p.taskId === task.taskId);
 
-  async function handleTask(taskId, target) {
-    const isDone = currentUser.completedTasks.includes(taskId);
-    const isPending = currentUser.pendingTasks.find(t => t.taskId === taskId);
+                    const div = document.createElement('div');
+                    div.className = 'task-card';
+                    
+                    let buttonHtml = `<button class="btn btn-yap" onclick="doTask('${task.taskId}', '${task.target}')">YAP</button>`;
+                    if (isCompleted) buttonHtml = `<button class="btn btn-tamam">✅</button>`;
+                    else if (isPending) buttonHtml = `<button class="btn btn-bekle">⌛ BEKLE</button>`;
 
-    if (isDone || isPending) return;
+                    div.innerHTML = `
+                        <div class="task-info">
+                            <h4>${task.title}</h4>
+                            <p>+${task.reward} GEP</p>
+                        </div>
+                        ${buttonHtml}
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        }
 
-    // Görevi dış bağlantıda aç
-    tg.openLink(target);
+        async function doTask(taskId, url) {
+            await fetch('/api/tasks/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegramId: tg.initDataUnsafe.user.id.toString(), taskId })
+            });
+            if(url !== "#") window.open(url, '_blank');
+            loadData();
+        }
 
-    // Backend'e "Görevi başlattım" haberi gönder
-    await fetch('/api/tasks/start', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegramId: currentUser.telegramId, taskId })
-    });
-
-    // Sayfayı yenileyerek butonu "Bekle" moduna sok
-    setTimeout(() => { location.reload(); }, 1000);
-  }
-
-  tg.expand();
-  init();
-</script>
+        loadData();
+    </script>
 </body>
 </html>
