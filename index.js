@@ -32,7 +32,7 @@ const taskSchema = new mongoose.Schema({
   taskId: { type: String, unique: true },
   title: String,
   reward: Number,
-  target: String, // Butonun gideceği link
+  target: String,
   category: String,
   isActive: { type: Boolean, default: true }
 });
@@ -72,8 +72,10 @@ app.post("/api/user/auth", async (req, res) => {
         const params = new URLSearchParams(req.body.initData);
         const tgUser = JSON.parse(params.get("user"));
         const user = await User.findOne({ telegramId: String(tgUser.id) });
-        // Kullanıcıya özel referans linki oluşturma
-        const refLink = `https://t.me/GelirEvreniBot?start=${tgUser.id}`;
+        
+        // ÖNEMLİ: Linki yeni bot adresine (@gelirevreni_bot) göre güncelledim
+        const refLink = `https://t.me/gelirevreni_bot?start=${tgUser.id}`;
+        
         res.json({ success: true, user, refLink });
     } catch (e) { res.status(500).json({ error: "Auth hatası" }); }
 });
