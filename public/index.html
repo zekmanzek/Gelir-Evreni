@@ -20,7 +20,7 @@
         .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-yap { background: #ffcc00; color: #000; padding: 8px 18px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
 
-        /* 🎡 ÇARK TASARIMI 🎡 */
+        /* 🎡 ÇARK TASARIMI (ASLA DOKUNULMADI) 🎡 */
         .wheel-container { position: relative; width: 260px; height: 260px; margin: 20px auto; border-radius: 50%; border: 6px solid #2d334a; box-shadow: 0 0 15px rgba(0,0,0,0.5); overflow: hidden; }
         .wheel { width: 100%; height: 100%; position: relative; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); border-radius: 50%; }
         .wheel-pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #ffcc00; z-index: 100; }
@@ -67,6 +67,7 @@
         let userData = null;
         let allTasks = [];
         let activeCategory = "Topluluğumuz";
+        let refLink = "";
 
         async function loadData() {
             try {
@@ -77,6 +78,7 @@
                 });
                 const data = await res.json();
                 userData = data.user;
+                refLink = data.refLink;
                 
                 document.getElementById('user-points').innerText = userData.points.toLocaleString();
                 document.getElementById('usd-val').innerText = `≈ ${(userData.points / 100000).toFixed(2)} USDT`;
@@ -97,8 +99,8 @@
 
         function renderPackages() {
             const container = document.getElementById('package-list');
-            const cats = ["Başlangıç Görevleri", "Topluluğumuz", "Airdroplar", "Şans Çarkı", "Sürpriz Görevler"];
-            const icons = {"Başlangıç Görevleri":"⭐", "Topluluğumuz":"👥", "Airdroplar":"🪂", "Şans Çarkı":"🎡", "Sürpriz Görevler":"🎁"};
+            const cats = ["Başlangıç Görevleri", "Topluluğumuz", "Airdroplar", "Şans Çarkı", "Sürpriz Görevler", "Referans Sistemi"];
+            const icons = {"Başlangıç Görevleri":"⭐", "Topluluğumuz":"👥", "Airdroplar":"🪂", "Şans Çarkı":"🎡", "Sürpriz Görevler":"🎁", "Referans Sistemi":"🔗"};
             container.innerHTML = '';
             cats.forEach(c => {
                 const card = document.createElement('div');
@@ -113,6 +115,7 @@
             const container = document.getElementById('tasks-container');
             container.innerHTML = '';
             
+            // ÇARK (DOKUNULMADI)
             if (category === "Şans Çarkı") {
                 container.innerHTML = `
                 <div style="text-align:center;">
@@ -129,9 +132,23 @@
                 return;
             }
 
+            // REFERANS SAYFASI
+            if (category === "Referans Sistemi") {
+                container.innerHTML = `
+                <div style="text-align:center; padding:20px; background:#1c1f2e; border-radius:20px; border:1px solid #2d334a;">
+                    <h3 style="color:#ffcc00; margin-top:0;">🔗 Arkadaş Davet Et</h3>
+                    <p style="font-size:13px; color:#8b949e;">Davet ettiğin her kişi için ödül kazan!</p>
+                    <input type="text" readonly value="${refLink}" style="width:100%; padding:12px; border-radius:10px; background:#0b0e14; color:#00d4ff; border:1px solid #30363d; text-align:center; margin-bottom:15px;">
+                    <button class="btn-yap" style="width:100%;" onclick="copyRef()">LİNKİ KOPYALA</button>
+                </div>`;
+                return;
+            }
+
             const filtered = allTasks.filter(t => t.category === category);
+            
+            // BOŞ PAKET UYARISI (TÜM PAKETLER İÇİN)
             if(filtered.length === 0) { 
-                container.innerHTML = `<p style="text-align:center; color:#8b949e; margin-top:20px;">Henüz görev bulunmuyor.</p>`; 
+                container.innerHTML = `<p style="text-align:center; color:#8b949e; margin-top:40px;">Henüz görev bulunmuyor.</p>`; 
                 return; 
             }
 
@@ -144,18 +161,26 @@
                         <h4 style="margin:0;">${t.title}</h4>
                         <p style="margin:5px 0 0; color:#ffcc00; font-size:13px;">+${t.reward} GEP</p>
                     </div>
-                    <button class="btn-yap" ${isC ? 'style="background:#238636;color:white"':''}>
+                    <button class="btn-yap" onclick="goTask('${t.target}')" ${isC ? 'style="background:#238636;color:white"':''}>
                         ${isC ? '✅' : 'YAP'}
                     </button>`;
                 container.appendChild(div);
             });
         }
 
+        function goTask(url) {
+            if(url && url !== "#") tg.openLink(url);
+        }
+
+        function copyRef() {
+            navigator.clipboard.writeText(refLink);
+            tg.showAlert("Referans linkin kopyalandı!");
+        }
+
         async function startSpin() {
             const btn = document.getElementById('spin-btn');
             if (btn.disabled) return;
             btn.disabled = true;
-            
             try {
                 const res = await fetch('/api/spin', { 
                     method: 'POST', 
@@ -163,7 +188,6 @@
                     body: JSON.stringify({ telegramId: userData.telegramId }) 
                 });
                 const data = await res.json();
-                
                 if(data.success) {
                     const angle = 3600 + (data.winIndex * 60);
                     document.getElementById('main-wheel').style.transform = `rotate(-${angle}deg)`;
@@ -171,21 +195,13 @@
                         tg.showAlert(`🎉 Tebrikler! ${data.reward} GEP kazandın!`); 
                         loadData(); 
                     }, 4100);
-                } else { 
-                    tg.showAlert(data.error); 
-                    btn.disabled = false; 
-                }
-            } catch (e) {
-                tg.showAlert("Bir hata oluştu.");
-                btn.disabled = false;
-            }
+                } else { tg.showAlert(data.error); btn.disabled = false; }
+            } catch (e) { tg.showAlert("Bir hata oluştu."); btn.disabled = false; }
         }
 
         function openWithdrawModal() { 
-            if(userData.points >= 500000) 
-                document.getElementById('withdraw-modal').style.display='flex'; 
-            else 
-                tg.showAlert("Minimum limit: 500,000 GEP"); 
+            if(userData.points >= 500000) document.getElementById('withdraw-modal').style.display='flex'; 
+            else tg.showAlert("Minimum limit: 500,000 GEP"); 
         }
 
         function closeModal() { document.getElementById('withdraw-modal').style.display='none'; }
@@ -193,15 +209,10 @@
         async function submitWithdraw() {
             const addr = document.getElementById('wallet-addr').value;
             if(addr.length < 20) return tg.showAlert("Geçerli bir cüzdan adresi girin!");
-            
             await fetch('/api/withdraw', { 
                 method: 'POST', 
                 headers: {'Content-Type':'application/json'}, 
-                body: JSON.stringify({ 
-                    telegramId: userData.telegramId, 
-                    walletAddress: addr, 
-                    amount: userData.points 
-                }) 
+                body: JSON.stringify({ telegramId: userData.telegramId, walletAddress: addr, amount: userData.points }) 
             });
             tg.showAlert("Çekim talebiniz başarıyla alındı!"); 
             closeModal();
