@@ -45,28 +45,33 @@ const taskSchema = new mongoose.Schema({
 const User = mongoose.model("User", userSchema);
 const Task = mongoose.model("Task", taskSchema);
 
-// ─── GÖREV PAKETLERİNİ YAPILANDIRMA ───────────────────────────────────────────
+// ─── GÖREV PAKETLERİNİ GÜNCELLEME ──────────────────────────────────────────────
 const seedTasks = async () => {
-  // Eski bozuk kategorileri temizle
-  await Task.updateMany(
-    { $or: [{ category: { $exists: false } }, { category: "" }, { category: "undefined" }] },
-    { $set: { category: "Başlangıç Görevleri" } }
-  );
+  // Mevcut tüm görevleri temizle/pasife al (Tekrarlanmaması için)
+  await Task.updateMany({}, { $set: { isActive: false } });
 
   const tasks = [
+    // --- TOPLULUĞUMUZ (AKTİF) ---
     { taskId: "tg_proje", title: "Gelir Evreni Proje Katıl", reward: 100, target: "https://t.me/gelirevreniproje", category: "Topluluğumuz" },
     { taskId: "tg_evreni", title: "Gelir Evreni Katıl", reward: 100, target: "https://t.me/gelirevreni", category: "Topluluğumuz" },
-    { taskId: "tg_tayfa_alt", title: "Kripto Tayfa Duyuru", reward: 100, target: "https://t.me/kripto_tayfa", category: "Topluluğumuz" },
     { taskId: "tg_tayfa_ana", title: "Kripto Tayfa Sohbet", reward: 100, target: "https://t.me/kriptotayfa", category: "Topluluğumuz" },
     { taskId: "tg_ref", title: "Referans Linkim Katıl", reward: 100, target: "https://t.me/referanslinkim", category: "Topluluğumuz" },
     { taskId: "x_tayfa", title: "Kripto Tayfa X Takip", reward: 100, target: "https://x.com/kriptotayfa", category: "Topluluğumuz" },
-    { taskId: "airdrop_soon", title: "Yakında Listelenecek", reward: 0, target: "#", category: "Airdroplar" },
+    
+    // --- DİĞER PAKETLER (YAKINDA) ---
+    { taskId: "start_soon", title: "Yeni Görevler Yakında", reward: 0, target: "#", category: "Başlangıç Görevleri" },
+    { taskId: "airdrop_soon", title: "Yeni Airdrop Çok Yakında", reward: 0, target: "#", category: "Airdroplar" },
     { taskId: "surprise_soon", title: "Sürpriz Görev Yolda", reward: 0, target: "#", category: "Sürpriz Görevler" }
   ];
 
   for (const t of tasks) {
-    await Task.findOneAndUpdate({ taskId: t.taskId }, t, { upsert: true });
+    await Task.findOneAndUpdate(
+        { taskId: t.taskId }, 
+        { ...t, isActive: true }, 
+        { upsert: true }
+    );
   }
+  console.log("✅ Görevler Güncellendi: Başlangıç Görevleri beklemede.");
 };
 
 // ─── BOT VE API ───────────────────────────────────────────────────────────────
