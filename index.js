@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
   points: { type: Number, default: 0 },
   completedTasks: [String],
   pendingTasks: [{ taskId: String, clickedAt: { type: Date, default: Date.now } }],
-  lastSpin: { type: Date, default: null } // Çark için eklenen alan
+  lastSpin: { type: Date, default: null }
 });
 
 const taskSchema = new mongoose.Schema({
@@ -62,42 +62,34 @@ const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 bot.onText(/\/start/, async (msg) => {
   const telegramId = String(msg.from.id);
   let user = await User.findOne({ telegramId });
-  if (!user) { user = await User.create({ telegramId, firstName: msg.from.first_name, username: msg.from.username }); }
+  if (!user) user = await User.create({ telegramId, firstName: msg.from.first_name, username: msg.from.username });
   bot.sendMessage(msg.chat.id, `🌟 *Gelir Evreni'ne Hoş Geldin!*`, {
     parse_mode: "Markdown",
     reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: APP_URL } }]] }
   });
 });
 
-// ─── ÇARK API ─────────────────────────────────────────────────────────────
 app.post("/api/spin", async (req, res) => {
     try {
         const { telegramId } = req.body;
         const user = await User.findOne({ telegramId });
-        if (!user) return res.status(404).json({ error: "User not found" });
-
         const now = new Date();
-        if (user.lastSpin && now - user.lastSpin < 24 * 60 * 60 * 1000) {
-            return res.status(400).json({ error: "Günde sadece 1 kez çevirebilirsin!" });
-        }
+        if (user.lastSpin && now - user.lastSpin < 24 * 60 * 60 * 1000) return res.status(400).json({ error: "Günde sadece 1 kez çevirebilirsin!" });
 
         const rewards = [50, 100, 150, 200, 250, 500];
         const winIndex = Math.floor(Math.random() * rewards.length);
-        const reward = rewards[winIndex];
-
-        user.points += reward;
+        user.points += rewards[winIndex];
         user.lastSpin = now;
         await user.save();
-
-        res.json({ success: true, reward, winIndex });
-    } catch (err) { res.status(500).json({ error: "Spin error" }); }
+        res.json({ success: true, reward: rewards[winIndex], winIndex });
+    } catch (err) { res.status(500).json({ error: "Hata" }); }
 });
 
 app.post("/api/withdraw", async (req, res) => {
     const { telegramId, walletAddress, amount } = req.body;
     const user = await User.findOne({ telegramId });
     if (user && user.points >= 500000) {
-        bot.sendMessage(ADMIN_ID, `💰 *ÇEKİM:* ${user.firstName} - ${amount} GEP\n🏦 Cüzdan: \`${walletAddress}\``, { parse_mode: "Markdown" });
+        bot.sendMessage(ADMIN_ID, `💰 *ÇEKİM TALEBİ*\n\n👤 Kullanıcı: ${user.firstName}\n💵 Miktar: ${amount} GEP\n🏦 Cüzdan: \`${walletAddress}\``, { parse_mode: "Markdown" });
         res.json({ success: true });
     }
 });
@@ -114,4 +106,4 @@ app.get("/api/tasks", async (req, res) => {
     res.json({ success: true, tasks });
 });
 
-app.listen(PORT, () => console.log(`🚀 Server on ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Aktif: ${PORT}`));
