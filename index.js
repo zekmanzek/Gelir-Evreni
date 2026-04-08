@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 const TelegramBot = require("node-telegram-bot-api");
 const cors = require("cors");
 const path = require("path");
-const crypto = require("crypto");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -33,7 +32,7 @@ const taskSchema = new mongoose.Schema({
   taskId: { type: String, unique: true },
   title: String,
   reward: Number,
-  target: String,
+  target: String, // Butonun gideceği link
   category: String,
   isActive: { type: Boolean, default: true }
 });
@@ -48,9 +47,7 @@ const seedTasks = async () => {
     { taskId: "tg_evreni", title: "Gelir Evreni Katıl", reward: 100, target: "https://t.me/gelirevreni", category: "Topluluğumuz" },
     { taskId: "tg_tayfa_ana", title: "Kripto Tayfa Sohbet", reward: 100, target: "https://t.me/kriptotayfa", category: "Topluluğumuz" },
     { taskId: "tg_ref", title: "Referans Linkim Katıl", reward: 100, target: "https://t.me/referanslinkim", category: "Topluluğumuz" },
-    { taskId: "x_tayfa", title: "Kripto Tayfa X Takip", reward: 100, target: "https://x.com/kriptotayfa", category: "Topluluğumuz" },
-    { taskId: "start_soon", title: "Yeni Görevler Yakında", reward: 0, target: "#", category: "Başlangıç Görevleri" },
-    { taskId: "airdrop_soon", title: "Yeni Airdrop Çok Yakında", reward: 0, target: "#", category: "Airdroplar" }
+    { taskId: "x_tayfa", title: "Kripto Tayfa X Takip", reward: 100, target: "https://x.com/kriptotayfa", category: "Topluluğumuz" }
   ];
   for (const t of tasks) {
     await Task.findOneAndUpdate({ taskId: t.taskId }, { ...t, isActive: true }, { upsert: true });
@@ -63,10 +60,27 @@ bot.onText(/\/start/, async (msg) => {
   const telegramId = String(msg.from.id);
   let user = await User.findOne({ telegramId });
   if (!user) user = await User.create({ telegramId, firstName: msg.from.first_name, username: msg.from.username });
+  
   bot.sendMessage(msg.chat.id, `🌟 *Gelir Evreni'ne Hoş Geldin!*`, {
     parse_mode: "Markdown",
     reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: APP_URL } }]] }
   });
+});
+
+app.post("/api/user/auth", async (req, res) => {
+    try {
+        const params = new URLSearchParams(req.body.initData);
+        const tgUser = JSON.parse(params.get("user"));
+        const user = await User.findOne({ telegramId: String(tgUser.id) });
+        // Kullanıcıya özel referans linki oluşturma
+        const refLink = `https://t.me/GelirEvreniBot?start=${tgUser.id}`;
+        res.json({ success: true, user, refLink });
+    } catch (e) { res.status(500).json({ error: "Auth hatası" }); }
+});
+
+app.get("/api/tasks", async (req, res) => {
+    const tasks = await Task.find({ isActive: true });
+    res.json({ success: true, tasks });
 });
 
 app.post("/api/spin", async (req, res) => {
@@ -94,16 +108,4 @@ app.post("/api/withdraw", async (req, res) => {
     }
 });
 
-app.post("/api/user/auth", async (req, res) => {
-    const params = new URLSearchParams(req.body.initData);
-    const tgUser = JSON.parse(params.get("user"));
-    const user = await User.findOne({ telegramId: String(tgUser.id) });
-    res.json({ success: true, user });
-});
-
-app.get("/api/tasks", async (req, res) => {
-    const tasks = await Task.find({ isActive: true });
-    res.json({ success: true, tasks });
-});
-
-app.listen(PORT, () => console.log(`🚀 Aktif: ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server Aktif: ${PORT}`));
