@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 10000;
 const BOT_TOKEN = "8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s";
 const MONGO_URI = "mongodb+srv://mzybro_db_user:RrdTszJxirbFhHfm@zekman.bi8ty3t.mongodb.net/GelirEvreni?retryWrites=true&w=majority";
 const APP_URL = "https://gelir-evreni.onrender.com";
+const ADMIN_ID = "1469411131"; // BURAYA KENDİ TELEGRAM ID'Nİ YAZ MEHMET
 
 app.use(cors());
 app.use(express.json());
@@ -47,31 +48,20 @@ const Task = mongoose.model("Task", taskSchema);
 
 // ─── GÖREV PAKETLERİNİ GÜNCELLEME ──────────────────────────────────────────────
 const seedTasks = async () => {
-  // Mevcut tüm görevleri temizle/pasife al (Tekrarlanmaması için)
   await Task.updateMany({}, { $set: { isActive: false } });
-
   const tasks = [
-    // --- TOPLULUĞUMUZ (AKTİF) ---
     { taskId: "tg_proje", title: "Gelir Evreni Proje Katıl", reward: 100, target: "https://t.me/gelirevreniproje", category: "Topluluğumuz" },
     { taskId: "tg_evreni", title: "Gelir Evreni Katıl", reward: 100, target: "https://t.me/gelirevreni", category: "Topluluğumuz" },
     { taskId: "tg_tayfa_ana", title: "Kripto Tayfa Sohbet", reward: 100, target: "https://t.me/kriptotayfa", category: "Topluluğumuz" },
     { taskId: "tg_ref", title: "Referans Linkim Katıl", reward: 100, target: "https://t.me/referanslinkim", category: "Topluluğumuz" },
     { taskId: "x_tayfa", title: "Kripto Tayfa X Takip", reward: 100, target: "https://x.com/kriptotayfa", category: "Topluluğumuz" },
-    
-    // --- DİĞER PAKETLER (YAKINDA) ---
     { taskId: "start_soon", title: "Yeni Görevler Yakında", reward: 0, target: "#", category: "Başlangıç Görevleri" },
     { taskId: "airdrop_soon", title: "Yeni Airdrop Çok Yakında", reward: 0, target: "#", category: "Airdroplar" },
     { taskId: "surprise_soon", title: "Sürpriz Görev Yolda", reward: 0, target: "#", category: "Sürpriz Görevler" }
   ];
-
   for (const t of tasks) {
-    await Task.findOneAndUpdate(
-        { taskId: t.taskId }, 
-        { ...t, isActive: true }, 
-        { upsert: true }
-    );
+    await Task.findOneAndUpdate({ taskId: t.taskId }, { ...t, isActive: true }, { upsert: true });
   }
-  console.log("✅ Görevler Güncellendi: Başlangıç Görevleri beklemede.");
 };
 
 // ─── BOT VE API ───────────────────────────────────────────────────────────────
@@ -94,6 +84,27 @@ bot.onText(/\/start/, async (msg) => {
       reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: APP_URL } }]] }
     });
   } catch (err) { console.log(err); }
+});
+
+// Çekim Talebi API
+app.post("/api/withdraw", async (req, res) => {
+    try {
+        const { telegramId, walletAddress, amount } = req.body;
+        const user = await User.findOne({ telegramId });
+
+        if (!user || user.points < 500000) {
+            return res.status(400).json({ error: "Yetersiz bakiye" });
+        }
+
+        // Admin'e bildirim gönder
+        const message = `💰 *YENİ ÇEKİM TALEBİ*\n\n👤 Kullanıcı: ${user.firstName} (@${user.username || 'yok'})\n🆔 ID: ${user.telegramId}\n💵 Miktar: ${amount} GEP\n🏦 Cüzdan (BEP20): \`${walletAddress}\``;
+        
+        bot.sendMessage(ADMIN_ID, message, { parse_mode: "Markdown" });
+
+        res.json({ success: true, message: "Talebiniz iletildi!" });
+    } catch (err) {
+        res.status(500).json({ error: "Sistem hatası" });
+    }
 });
 
 app.post("/api/user/auth", async (req, res) => {
