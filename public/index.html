@@ -89,64 +89,155 @@
 
         function renderTasks(category) {
             const container = document.getElementById('tasks-container');
+            container.innerHTML = '';<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gelir Evreni</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: -apple-system, sans-serif; background-color: #0b0e14; color: white; margin: 0; padding: 15px; overflow-x: hidden; }
+        .stats-card { background: linear-gradient(135deg, #1c1f2e, #111420); padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; border: 1px solid #2d334a; }
+        .points-val { font-size: 32px; font-weight: 800; color: #ffcc00; margin: 5px 0; }
+        .withdraw-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        .withdraw-active { background: #238636; color: white; }
+        .withdraw-passive { background: #2d334a; color: #8b949e; opacity: 0.6; }
+
+        .package-wrapper { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
+        .package-card { min-width: 90px; background: #1c1f2e; border: 2px solid #2d334a; border-radius: 15px; padding: 10px; text-align: center; cursor: pointer; flex-shrink: 0; }
+        .package-card.active { border-color: #00d4ff; background: #162a3d; }
+        
+        .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-yap { background: #ffcc00; color: #000; padding: 8px 18px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
+
+        /* 🎡 ÇARK TASARIMI - GÜNCELLENDİ 🎡 */
+        .wheel-container { position: relative; width: 260px; height: 260px; margin: 20px auto; border-radius: 50%; border: 6px solid #2d334a; box-shadow: 0 0 15px rgba(0,0,0,0.5); overflow: hidden; }
+        .wheel { width: 100%; height: 100%; position: relative; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); border-radius: 50%; }
+        .wheel-pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #ffcc00; z-index: 100; }
+        
+        .slice { position: absolute; width: 100%; height: 100%; transform-origin: center; display: flex; justify-content: center; clip-path: polygon(50% 50%, 40% 0, 60% 0); }
+        .slice b { margin-top: 25px; font-size: 16px; color: white; font-weight: 800; text-shadow: 1px 1px 2px black; }
+
+        /* Dilim Renkleri ve Pozisyonları */
+        .s1 { background: #1c1f2e; transform: rotate(0deg); }
+        .s2 { background: #00d4ff; transform: rotate(60deg); }
+        .s3 { background: #1c1f2e; transform: rotate(120deg); }
+        .s4 { background: #00d4ff; transform: rotate(180deg); }
+        .s5 { background: #1c1f2e; transform: rotate(240deg); }
+        .s6 { background: #00d4ff; transform: rotate(300deg); }
+
+        #withdraw-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #1c1f2e; padding: 25px; border-radius: 20px; width: 85%; text-align: center; border: 1px solid #2d334a; }
+        .modal-content input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #30363d; background: #0b0e14; color: white; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="stats-card">
+        <div style="font-size: 11px; color: #8b949e;">GEP BAKİYE</div>
+        <div class="points-val" id="user-points">0</div>
+        <div style="font-size: 12px; color: #00d4ff;" id="usd-val">≈ 0.00 USDT</div>
+        <button id="main-withdraw-btn" class="withdraw-btn withdraw-passive" onclick="openWithdrawModal()">💸 Para Çekme Talebi</button>
+        <span style="font-size: 10px; color: #8b949e; display: block; margin-top: 8px;">⚠️ Minimum: 500,000 GEP (5 USDT)</span>
+    </div>
+
+    <div class="package-wrapper" id="package-list"></div>
+    <div id="tasks-container"></div>
+
+    <div id="withdraw-modal">
+        <div class="modal-content">
+            <h3 style="margin:0; color:#ffcc00;">Cüzdan Adresi</h3>
+            <input type="text" id="wallet-addr" placeholder="USDT BEP-20 Adresiniz">
+            <button class="withdraw-btn withdraw-active" onclick="submitWithdraw()">TALEBİ GÖNDER</button>
+            <button style="background:none; border:none; color:#8b949e; margin-top:15px;" onclick="closeModal()">Kapat</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        let userData = null;
+        let allTasks = [];
+        let activeCategory = "Topluluğumuz";
+
+        async function loadData() {
+            const res = await fetch('/api/user/auth', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) });
+            const data = await res.json();
+            userData = data.user;
+            document.getElementById('user-points').innerText = userData.points.toLocaleString();
+            document.getElementById('usd-val').innerText = `≈ ${(userData.points / 100000).toFixed(2)} USDT`;
+            document.getElementById('main-withdraw-btn').className = userData.points >= 500000 ? "withdraw-btn withdraw-active" : "withdraw-btn withdraw-passive";
+
+            const tRes = await fetch('/api/tasks');
+            const tData = await tRes.json();
+            allTasks = tData.tasks;
+            renderPackages();
+            renderTasks(activeCategory);
+        }
+
+        function renderPackages() {
+            const container = document.getElementById('package-list');
+            const cats = ["Başlangıç Görevleri", "Topluluğumuz", "Airdroplar", "Şans Çarkı", "Sürpriz Görevler"];
+            const icons = {"Başlangıç Görevleri":"⭐", "Topluluğumuz":"👥", "Airdroplar":"🪂", "Şans Çarkı":"🎡", "Sürpriz Görevler":"🎁"};
             container.innerHTML = '';
-            
-            if (category === "Sürpriz Görevler") {
+            cats.forEach(c => {
+                const card = document.createElement('div');
+                card.className = `package-card ${activeCategory === c ? 'active':''}`;
+                card.onclick = () => { activeCategory = c; renderPackages(); renderTasks(c); };
+                card.innerHTML = `<div>${icons[c]}</div><span style="font-size:10px;">${c}</span>`;
+                container.appendChild(card);
+            });
+        }
+
+        function renderTasks(category) {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = '';
+            if (category === "Şans Çarkı") {
                 container.innerHTML = `
-                    <div style="text-align:center;">
-                        <h4 style="margin:0;">Günlük Şans Çarkı</h4>
-                        <p style="font-size:12px; color:#8b949e;">Her gün bir kez çevir, ödülünü kap!</p>
-                        <div class="wheel-container">
-                            <div class="wheel-pointer"></div>
-                            <div class="wheel" id="main-wheel">
-                                <div class="segment"><span>50</span></div>
-                                <div class="segment"><span>100</span></div>
-                                <div class="segment"><span>150</span></div>
-                                <div class="segment"><span>200</span></div>
-                                <div class="segment"><span>250</span></div>
-                                <div class="segment"><span>500</span></div>
-                            </div>
+                <div style="text-align:center;">
+                    <div class="wheel-container">
+                        <div class="wheel-pointer"></div>
+                        <div class="wheel" id="main-wheel">
+                            <div class="slice s1"><b>50</b></div><div class="slice s2"><b>100</b></div><div class="slice s3"><b>150</b></div>
+                            <div class="slice s4"><b>200</b></div><div class="slice s5"><b>250</b></div><div class="slice s6"><b>500</b></div>
                         </div>
-                        <button class="btn-yap" style="width:100%; padding:15px;" id="spin-btn" onclick="startSpin()">ÇARKI ÇEVİR</button>
                     </div>
-                `;
+                    <button class="btn-yap" style="width:100%; padding:15px;" id="spin-btn" onclick="startSpin()">ÇARKI ÇEVİR</button>
+                </div>`;
                 return;
             }
-
-            allTasks.filter(t => t.category === category).forEach(task => {
-                const isCompleted = userData.completedTasks.includes(task.taskId);
-                const div = document.createElement('div');
-                div.className = 'task-card';
-                div.innerHTML = `<div class="task-info"><h4>${task.title}</h4><p>+${task.reward} GEP</p></div>
-                <button class="btn-yap" ${isCompleted ? 'style="background:#238636;color:white"':''}>${isCompleted ? '✅':'YAP'}</button>`;
-                container.appendChild(div);
+            const filtered = allTasks.filter(t => t.category === category);
+            if(filtered.length === 0) { container.innerHTML = `<p style="text-align:center; color:#8b949e; margin-top:20px;">Yakında...</p>`; return; }
+            filtered.forEach(t => {
+                const isC = userData.completedTasks.includes(t.taskId);
+                container.innerHTML += `<div class="task-card"><div><h4>${t.title}</h4><p>+${t.reward} GEP</p></div><button class="btn-yap" ${isC ? 'style="background:#238636;color:white"':''}>${isC ? '✅':'YAP'}</button></div>`;
             });
         }
 
         async function startSpin() {
             const btn = document.getElementById('spin-btn');
             btn.disabled = true;
-            const res = await fetch('/api/spin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegramId: userData.telegramId })
-            });
+            const res = await fetch('/api/spin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ telegramId: userData.telegramId }) });
             const data = await res.json();
-            
-            if (data.success) {
-                const wheel = document.getElementById('main-wheel');
-                const rotation = 3600 + (data.winIndex * 60); // En az 10 tur + ödül açısı
-                wheel.style.transform = `rotate(-${rotation}deg)`;
-                
-                setTimeout(() => {
-                    tg.showAlert(`🎉 Tebrikler! ${data.reward} GEP Kazandın!`);
-                    loadData();
-                }, 4100);
-            } else {
-                tg.showAlert(data.error);
-                btn.disabled = false;
-            }
+            if(data.success) {
+                const angle = 3600 + (data.winIndex * 60);
+                document.getElementById('main-wheel').style.transform = `rotate(-${angle}deg)`;
+                setTimeout(() => { tg.showAlert(`🎉 ${data.reward} GEP kazandın!`); loadData(); }, 4100);
+            } else { tg.showAlert(data.error); btn.disabled = false; }
         }
+
+        function openWithdrawModal() { if(userData.points >= 500000) document.getElementById('withdraw-modal').style.display='flex'; else tg.showAlert("Minimum limit: 500,000 GEP"); }
+        function closeModal() { document.getElementById('withdraw-modal').style.display='none'; }
+        async function submitWithdraw() {
+            const addr = document.getElementById('wallet-addr').value;
+            if(addr.length < 20) return tg.showAlert("Geçerli cüzdan girin!");
+            await fetch('/api/withdraw', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ telegramId: userData.telegramId, walletAddress: addr, amount: userData.points }) });
+            tg.showAlert("Talep alındı!"); closeModal();
+        }
+        loadData();
+    </script>
+</body>
+</html>
 
         loadData();
     </script>
