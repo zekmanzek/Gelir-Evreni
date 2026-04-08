@@ -20,6 +20,12 @@
         .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-yap { background: #ffcc00; color: #000; padding: 8px 18px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
 
+        /* MADENCİLİK TASARIM EKLEMESİ */
+        .mining-card { background: #1c1f2e; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid #00d4ff; margin-bottom: 15px; }
+        .mining-timer { font-size: 28px; font-weight: bold; color: #00d4ff; margin: 15px 0; font-family: monospace; letter-spacing: 2px; }
+        .progress-bar { width: 100%; height: 8px; background: #2d334a; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+        .progress-fill { height: 100%; background: #00d4ff; width: 0%; transition: width 1s linear; }
+
         /* 🎡 ÇARK TASARIMI (ASLA DOKUNULMADI) 🎡 */
         .wheel-container { position: relative; width: 260px; height: 260px; margin: 20px auto; border-radius: 50%; border: 6px solid #2d334a; box-shadow: 0 0 15px rgba(0,0,0,0.5); overflow: hidden; }
         .wheel { width: 100%; height: 100%; position: relative; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); border-radius: 50%; }
@@ -68,6 +74,7 @@
         let allTasks = [];
         let activeCategory = "Topluluğumuz";
         let refLink = "";
+        let miningInterval = null; // Madencilik sayacı için
 
         async function loadData() {
             try {
@@ -99,8 +106,9 @@
 
         function renderPackages() {
             const container = document.getElementById('package-list');
-            const cats = ["Başlangıç Görevleri", "Topluluğumuz", "Airdroplar", "Şans Çarkı", "Sürpriz Görevler", "Referans Sistemi"];
-            const icons = {"Başlangıç Görevleri":"⭐", "Topluluğumuz":"👥", "Airdroplar":"🪂", "Şans Çarkı":"🎡", "Sürpriz Görevler":"🎁", "Referans Sistemi":"🔗"};
+            // GEP Madencilik kategori listesine eklendi
+            const cats = ["Başlangıç Görevleri", "Topluluğumuz", "Airdroplar", "Şans Çarkı", "GEP Madencilik", "Sürpriz Görevler", "Referans Sistemi"];
+            const icons = {"Başlangıç Görevleri":"⭐", "Topluluğumuz":"👥", "Airdroplar":"🪂", "Şans Çarkı":"🎡", "GEP Madencilik":"⛏️", "Sürpriz Görevler":"🎁", "Referans Sistemi":"🔗"};
             container.innerHTML = '';
             cats.forEach(c => {
                 const card = document.createElement('div');
@@ -115,6 +123,56 @@
             const container = document.getElementById('tasks-container');
             container.innerHTML = '';
             
+            // Başka sekmeye geçince madencilik sayacını durdur
+            if(miningInterval) clearInterval(miningInterval);
+
+            // MADENCİLİK TASARIMI
+            if (category === "GEP Madencilik") {
+                const lastClaim = userData.lastMining ? new Date(userData.lastMining).getTime() : 0;
+                const waitTime = 8 * 60 * 60 * 1000; // 8 Saat
+
+                container.innerHTML = `
+                <div class="mining-card">
+                    <h3 style="margin:0; color:#ffcc00;">GEP Madenciliği</h3>
+                    <p style="font-size:12px; color:#8b949e;">Her 8 saatte bir 100 GEP kazanırsın.</p>
+                    <div class="mining-timer" id="mining-timer-display">00:00:00</div>
+                    <div class="progress-bar"><div class="progress-fill" id="mining-progress-bar"></div></div>
+                    <button class="btn-yap" id="mining-btn" style="width:100%; height:50px;" onclick="claimMining()">TOPLA</button>
+                </div>`;
+
+                const updateUI = () => {
+                    const now = Date.now();
+                    const diff = now - lastClaim;
+                    const timerText = document.getElementById('mining-timer-display');
+                    const progress = document.getElementById('mining-progress-bar');
+                    const btn = document.getElementById('mining-btn');
+
+                    if (diff >= waitTime) {
+                        timerText.innerText = "HAZIR!";
+                        timerText.style.color = "#238636";
+                        progress.style.width = "100%";
+                        btn.disabled = false;
+                        btn.innerText = "100 GEP TOPLA";
+                        btn.style.background = "#238636";
+                        btn.style.color = "white";
+                    } else {
+                        const remaining = waitTime - diff;
+                        const h = Math.floor(remaining / 3600000);
+                        const m = Math.floor((remaining % 3600000) / 60000);
+                        const s = Math.floor((remaining % 60000) / 1000);
+                        timerText.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                        progress.style.width = `${(diff / waitTime) * 100}%`;
+                        btn.disabled = true;
+                        btn.innerText = "KAZILIYOR...";
+                        btn.style.background = "#2d334a";
+                        btn.style.color = "#8b949e";
+                    }
+                };
+                updateUI();
+                miningInterval = setInterval(updateUI, 1000);
+                return;
+            }
+
             // ÇARK (DOKUNULMADI)
             if (category === "Şans Çarkı") {
                 container.innerHTML = `
@@ -146,7 +204,6 @@
 
             const filtered = allTasks.filter(t => t.category === category);
             
-            // BOŞ PAKET UYARISI
             if(filtered.length === 0) { 
                 container.innerHTML = `<p style="text-align:center; color:#8b949e; margin-top:40px;">Henüz görev bulunmuyor.</p>`; 
                 return; 
@@ -166,6 +223,21 @@
                     </button>`;
                 container.appendChild(div);
             });
+        }
+
+        async function claimMining() {
+            try {
+                const res = await fetch('/api/mining/claim', { 
+                    method: 'POST', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify({ telegramId: userData.telegramId }) 
+                });
+                const data = await res.json();
+                if(data.success) {
+                    tg.showAlert("🎉 100 GEP Toplandı!");
+                    loadData(); // Bakiyeyi ve süreleri yenile
+                } else { tg.showAlert(data.error); }
+            } catch (e) { tg.showAlert("Hata oluştu."); }
         }
 
         function goTask(url) {
