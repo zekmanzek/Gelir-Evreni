@@ -17,10 +17,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// ─── VERİTABANI BAĞLANTISI ────────────────────────────────────────────────────
+// ─── VERİTABANI VE MODELLER ───────────────────────────────────────────────────
 mongoose.connect(MONGO_URI).then(() => {
     console.log("✅ MongoDB Bağlantısı Başarılı");
-    seedTasks(); // Görevleri her başlangıçta kontrol et/ekle
+    seedTasks(); 
 });
 
 const userSchema = new mongoose.Schema({
@@ -38,17 +38,23 @@ const taskSchema = new mongoose.Schema({
   title: String,
   reward: Number,
   target: String,
-  category: String,
+  category: { type: String, default: "Genel" }, // Boş kalmaması için varsayılan değer
   isActive: { type: Boolean, default: true }
 });
 
 const User = mongoose.model("User", userSchema);
 const Task = mongoose.model("Task", taskSchema);
 
-// ─── GÖREVLERİ YAPILANDIRMA (PAKET SİSTEMİ) ──────────────────────────────────
+// ─── GÖREV PAKETLERİNİ DÜZENLEME ──────────────────────────────────────────────
 const seedTasks = async () => {
+  // Önce kategorisi "undefined" veya boş olan eski görevleri "Sistem Görevleri" yap
+  await Task.updateMany(
+    { $or: [{ category: { $exists: false } }, { category: "" }, { category: null }] },
+    { $set: { category: "Başlangıç Görevleri" } }
+  );
+
   const tasks = [
-    // --- TOPLULUĞUMUZ (100 GEP) ---
+    // --- TOPLULUĞUMUZ PAKETİ ---
     { taskId: "tg_proje", title: "Gelir Evreni Proje Katıl", reward: 100, target: "https://t.me/gelirevreniproje", category: "Topluluğumuz" },
     { taskId: "tg_evreni", title: "Gelir Evreni Katıl", reward: 100, target: "https://t.me/gelirevreni", category: "Topluluğumuz" },
     { taskId: "tg_tayfa_alt", title: "Kripto Tayfa Duyuru", reward: 100, target: "https://t.me/kripto_tayfa", category: "Topluluğumuz" },
@@ -56,20 +62,20 @@ const seedTasks = async () => {
     { taskId: "tg_ref", title: "Referans Linkim Katıl", reward: 100, target: "https://t.me/referanslinkim", category: "Topluluğumuz" },
     { taskId: "x_tayfa", title: "Kripto Tayfa X Takip", reward: 100, target: "https://x.com/kriptotayfa", category: "Topluluğumuz" },
 
-    // --- AİRDROPLAR (YAKINDA) ---
-    { taskId: "airdrop_soon", title: "Yeni Airdroplar (Yakında)", reward: 0, target: "#", category: "Airdroplar", isActive: false },
+    // --- AİRDROPLAR PAKETİ ---
+    { taskId: "airdrop_soon", title: "Yakında...", reward: 0, target: "#", category: "Airdroplar", isActive: true },
 
-    // --- SÜRPRİZ GÖREVLER (YAKINDA) ---
-    { taskId: "surprise_soon", title: "Sürpriz Görevler (Yakında)", reward: 0, target: "#", category: "Sürpriz Görevler", isActive: false }
+    // --- SÜRPRİZ GÖREVLER PAKETİ ---
+    { taskId: "surprise_soon", title: "Yakında...", reward: 0, target: "#", category: "Sürpriz Görevler", isActive: true }
   ];
 
   for (const t of tasks) {
     await Task.findOneAndUpdate({ taskId: t.taskId }, t, { upsert: true });
   }
-  console.log("✅ Görev Paketleri Güncellendi");
+  console.log("✅ Görev paketleri ve kategoriler temizlendi.");
 };
 
-// ─── TELEGRAM BOT ─────────────────────────────────────────────────────────────
+// ─── BOT VE API DİĞER KISIMLAR (AYNI KALACAK) ─────────────────────────────────
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 bot.onText(/\/start/, async (msg) => {
@@ -84,65 +90,62 @@ bot.onText(/\/start/, async (msg) => {
         inviteCode: crypto.randomBytes(3).toString('hex').toUpperCase()
       });
     }
-    bot.sendMessage(msg.chat.id, `🌟 *Gelir Evreni'ne Hoş Geldin!* \n\nTopluluğumuza katıl, görevleri yap ve GEP kazan!`, {
+    bot.sendMessage(msg.chat.id, `🌟 *Gelir Evreni'ne Hoş Geldin!*`, {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: APP_URL } }]] }
     });
-  } catch (err) { console.log("Start Hatası:", err); }
+  } catch (err) { console.log(err); }
 });
 
-// ─── API ROUTES ───────────────────────────────────────────────────────────────
-
 app.post("/api/user/auth", async (req, res) => {
-  try {
-    const { initData } = req.body;
-    const params = new URLSearchParams(initData);
-    const tgUser = JSON.parse(params.get("user"));
-    const telegramId = String(tgUser.id);
-
-    let user = await User.findOne({ telegramId });
-    if (!user) {
-        user = await User.create({ 
-          telegramId, 
-          firstName: tgUser.first_name, 
-          username: tgUser.username, 
-          inviteCode: crypto.randomBytes(3).toString('hex').toUpperCase() 
-        });
-    }
-
-    // 1 Saatlik Otomatik Puan Onayı
-    const now = new Date();
-    let updated = false;
-    if (user.pendingTasks && user.pendingTasks.length > 0) {
-        const stillPending = [];
-        for (const pTask of user.pendingTasks) {
-            if (now - new Date(pTask.clickedAt) >= 3600000) { 
-                const task = await Task.findOne({ taskId: pTask.taskId });
-                if (task && !user.completedTasks.includes(pTask.taskId)) {
-                    user.points += task.reward;
-                    user.completedTasks.push(pTask.taskId);
-                    updated = true;
-                }
-            } else { stillPending.push(pTask); }
-        }
-        user.pendingTasks = stillPending;
-        if (updated) await user.save();
-    }
-    res.json({ success: true, user });
-  } catch (err) { res.status(500).json({ error: "Auth hatası" }); }
+    try {
+      const { initData } = req.body;
+      const params = new URLSearchParams(initData);
+      const tgUser = JSON.parse(params.get("user"));
+      const telegramId = String(tgUser.id);
+  
+      let user = await User.findOne({ telegramId });
+      if (!user) {
+          user = await User.create({ 
+            telegramId, 
+            firstName: tgUser.first_name, 
+            username: tgUser.username, 
+            inviteCode: crypto.randomBytes(3).toString('hex').toUpperCase() 
+          });
+      }
+  
+      const now = new Date();
+      let updated = false;
+      if (user.pendingTasks && user.pendingTasks.length > 0) {
+          const stillPending = [];
+          for (const pTask of user.pendingTasks) {
+              if (now - new Date(pTask.clickedAt) >= 3600000) { 
+                  const task = await Task.findOne({ taskId: pTask.taskId });
+                  if (task && !user.completedTasks.includes(pTask.taskId)) {
+                      user.points += task.reward;
+                      user.completedTasks.push(pTask.taskId);
+                      updated = true;
+                  }
+              } else { stillPending.push(pTask); }
+          }
+          user.pendingTasks = stillPending;
+          if (updated) await user.save();
+      }
+      res.json({ success: true, user });
+    } catch (err) { res.status(500).json({ error: "Auth hatası" }); }
 });
 
 app.post("/api/tasks/start", async (req, res) => {
-  try {
-    const { telegramId, taskId } = req.body;
-    const user = await User.findOne({ telegramId });
-    if (user && !user.completedTasks.includes(taskId) && !user.pendingTasks.find(t => t.taskId === taskId)) {
-      user.pendingTasks.push({ taskId, clickedAt: new Date() });
-      await user.save();
-      return res.json({ success: true });
-    }
-    res.status(400).json({ error: "Zaten yapılıyor" });
-  } catch (err) { res.status(500).json({ error: "Hata" }); }
+    try {
+      const { telegramId, taskId } = req.body;
+      const user = await User.findOne({ telegramId });
+      if (user && !user.completedTasks.includes(taskId) && !user.pendingTasks.find(t => t.taskId === taskId)) {
+        user.pendingTasks.push({ taskId, clickedAt: new Date() });
+        await user.save();
+        return res.json({ success: true });
+      }
+      res.status(400).json({ error: "Zaten yapılıyor" });
+    } catch (err) { res.status(500).json({ error: "Hata" }); }
 });
 
 app.get("/api/tasks", async (req, res) => {
