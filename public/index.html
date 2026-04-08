@@ -10,6 +10,11 @@
         .stats-card { background: linear-gradient(135deg, #1c1f2e, #111420); padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; border: 1px solid #2d334a; }
         .points-val { font-size: 32px; font-weight: 800; color: #ffcc00; margin: 5px 0; }
         
+        /* Çekim Butonu */
+        .withdraw-btn { width: 100%; padding: 12px; border-radius: 12px; border: none; font-weight: bold; margin-top: 10px; cursor: pointer; transition: 0.3s; }
+        .withdraw-active { background: #00d4ff; color: #000; box-shadow: 0 0 15px rgba(0, 212, 255, 0.4); }
+        .withdraw-passive { background: #2d334a; color: #8b949e; cursor: not-allowed; }
+
         .package-wrapper { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
         .package-wrapper::-webkit-scrollbar { display: none; }
         .package-card { min-width: 100px; background: #1c1f2e; border: 2px solid #2d334a; border-radius: 15px; padding: 12px; text-align: center; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
@@ -24,6 +29,11 @@
         .btn-yap { background: #ffcc00; color: #000; }
         .btn-bekle { background: #30363d; color: #8b949e; cursor: not-allowed; }
         .btn-tamam { background: #238636; color: white; }
+
+        /* Modal Stili */
+        #withdraw-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #1c1f2e; padding: 25px; border-radius: 20px; width: 80%; text-align: center; border: 1px solid #2d334a; }
+        .modal-content input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #30363d; background: #0b0e14; color: white; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -31,13 +41,23 @@
     <div class="stats-card">
         <div style="font-size: 11px; color: #8b949e;">GEP BAKİYE</div>
         <div class="points-val" id="user-points">0</div>
-        <div style="font-size: 12px; color: #00d4ff;" id="usd-val">≈ 0.00 USDT</div>
+        <div style="font-size: 12px; color: #00d4ff; margin-bottom: 10px;" id="usd-val">≈ 0.00 USDT</div>
+        <button id="main-withdraw-btn" class="withdraw-btn withdraw-passive" onclick="openWithdrawModal()">💸 Para Çekme Talebi</button>
     </div>
 
     <div class="package-wrapper" id="package-list"></div>
-
     <div style="font-size: 14px; color: #8b949e; margin-bottom: 15px; font-weight: bold;" id="cat-name">Yükleniyor...</div>
     <div id="tasks-container"></div>
+
+    <div id="withdraw-modal">
+        <div class="modal-content">
+            <h3 style="margin:0;">Para Çekme</h3>
+            <p style="font-size: 12px; color: #8b949e;">Minimum 500,000 GEP gereklidir. USDT BEP-20 adresinizi girin.</p>
+            <input type="text" id="wallet-addr" placeholder="0x...">
+            <button class="btn btn-yap" style="width:100%; margin-bottom:10px;" onclick="submitWithdraw()">TALEBİ GÖNDER</button>
+            <button class="btn" style="background:transparent; color:#8b949e;" onclick="closeModal()">İptal</button>
+        </div>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -49,23 +69,60 @@
             const response = await fetch('/api/user/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ initData: tg.initData }) });
             const data = await response.json();
             userData = data.user;
+            
             document.getElementById('user-points').innerText = userData.points.toLocaleString();
             document.getElementById('usd-val').innerText = `≈ ${(userData.points / 10000).toFixed(2)} USDT`;
+
+            // Çekim butonu kontrolü
+            const wBtn = document.getElementById('main-withdraw-btn');
+            if(userData.points >= 500000) {
+                wBtn.className = "withdraw-btn withdraw-active";
+                wBtn.disabled = false;
+            } else {
+                wBtn.className = "withdraw-btn withdraw-passive";
+                wBtn.disabled = true;
+            }
 
             const taskRes = await fetch('/api/tasks');
             const taskData = await taskRes.json();
             allTasks = taskData.tasks;
-            
             renderPackages();
             renderTasks(activeCategory);
         }
 
+        function openWithdrawModal() {
+            if(userData.points < 500000) return;
+            document.getElementById('withdraw-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('withdraw-modal').style.display = 'none';
+        }
+
+        async function submitWithdraw() {
+            const addr = document.getElementById('wallet-addr').value;
+            if(addr.length < 10) { alert("Geçerli bir cüzdan adresi girin!"); return; }
+
+            const res = await fetch('/api/withdraw', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    telegramId: userData.telegramId,
+                    walletAddress: addr,
+                    amount: userData.points
+                })
+            });
+            const result = await res.json();
+            if(result.success) {
+                alert("Talebiniz Mehmet Bey'e iletildi. Kontrollerden sonra ödemeniz yapılacaktır.");
+                closeModal();
+            }
+        }
+
         function renderPackages() {
             const container = document.getElementById('package-list');
-            // Paket sırasını manuel sabitliyoruz ki Başlangıç en başta kalsın
             const order = ["Başlangıç Görevleri", "Topluluğumuz", "Airdroplar", "Sürpriz Görevler"];
             const icons = {"Başlangıç Görevleri": "⭐", "Topluluğumuz": "👥", "Airdroplar": "🪂", "Sürpriz Görevler": "🎁"};
-            
             container.innerHTML = '';
             order.forEach(cat => {
                 const card = document.createElement('div');
@@ -80,9 +137,7 @@
             document.getElementById('cat-name').innerText = category;
             const container = document.getElementById('tasks-container');
             container.innerHTML = '';
-            const filtered = allTasks.filter(t => t.category === category);
-            
-            filtered.forEach(task => {
+            allTasks.filter(t => t.category === category).forEach(task => {
                 const isCompleted = userData.completedTasks.includes(task.taskId);
                 const isPending = userData.pendingTasks.find(p => p.taskId === task.taskId);
                 const div = document.createElement('div');
@@ -97,7 +152,7 @@
 
         async function doTask(taskId, url) {
             if(url === "#") return;
-            await fetch('/api/tasks/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telegramId: tg.initDataUnsafe.user.id.toString(), taskId }) });
+            await fetch('/api/tasks/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telegramId: userData.telegramId, taskId }) });
             window.open(url, '_blank');
             setTimeout(loadData, 1000);
         }
