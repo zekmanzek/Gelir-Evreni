@@ -20,13 +20,11 @@
         .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-yap { background: #ffcc00; color: #000; padding: 8px 18px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
 
-        /* MADENCİLİK TASARIM EKLEMESİ */
         .mining-card { background: #1c1f2e; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid #00d4ff; margin-bottom: 15px; }
         .mining-timer { font-size: 28px; font-weight: bold; color: #00d4ff; margin: 15px 0; font-family: monospace; letter-spacing: 2px; }
         .progress-bar { width: 100%; height: 8px; background: #2d334a; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
         .progress-fill { height: 100%; background: #00d4ff; width: 0%; transition: width 1s linear; }
 
-        /* 🎡 ÇARK TASARIMI (ASLA DOKUNULMADI) 🎡 */
         .wheel-container { position: relative; width: 260px; height: 260px; margin: 20px auto; border-radius: 50%; border: 6px solid #2d334a; box-shadow: 0 0 15px rgba(0,0,0,0.5); overflow: hidden; }
         .wheel { width: 100%; height: 100%; position: relative; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); border-radius: 50%; }
         .wheel-pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #ffcc00; z-index: 100; }
@@ -74,7 +72,7 @@
         let allTasks = [];
         let activeCategory = "Topluluğumuz";
         let refLink = "";
-        let miningInterval = null; // Madencilik sayacı için
+        let miningInterval = null;
 
         async function loadData() {
             try {
@@ -106,7 +104,6 @@
 
         function renderPackages() {
             const container = document.getElementById('package-list');
-            // GEP Madencilik kategori listesine eklendi
             const cats = ["Başlangıç Görevleri", "Topluluğumuz", "Airdroplar", "Şans Çarkı", "GEP Madencilik", "Sürpriz Görevler", "Referans Sistemi"];
             const icons = {"Başlangıç Görevleri":"⭐", "Topluluğumuz":"👥", "Airdroplar":"🪂", "Şans Çarkı":"🎡", "GEP Madencilik":"⛏️", "Sürpriz Görevler":"🎁", "Referans Sistemi":"🔗"};
             container.innerHTML = '';
@@ -122,15 +119,12 @@
         function renderTasks(category) {
             const container = document.getElementById('tasks-container');
             container.innerHTML = '';
-            
-            // Başka sekmeye geçince madencilik sayacını durdur
             if(miningInterval) clearInterval(miningInterval);
 
-            // MADENCİLİK TASARIMI
+            // MADENCİLİK (⛏️)
             if (category === "GEP Madencilik") {
                 const lastClaim = userData.lastMining ? new Date(userData.lastMining).getTime() : 0;
-                const waitTime = 8 * 60 * 60 * 1000; // 8 Saat
-
+                const waitTime = 8 * 60 * 60 * 1000;
                 container.innerHTML = `
                 <div class="mining-card">
                     <h3 style="margin:0; color:#ffcc00;">GEP Madenciliği</h3>
@@ -139,22 +133,19 @@
                     <div class="progress-bar"><div class="progress-fill" id="mining-progress-bar"></div></div>
                     <button class="btn-yap" id="mining-btn" style="width:100%; height:50px;" onclick="claimMining()">TOPLA</button>
                 </div>`;
-
                 const updateUI = () => {
                     const now = Date.now();
                     const diff = now - lastClaim;
                     const timerText = document.getElementById('mining-timer-display');
                     const progress = document.getElementById('mining-progress-bar');
                     const btn = document.getElementById('mining-btn');
-
                     if (diff >= waitTime) {
                         timerText.innerText = "HAZIR!";
                         timerText.style.color = "#238636";
                         progress.style.width = "100%";
                         btn.disabled = false;
                         btn.innerText = "100 GEP TOPLA";
-                        btn.style.background = "#238636";
-                        btn.style.color = "white";
+                        btn.style.background = "#238636"; btn.style.color = "white";
                     } else {
                         const remaining = waitTime - diff;
                         const h = Math.floor(remaining / 3600000);
@@ -164,8 +155,7 @@
                         progress.style.width = `${(diff / waitTime) * 100}%`;
                         btn.disabled = true;
                         btn.innerText = "KAZILIYOR...";
-                        btn.style.background = "#2d334a";
-                        btn.style.color = "#8b949e";
+                        btn.style.background = "#2d334a"; btn.style.color = "#8b949e";
                     }
                 };
                 updateUI();
@@ -173,7 +163,7 @@
                 return;
             }
 
-            // ÇARK (DOKUNULMADI)
+            // ÇARK (🎡)
             if (category === "Şans Çarkı") {
                 container.innerHTML = `
                 <div style="text-align:center;">
@@ -185,29 +175,25 @@
                         </div>
                     </div>
                     <button class="btn-yap" style="width:100%; padding:15px;" id="spin-btn" onclick="startSpin()">ÇARKI ÇEVİR</button>
-                    <p style="font-size: 12px; color: #8b949e; margin-top: 10px;">Her gün bir kez şansını dene!</p>
+                    <p style="font-size: 12px; color: #8b949e; margin-top: 10px;">Günde 1 kez şansını dene!</p>
                 </div>`;
                 return;
             }
 
-            // REFERANS SAYFASI
+            // REF (🔗)
             if (category === "Referans Sistemi") {
                 container.innerHTML = `
                 <div style="text-align:center; padding:20px; background:#1c1f2e; border-radius:20px; border:1px solid #2d334a;">
                     <h3 style="color:#ffcc00; margin-top:0;">🔗 Arkadaş Davet Et</h3>
-                    <p style="font-size:13px; color:#8b949e;">Davet ettiğin her kişi için ödül kazan!</p>
                     <input type="text" readonly value="${refLink}" style="width:100%; padding:12px; border-radius:10px; background:#0b0e14; color:#00d4ff; border:1px solid #30363d; text-align:center; margin-bottom:15px;">
                     <button class="btn-yap" style="width:100%;" onclick="copyRef()">LİNKİ KOPYALA</button>
                 </div>`;
                 return;
             }
 
+            // GÖREVLER (LISTE)
             const filtered = allTasks.filter(t => t.category === category);
-            
-            if(filtered.length === 0) { 
-                container.innerHTML = `<p style="text-align:center; color:#8b949e; margin-top:40px;">Henüz görev bulunmuyor.</p>`; 
-                return; 
-            }
+            if(filtered.length === 0) { container.innerHTML = `<p style="text-align:center; color:#8b949e; margin-top:40px;">Görev bulunmuyor.</p>`; return; }
 
             filtered.forEach(t => {
                 const isC = userData.completedTasks.includes(t.taskId);
@@ -218,76 +204,73 @@
                         <h4 style="margin:0;">${t.title}</h4>
                         <p style="margin:5px 0 0; color:#ffcc00; font-size:13px;">+${t.reward} GEP</p>
                     </div>
-                    <button class="btn-yap" onclick="goTask('${t.target}')" ${isC ? 'style="background:#238636;color:white"':''}>
+                    <button class="btn-yap" id="btn-${t.taskId}" onclick="goTask('${t.taskId}', '${t.target}')" ${isC ? 'style="background:#238636;color:white"':''}>
                         ${isC ? '✅' : 'YAP'}
                     </button>`;
                 container.appendChild(div);
             });
         }
 
-        async function claimMining() {
+        // --- EN KRİTİK FONKSİYON: GÖREV ONAYLAMA ---
+        async function goTask(taskId, url) {
+            if(!url || url === "#") return;
+            
+            // Linki yeni sekmede aç
+            tg.openLink(url);
+            
+            // Butonu "Bekliyor" durumuna getir
+            const btn = document.getElementById(`btn-${taskId}`);
+            if(btn.innerText === "✅") return; 
+
+            // Arka planda sunucuya "yaptım" de
             try {
-                const res = await fetch('/api/mining/claim', { 
-                    method: 'POST', 
-                    headers: {'Content-Type':'application/json'}, 
-                    body: JSON.stringify({ telegramId: userData.telegramId }) 
+                const res = await fetch('/api/tasks/complete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ telegramId: userData.telegramId, taskId: taskId })
                 });
                 const data = await res.json();
                 if(data.success) {
-                    tg.showAlert("🎉 100 GEP Toplandı!");
-                    loadData(); // Bakiyeyi ve süreleri yenile
-                } else { tg.showAlert(data.error); }
+                    btn.innerText = "✅";
+                    btn.style.background = "#238636";
+                    btn.style.color = "white";
+                    loadData(); // Bakiyeyi güncelle
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function claimMining() {
+            try {
+                const res = await fetch('/api/mining/claim', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ telegramId: userData.telegramId }) });
+                const data = await res.json();
+                if(data.success) { tg.showAlert("🎉 100 GEP Toplandı!"); loadData(); }
             } catch (e) { tg.showAlert("Hata oluştu."); }
         }
 
-        function goTask(url) {
-            if(url && url !== "#") tg.openLink(url);
-        }
-
-        function copyRef() {
-            navigator.clipboard.writeText(refLink);
-            tg.showAlert("Referans linkin kopyalandı!");
-        }
+        function copyRef() { navigator.clipboard.writeText(refLink); tg.showAlert("Kopyalandı!"); }
 
         async function startSpin() {
             const btn = document.getElementById('spin-btn');
             if (btn.disabled) return;
             btn.disabled = true;
             try {
-                const res = await fetch('/api/spin', { 
-                    method: 'POST', 
-                    headers: {'Content-Type':'application/json'}, 
-                    body: JSON.stringify({ telegramId: userData.telegramId }) 
-                });
+                const res = await fetch('/api/spin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ telegramId: userData.telegramId }) });
                 const data = await res.json();
                 if(data.success) {
                     const angle = 3600 + (data.winIndex * 60);
                     document.getElementById('main-wheel').style.transform = `rotate(-${angle}deg)`;
-                    setTimeout(() => { 
-                        tg.showAlert(`🎉 Tebrikler! ${data.reward} GEP kazandın!`); 
-                        loadData(); 
-                    }, 4100);
+                    setTimeout(() => { tg.showAlert(`🎉 ${data.reward} GEP kazandın!`); loadData(); }, 4100);
                 } else { tg.showAlert(data.error); btn.disabled = false; }
-            } catch (e) { tg.showAlert("Bir hata oluştu."); btn.disabled = false; }
+            } catch (e) { tg.showAlert("Hata!"); btn.disabled = false; }
         }
 
-        function openWithdrawModal() { 
-            if(userData.points >= 500000) document.getElementById('withdraw-modal').style.display='flex'; 
-            else tg.showAlert("Minimum limit: 500,000 GEP"); 
-        }
-
+        function openWithdrawModal() { if(userData.points >= 500000) document.getElementById('withdraw-modal').style.display='flex'; else tg.showAlert("Minimum limit: 500.000 GEP"); }
         function closeModal() { document.getElementById('withdraw-modal').style.display='none'; }
-
         async function submitWithdraw() {
             const addr = document.getElementById('wallet-addr').value;
-            if(addr.length < 20) return tg.showAlert("Geçerli bir cüzdan adresi girin!");
-            await fetch('/api/withdraw', { 
-                method: 'POST', 
-                headers: {'Content-Type':'application/json'}, 
-                body: JSON.stringify({ telegramId: userData.telegramId, walletAddress: addr, amount: userData.points }) 
-            });
-            tg.showAlert("Çekim talebiniz başarıyla alındı!"); 
-            closeModal();
+            if(addr.length < 20) return tg.showAlert("Geçerli adres girin!");
+            await fetch('/api/withdraw', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ telegramId: userData.telegramId, walletAddress: addr, amount: userData.points }) });
+            tg.showAlert("Talep alındı!"); closeModal();
         }
 
         loadData();
