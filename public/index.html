@@ -6,208 +6,97 @@
     <title>Gelir Evreni</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; background-color: #0b0e14; color: white; margin: 0; padding: 15px; overflow-x: hidden; }
-        .stats-card { background: linear-gradient(135deg, #1c1f2e, #111420); padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; border: 1px solid #2d334a; }
-        .points-val { font-size: 32px; font-weight: 800; color: #ffcc00; margin: 5px 0; }
-        .withdraw-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; margin-top: 10px; cursor: pointer; transition: 0.3s; }
-        .withdraw-active { background: #238636; color: white; box-shadow: 0 4px 15px rgba(35, 134, 54, 0.3); }
-        .withdraw-passive { background: #2d334a; color: #8b949e; opacity: 0.6; cursor: not-allowed; }
-
-        .package-wrapper { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
-        .package-card { min-width: 90px; background: #1c1f2e; border: 2px solid #2d334a; border-radius: 15px; padding: 10px; text-align: center; cursor: pointer; flex-shrink: 0; }
-        .package-card.active { border-color: #00d4ff; background: #162a3d; }
-        
+        body { font-family: -apple-system, sans-serif; background-color: #0b0e14; color: white; margin: 0; padding: 15px; }
+        .stats-card { background: #1c1f2e; padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; border: 1px solid #2d334a; }
+        .points-val { font-size: 32px; font-weight: 800; color: #ffcc00; }
+        .withdraw-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; }
+        .withdraw-active { background: #238636; color: white; }
+        .withdraw-passive { background: #2d334a; color: #8b949e; opacity: 0.6; }
+        .package-wrapper { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
+        .package-card { min-width: 90px; background: #1c1f2e; border: 2px solid #2d334a; border-radius: 15px; padding: 10px; text-align: center; }
+        .package-card.active { border-color: #00d4ff; }
         .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-yap { background: #ffcc00; color: #000; padding: 8px 18px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
-
-        .wheel-container { position: relative; width: 260px; height: 260px; margin: 20px auto; border-radius: 50%; border: 6px solid #2d334a; overflow: hidden; }
+        .btn-yap { background: #ffcc00; color: #000; padding: 8px 18px; border-radius: 10px; border: none; font-weight: bold; }
+        .wheel-container { position: relative; width: 240px; height: 240px; margin: 20px auto; border-radius: 50%; border: 5px solid #2d334a; overflow: hidden; }
         .wheel { width: 100%; height: 100%; position: relative; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); border-radius: 50%; }
-        .wheel-pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #ffcc00; z-index: 100; }
-        
         .slice { position: absolute; width: 100%; height: 100%; transform-origin: center; display: flex; justify-content: center; clip-path: polygon(50% 50%, 40% 0, 60% 0); }
-        .slice b { margin-top: 25px; font-size: 16px; color: white; font-weight: 800; text-shadow: 1px 1px 2px black; }
-        .s1 { background: #1c1f2e; transform: rotate(0deg); }
-        .s2 { background: #00d4ff; transform: rotate(60deg); }
-        .s3 { background: #1c1f2e; transform: rotate(120deg); }
-        .s4 { background: #00d4ff; transform: rotate(180deg); }
-        .s5 { background: #1c1f2e; transform: rotate(240deg); }
-        .s6 { background: #00d4ff; transform: rotate(300deg); }
+        .slice b { margin-top: 20px; text-shadow: 1px 1px 2px black; }
+        .s1 { background: #1c1f2e; transform: rotate(0deg); } .s2 { background: #00d4ff; transform: rotate(60deg); }
+        .s3 { background: #1c1f2e; transform: rotate(120deg); } .s4 { background: #00d4ff; transform: rotate(180deg); }
+        .s5 { background: #1c1f2e; transform: rotate(240deg); } .s6 { background: #00d4ff; transform: rotate(300deg); }
     </style>
 </head>
 <body>
-
     <div class="stats-card">
-        <div style="font-size: 11px; color: #8b949e;">GEP BAKİYE</div>
+        <div style="font-size: 11px;">GEP BAKİYE</div>
         <div class="points-val" id="user-points">0</div>
-        <div style="font-size: 12px; color: #00d4ff;" id="usd-val">≈ 0.00 USDT</div>
+        <div id="usd-val">≈ 0.00 USDT</div>
         <button id="main-withdraw-btn" class="withdraw-btn withdraw-passive">💸 Para Çekme Talebi</button>
     </div>
-
     <div class="package-wrapper" id="package-list"></div>
     <div id="tasks-container"></div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Uygulamayı tam ekran yap
+        let userData, allTasks = [], activeCategory = "Topluluğumuz";
 
-        let userData = null;
-        let allTasks = [];
-        let activeCategory = "Topluluğumuz";
-
-        // 1. VERİLERİ YÜKLE
         async function loadData() {
-            try {
-                // Telegram'dan gerçek kullanıcı ID'sini alıyoruz
-                const telegramId = tg.initDataUnsafe?.user?.id.toString() || "6814040940";
-                
-                const res = await fetch('/api/user/auth', { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({ telegramId: telegramId }) 
-                });
-                
-                const data = await res.json();
-                userData = data.user;
-                
-                // Arayüzü Güncelle
-                const points = userData.points;
-                document.getElementById('user-points').innerText = points.toLocaleString();
-                document.getElementById('usd-val').innerText = `≈ ${(points / 100000).toFixed(2)} USDT`;
-                
-                // Para çekme butonu kontrolü (500.000 GEP eşiği)
-                const wBtn = document.getElementById('main-withdraw-btn');
-                if (points >= 500000) {
-                    wBtn.classList.replace('withdraw-passive', 'withdraw-active');
-                    wBtn.disabled = false;
-                } else {
-                    wBtn.classList.replace('withdraw-active', 'withdraw-passive');
-                    wBtn.disabled = true;
-                }
+            const uid = tg.initDataUnsafe?.user?.id.toString() || "6814040940";
+            const res = await fetch('/api/user/auth', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegramId: uid }) });
+            userData = (await res.json()).user;
+            document.getElementById('user-points').innerText = userData.points.toLocaleString();
+            document.getElementById('usd-val').innerText = `≈ ${(userData.points / 100000).toFixed(2)} USDT`;
+            
+            const wBtn = document.getElementById('main-withdraw-btn');
+            wBtn.className = `withdraw-btn ${userData.points >= 500000 ? 'withdraw-active' : 'withdraw-passive'}`;
 
-                // Görevleri Getir
-                const tRes = await fetch('/api/tasks');
-                const tData = await tRes.json();
-                allTasks = tData.tasks || [];
-                
-                renderPackages();
-                renderTasks(activeCategory);
-            } catch (e) { console.error("Yükleme Hatası:", e); }
+            const tRes = await fetch('/api/tasks');
+            allTasks = (await tRes.json()).tasks;
+            renderPackages(); renderTasks(activeCategory);
         }
 
-        // 2. KATEGORİLERİ ÇİZ
         function renderPackages() {
-            const container = document.getElementById('package-list');
-            const cats = ["Topluluğumuz", "Şans Çarkı", "GEP Madencilik", "Referans Sistemi"];
-            container.innerHTML = '';
+            const cats = ["Topluluğumuz", "Şans Çarkı", "GEP Madencilik"];
+            const cont = document.getElementById('package-list'); cont.innerHTML = '';
             cats.forEach(c => {
-                const card = document.createElement('div');
-                card.className = `package-card ${activeCategory === c ? 'active':''}`;
-                card.onclick = () => { activeCategory = c; renderPackages(); renderTasks(c); };
-                card.innerHTML = `<span>${c}</span>`;
-                container.appendChild(card);
+                const div = document.createElement('div');
+                div.className = `package-card ${activeCategory === c ? 'active':''}`;
+                div.onclick = () => { activeCategory = c; renderPackages(); renderTasks(c); };
+                div.innerText = c; cont.appendChild(div);
             });
         }
 
-        // 3. İÇERİĞİ ÇİZ
-        function renderTasks(category) {
-            const container = document.getElementById('tasks-container');
-            container.innerHTML = '';
-
-            if (category === "Şans Çarkı") {
-                container.innerHTML = `
-                <div style="text-align:center;">
-                    <div class="wheel-container">
-                        <div class="wheel-pointer"></div>
-                        <div class="wheel" id="main-wheel">
-                            <div class="slice s1"><b>50</b></div><div class="slice s2"><b>100</b></div><div class="slice s3"><b>150</b></div>
-                            <div class="slice s4"><b>200</b></div><div class="slice s5"><b>250</b></div><div class="slice s6"><b>500</b></div>
-                        </div>
-                    </div>
-                    <button class="btn-yap" style="width:100%; padding:15px;" id="spin-btn" onclick="startSpin()">ÇARKI ÇEVİR</button>
-                    <p style="font-size: 12px; color: #8b949e; margin-top: 10px;">Günde 1 kez çevirebilirsin!</p>
-                </div>`;
-                return;
-            }
-
-            if (category === "GEP Madencilik") {
-                container.innerHTML = `<div style="padding:20px; text-align:center; background:#1c1f2e; border-radius:15px; border:1px solid #00d4ff;">
-                    <h3 style="color:#ffcc00; margin:0;">GEP Mining</h3>
-                    <p style="color:#8b949e; font-size:14px;">Çok Yakında!</p>
-                </div>`;
-                return;
-            }
-
-            // Diğer görevler
-            const filtered = allTasks.filter(t => t.category === category);
-            if(filtered.length === 0) {
-                container.innerHTML = `<p style="text-align:center; color:#8b949e;">Bu kategoride henüz görev yok.</p>`;
-            }
-            // ... görev listeleme döngüsü buraya gelebilir
-        }
-
-        // 4. ÇARK ÇEVİRME
-        async function startSpin() {
-            const btn = document.getElementById('spin-btn');
-            if (btn.disabled) return;
-            btn.disabled = true;
-            try {
-                const res = await fetch('/api/spin', { 
-                    method: 'POST', 
-                    headers: {'Content-Type':'application/json'}, 
-                    body: JSON.stringify({ telegramId: userData.telegramId }) 
+        function renderTasks(cat) {
+            const cont = document.getElementById('tasks-container'); cont.innerHTML = '';
+            if (cat === "Şans Çarkı") {
+                cont.innerHTML = `<div style="text-align:center;"><div class="wheel-container"><div class="wheel" id="main-wheel"><div class="slice s1"><b>50</b></div><div class="slice s2"><b>100</b></div><div class="slice s3"><b>150</b></div><div class="slice s4"><b>200</b></div><div class="slice s5"><b>250</b></div><div class="slice s6"><b>500</b></div></div></div><button class="btn-yap" onclick="startSpin()">ÇEVİR</button></div>`;
+            } else if (cat === "GEP Madencilik") {
+                cont.innerHTML = `<p style="text-align:center;">Yakında!</p>`;
+            } else {
+                allTasks.filter(t => t.category === cat).forEach(t => {
+                    const isC = userData.completedTasks.includes(t.taskId);
+                    const div = document.createElement('div'); div.className = 'task-card';
+                    div.innerHTML = `<div>${t.title}<br>+${t.reward}</div><button class="btn-yap" onclick="tg.openLink('${t.target}')">${isC ? '✅':'YAP'}</button>`;
+                    cont.appendChild(div);
                 });
-                const data = await res.json();
-                if(data.success) {
-                    const angle = 3600 + (data.winIndex * 60);
-                    document.getElementById('main-wheel').style.transform = `rotate(-${angle}deg)`;
-                    setTimeout(() => { 
-                        tg.showAlert(`🎉 Tebrikler! ${data.reward} GEP kazandın!`); 
-                        loadData(); 
-                    }, 4100);
-                } else { 
-                    tg.showAlert(data.error);
-                    btn.innerText = "YARIN TEKRAR DENE";
-                }
-            } catch (e) { btn.disabled = false; }
+            }
         }
 
-        // 5. PARA ÇEKME TALEBİ (Yeni Fonksiyon)
-        document.getElementById('main-withdraw-btn').onclick = async () => {
-            if (userData.points < 500000) {
-                tg.showAlert("Ödeme talebi için en az 500.000 GEP gereklidir!");
-                return;
-            }
+        async function startSpin() {
+            const res = await fetch('/api/spin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ telegramId: userData.telegramId }) });
+            const data = await res.json();
+            if(data.success) {
+                document.getElementById('main-wheel').style.transform = `rotate(-${3600 + (data.winIndex * 60)}deg)`;
+                setTimeout(() => { tg.showAlert(`${data.reward} GEP!`); loadData(); }, 4100);
+            } else tg.showAlert(data.error);
+        }
 
-            tg.showPrompt("Lütfen USDT BEP20 cüzdan adresinizi giriniz:", async (wallet) => {
-                if (!wallet || wallet.length < 10) {
-                    tg.showAlert("Geçerli bir cüzdan adresi giriniz!");
-                    return;
-                }
-
-                try {
-                    const res = await fetch('/api/withdraw', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ 
-                            telegramId: userData.telegramId, 
-                            wallet: wallet 
-                        })
-                    });
-
-                    const data = await res.json();
-                    if(data.success) {
-                        tg.showAlert("✅ Talebin iletildi! Puanın bakiyenden düşüldü. Kontrollerden sonra ödemen yapılacaktır.");
-                        loadData(); 
-                    } else {
-                        tg.showAlert("❌ Hata: " + data.error);
-                    }
-                } catch (e) {
-                    tg.showAlert("Bir bağlantı hatası oluştu.");
-                }
-            });
+        document.getElementById('main-withdraw-btn').onclick = () => {
+            if(userData.points < 500000) return tg.showAlert("Min 500k GEP!");
+            const wallet = prompt("USDT BEP20 Adresi:");
+            if(wallet) fetch('/api/withdraw', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ telegramId: userData.telegramId, wallet }) }).then(() => loadData());
         };
 
-        // Başlat
         loadData();
     </script>
 </body>
