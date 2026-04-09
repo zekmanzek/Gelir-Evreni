@@ -1,96 +1,103 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gelir Evreni - Premium</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;800&display=swap" rel="stylesheet">
-  <style>
-    body { font-family:'Urbanist',sans-serif; background:#020617; color:#f8fafc; margin:0; padding:20px; }
-    .profile-card, .points-card, .leaderboard, .sponsor-banner {
-      background:rgba(15,23,42,0.85); border-radius:12px; padding:15px; margin-bottom:20px;
-    }
-    .profile-card { display:flex; align-items:center; }
-    .profile-card img { width:50px; height:50px; border-radius:50%; margin-right:15px; }
-    .points-card { text-align:center; }
-    .btn { background:#00d4ff; border:none; border-radius:8px; padding:10px 20px; color:#020617; font-weight:600; cursor:pointer; margin-top:10px; }
-    .leaderboard h3 { margin:0 0 10px; }
-    .leaderboard ul { list-style:none; padding:0; margin:0; }
-    .leaderboard li { padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.1); }
-    .sponsor-banner { text-align:center; color:#ffcc00; font-weight:600; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gelir Evreni</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-color: #020617; --card-bg: rgba(15, 23, 42, 0.85); --accent-gold: #ffcc00; --accent-cyan: #00d4ff; --text-main: #f8fafc; --text-dim: #94a3b8; }
+        body { font-family: 'Urbanist', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; min-height: 100vh; }
+        .stats-card { background: var(--card-bg); padding: 30px 20px; border-radius: 28px; text-align: center; margin-bottom: 25px; border: 1px solid rgba(255, 204, 0, 0.2); }
+        .points-val { font-size: 48px; font-weight: 800; color: var(--accent-gold); margin: 5px 0; }
+        .withdraw-btn { width: 100%; padding: 16px; border-radius: 18px; border: none; font-weight: 800; margin-top: 20px; cursor: pointer; }
+        .withdraw-active { background: var(--accent-gold); color: #000; }
+        .withdraw-passive { background: #1e293b; color: var(--text-dim); opacity: 0.5; cursor: not-allowed; }
+        .task-card { background: var(--card-bg); padding: 20px; border-radius: 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); }
+        .btn-yap { background: var(--accent-gold); color: #000; padding: 10px 20px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; }
+        .btn-yap:disabled { background: #1e293b; color: #475569; cursor: not-allowed; }
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg-color); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    </style>
 </head>
 <body>
-  <div class="profile-card">
-    <img src="https://via.placeholder.com/50" alt="Avatar">
-    <div>
-      <div id="user-name">Kullanıcı</div>
-      <div id="user-id" style="color:#94a3b8;font-size:12px;">ID: ...</div>
+    <div id="loader"><h2 style="color:var(--accent-gold)">GELİR EVRENİ...</h2></div>
+    <div class="stats-card">
+        <div style="font-size: 12px; letter-spacing: 2px; color: var(--text-dim)">TOPLAM GEP BAKİYESİ</div>
+        <div class="points-val" id="user-points">0</div>
+        <div id="usd-val" style="color: var(--accent-cyan); font-weight: 600;">≈ 0.00 USDT</div>
+        <button id="withdraw-btn" class="withdraw-btn withdraw-passive">💸 ÖDEME TALEBİ OLUŞTUR</button>
     </div>
-  </div>
+    <div id="tasks"></div>
 
-  <div class="points-card">
-    <div style="font-size:13px; color:#94a3b8;">GEP Balance</div>
-    <div id="user-points" style="font-size:28px; font-weight:800;">0</div>
-    <div id="usd-val" style="color:#00d4ff; font-weight:600;">≈ 0.00 USDT</div>
-    <button id="withdraw-btn" class="btn">💸 Withdrawal Request</button>
-  </div>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const API_BASE = window.location.origin;
+        let user, tasks = [];
 
-  <div id="tasks-container"></div>
+        async function init() {
+            try {
+                const uid = tg.initDataUnsafe?.user?.id?.toString() || "6814040940";
+                const res = await fetch(`${API_BASE}/api/user/auth`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ telegramId: uid })
+                });
+                const data = await res.json();
+                user = data.user;
+                updateUI();
+                const tRes = await fetch(`${API_BASE}/api/tasks`);
+                const tData = await tRes.json();
+                tasks = tData.tasks;
+                renderTasks();
+                document.getElementById('loader').style.display = 'none';
+            } catch (e) { console.error("Hata:", e); }
+        }
 
-  <div class="leaderboard">
-    <h3>🏆 Leaderboard</h3>
-    <ul id="leaderboard-list"><li>Yükleniyor...</li></ul>
-  </div>
+        function updateUI() {
+            document.getElementById('user-points').innerText = user.points.toLocaleString();
+            document.getElementById('usd-val').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`;
+            const wBtn = document.getElementById('withdraw-btn');
+            wBtn.className = `withdraw-btn ${user.points >= 500000 ? 'withdraw-active' : 'withdraw-passive'}`;
+        }
 
-  <div class="sponsor-banner" id="sponsor-banner">
-    🔥 Sponsor Alanı - Yükleniyor...
-  </div>
+        async function completeTask(tid, link) {
+            tg.openLink(link);
+            const res = await fetch(`${API_BASE}/api/tasks/complete`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ telegramId: user.telegramId, taskId: tid })
+            });
+            const data = await res.json();
+            if(data.success) { user.points = data.points; user.completedTasks.push(tid); updateUI(); renderTasks(); }
+        }
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    let userData;
+        function renderTasks() {
+            const cont = document.getElementById('tasks');
+            cont.innerHTML = '';
+            tasks.forEach(t => {
+                const done = user.completedTasks.includes(t.taskId);
+                const div = document.createElement('div');
+                div.className = 'task-card';
+                div.innerHTML = `<div><div style="font-weight:600">${t.title}</div><div style="color:var(--accent-gold); font-weight:800">+${t.reward} GEP</div></div>
+                <button class="btn-yap" ${done ? 'disabled' : ''} onclick="completeTask('${t.taskId}','${t.target}')">${done ? 'TAMAMLANDI' : 'BAŞLAT'}</button>`;
+                cont.appendChild(div);
+            });
+        }
 
-    async function loadData(){
-      const uid = tg.initDataUnsafe?.user?.id?.toString();
-      const res = await fetch('https://gelir-evreni.onrender.com/api/user/auth',{
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ telegramId: uid })
-      });
-      const data = await res.json();
-      userData = data.user;
-
-      document.getElementById('user-name').innerText = tg.initDataUnsafe?.user?.first_name || "Kullanıcı";
-      document.getElementById('user-id').innerText = "ID: " + userData.telegramId;
-      document.getElementById('user-points').innerText = userData.points.toLocaleString();
-      document.getElementById('usd-val').innerText = `≈ ${(userData.points/100000).toFixed(2)} USDT`;
-
-      // Leaderboard
-      const lbRes = await fetch('https://gelir-evreni.onrender.com/api/leaderboard');
-      const lbData = await lbRes.json();
-      const lb = document.getElementById('leaderboard-list');
-      lb.innerHTML = '';
-      lbData.leaderboard.forEach(u=>{
-        const li = document.createElement('li');
-        li.innerText = `${u.name || u.telegramId} – ${u.points.toLocaleString()} GEP`;
-        lb.appendChild(li);
-      });
-
-      // Sponsor
-      const sRes = await fetch('https://gelir-evreni.onrender.com/api/sponsors');
-      const sData = await sRes.json();
-      const sb = document.getElementById('sponsor-banner');
-      sb.innerHTML = sData.sponsors.map(s=>`${s.name}: ${s.message}`).join(" | ");
-    }
-
-    document.getElementById('withdraw-btn').onclick = ()=>{
-      if(userData.points < 500000) return tg.showAlert("Minimum 500,000 GEP gerekli.");
-      tg.showAlert("Withdrawal request gönderildi!");
-    };
-
-    loadData();
-  </script>
+        document.getElementById('withdraw-btn').onclick = () => {
+            if(user.points < 500000) return alert("Minimum 500.000 GEP gerekli.");
+            const wallet = prompt("USDT BEP20 Cüzdan Adresiniz:");
+            if(wallet) {
+                fetch(`${API_BASE}/api/withdraw`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ telegramId: user.telegramId, wallet })
+                }).then(() => alert("Talebiniz iletildi!"));
+            }
+        };
+        window.onload = init;
+    </script>
 </body>
 </html>
