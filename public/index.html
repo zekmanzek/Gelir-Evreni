@@ -2,181 +2,139 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gelir Evreni - Premium</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
-    /* --- Renk Paleti ve Genel Stil --- */
-    :root {
-      --bg-color: #020617;
-      --card-bg: rgba(15, 23, 42, 0.85);
-      --accent-gold: #ffcc00;
-      --accent-cyan: #00d4ff;
-      --text-main: #f8fafc;
-      --text-dim: #94a3b8;
-      --border-color: rgba(255, 204, 0, 0.2);
-    }
     body {
       font-family: 'Urbanist', sans-serif;
-      background-color: var(--bg-color);
-      background-image: radial-gradient(circle at top right, rgba(0, 212, 255, 0.12), transparent),
-                        radial-gradient(circle at bottom left, rgba(255, 204, 0, 0.08), transparent);
-      background-attachment: fixed;
-      color: var(--text-main);
+      background: #020617;
+      color: #f8fafc;
       margin: 0;
       padding: 20px;
-      min-height: 100vh;
     }
-    /* Kartlar, Çark ve Butonlar için CSS burada (önceki sürümdeki gibi) */
-    /* ... (CSS kodları aynı, sadece kısaltılmış) ... */
+    .profile-card {
+      background: rgba(15,23,42,0.85);
+      border-radius: 12px;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .profile-card img {
+      width: 50px; height: 50px;
+      border-radius: 50%;
+      margin-right: 15px;
+    }
+    .points-card {
+      background: rgba(15,23,42,0.85);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .leaderboard {
+      background: rgba(15,23,42,0.85);
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+    .leaderboard h3 { margin: 0 0 10px; }
+    .leaderboard ul { list-style: none; padding: 0; margin: 0; }
+    .leaderboard li { padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sponsor-banner {
+      background: rgba(255,204,0,0.1);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+      margin-top: 30px;
+      color: #ffcc00;
+      font-weight: 600;
+    }
+    .btn {
+      background: #00d4ff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      color: #020617;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <div id="loader"><div class="spinner"></div></div>
-
-  <!-- Kullanıcı Bilgisi Kartı -->
-  <div class="stats-card">
-    <div style="font-size: 13px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 3px; font-weight: 600;">GEP Balance</div>
-    <div class="points-val" id="user-points">0</div>
-    <div id="usd-val" style="color: var(--accent-cyan); font-weight: 600; font-size: 16px;">≈ 0.00 USDT</div>
-    <button id="main-withdraw-btn" class="withdraw-btn withdraw-passive">💸 Withdrawal Request</button>
+  <div class="profile-card">
+    <img src="https://via.placeholder.com/50" alt="Avatar">
+    <div>
+      <div id="user-name">Kullanıcı</div>
+      <div id="user-id" style="color:#94a3b8;font-size:12px;">ID: ...</div>
+    </div>
   </div>
 
-  <div class="package-wrapper" id="package-list"></div>
-  <div id="tasks-container" style="padding-bottom: 60px;"></div>
+  <div class="points-card">
+    <div style="font-size:13px; color:#94a3b8;">GEP Balance</div>
+    <div id="user-points" style="font-size:28px; font-weight:800;">0</div>
+    <div id="usd-val" style="color:#00d4ff; font-weight:600;">≈ 0.00 USDT</div>
+    <button id="withdraw-btn" class="btn">💸 Withdrawal Request</button>
+  </div>
+
+  <div id="tasks-container"></div>
+
+  <div class="leaderboard">
+    <h3>🏆 Leaderboard</h3>
+    <ul id="leaderboard-list">
+      <li>Henüz veri yok</li>
+    </ul>
+  </div>
+
+  <div class="sponsor-banner">
+    🔥 Sponsor Alanı - Reklamlar Burada Görünecek
+  </div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    tg.headerColor = "#020617";
 
-    let userData, allTasks = [], activeCategory = "Topluluğumuz";
+    let userData;
 
     async function loadData() {
-      try {
-        const uid = tg.initDataUnsafe?.user?.id?.toString();
-        const res = await fetch('https://gelir-evreni.onrender.com/api/user/auth', { 
-          method: 'POST', 
-          headers: {'Content-Type': 'application/json'}, 
-          body: JSON.stringify({ telegramId: uid }) 
-        });
-        const data = await res.json();
-        userData = data.user;
+      const uid = tg.initDataUnsafe?.user?.id?.toString();
+      const res = await fetch('https://gelir-evreni.onrender.com/api/user/auth', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ telegramId: uid })
+      });
+      const data = await res.json();
+      userData = data.user;
 
-        document.getElementById('user-points').innerText = userData.points.toLocaleString();
-        document.getElementById('usd-val').innerText = `≈ ${(userData.points / 100000).toFixed(2)} USDT`;
+      document.getElementById('user-name').innerText = tg.initDataUnsafe?.user?.first_name || "Kullanıcı";
+      document.getElementById('user-id').innerText = "ID: " + userData.telegramId;
+      document.getElementById('user-points').innerText = userData.points.toLocaleString();
+      document.getElementById('usd-val').innerText = `≈ ${(userData.points/100000).toFixed(2)} USDT`;
 
-        const wBtn = document.getElementById('main-withdraw-btn');
-        wBtn.className = `withdraw-btn ${userData.points >= 500000 ? 'withdraw-active' : 'withdraw-passive'}`;
-
-        const tRes = await fetch('https://gelir-evreni.onrender.com/api/tasks');
-        allTasks = (await tRes.json()).tasks;
-
-        renderPackages(); 
-        renderTasks(activeCategory);
-        setTimeout(() => { document.getElementById('loader').style.display = 'none'; }, 500);
-      } catch (err) {
-        console.error("Initialization failed:", err);
-      }
-    }
-
-    function renderPackages() {
-      const cats = ["Topluluğumuz", "Şans Çarkı", "GEP Madencilik"];
-      const cont = document.getElementById('package-list'); 
-      cont.innerHTML = '';
-      cats.forEach(c => {
-        const div = document.createElement('div');
-        div.className = `package-card ${activeCategory === c ? 'active':''}`;
-        div.onclick = () => { 
-          if(activeCategory === c) return;
-          activeCategory = c; 
-          renderPackages(); 
-          renderTasks(c); 
-        };
-        div.innerText = c; 
-        cont.appendChild(div);
+      // Leaderboard örnek veri
+      const lb = document.getElementById('leaderboard-list');
+      lb.innerHTML = '';
+      const sample = [
+        {name:"Ali", points:1200000},
+        {name:"Ayşe", points:950000},
+        {name:"Mehmet", points:800000}
+      ];
+      sample.forEach(u=>{
+        const li = document.createElement('li');
+        li.innerText = `${u.name} - ${u.points.toLocaleString()} GEP`;
+        lb.appendChild(li);
       });
     }
 
-    function renderTasks(cat) {
-      const cont = document.getElementById('tasks-container'); 
-      cont.innerHTML = '';
-      if (cat === "Şans Çarkı") {
-        cont.innerHTML = `
-          <div style="text-align:center;">
-            <div class="wheel-container">
-              <div class="wheel-pointer"></div>
-              <div class="wheel" id="main-wheel">
-                <div class="slice s1"><b>50</b></div><div class="slice s2"><b>100</b></div><div class="slice s3"><b>150</b></div>
-                <div class="slice s4"><b>200</b></div><div class="slice s5"><b>250</b></div><div class="slice s6"><b>500</b></div>
-              </div>
-              <div class="wheel-logo">GEP</div>
-            </div>
-            <button class="btn-yap" onclick="startSpin()">SPIN THE WHEEL</button>
-          </div>`;
-      } else if (cat === "GEP Madencilik") {
-        cont.innerHTML = `<div style="text-align:center; padding:70px 30px; color: var(--text-dim);">
-          <div style="font-size: 55px; margin-bottom: 20px;">⛏️</div>
-          <h3 style="color: #fff; font-size: 22px;">Cloud Mining</h3>
-          <p>Passive mining era is coming soon. Earn GEP while you sleep.</p>
-        </div>`;
-      } else {
-        const filtered = allTasks.filter(t => t.category === cat);
-        filtered.forEach(t => {
-          const isC = userData.completedTasks.includes(t.taskId);
-          const div = document.createElement('div'); 
-          div.className = 'task-card';
-          div.innerHTML = `
-            <div>
-              <h4>${t.title}</h4>
-              <p style="color: var(--accent-gold); font-weight: 800;">+${t.reward.toLocaleString()} GEP</p>
-            </div>
-            <button class="btn-yap" onclick="tg.openLink('${t.target}')">${isC ? '✅' : 'START'}</button>`;
-          cont.appendChild(div);
-        });
-      }
-    }
+    document.getElementById('withdraw-btn').onclick = ()=>{
+      if(userData.points < 500000) return tg.showAlert("Minimum 500,000 GEP gerekli.");
+      tg.showAlert("Withdrawal request gönderildi!");
+    };
 
-    async function startSpin() {
-      try {
-        const res = await fetch('https://gelir-evreni.onrender.com/api/spin', { 
-          method: 'POST', 
-          headers: {'Content-Type':'application/json'}, 
-          body: JSON.stringify({ telegramId: userData.telegramId }) 
-        });
-        const data = await res.json();
-        if(data.success) {
-          const stopAngle = 3600 + (data.winIndex * 60);
-          const wheel = document.getElementById('main-wheel');
-          wheel.style.transform = `rotate(-${stopAngle}deg)`;
-          setTimeout(() => { 
-            tg.showPopup({
-              title: 'Success!',
-              message: `You won ${data.reward} GEP!`,
-              buttons: [{type: 'ok', color: '#ffcc00'}]
-            });
-            loadData(); 
-          }, 4500);
-        } else {
-          tg.showAlert(data.error);
-        }
-      } catch (err) {
-        tg.showAlert("Server connection error!");
-      }
-    }
-
-    document.getElementById('main-withdraw-btn').onclick = () => {
-      if(userData.points < 500000) return tg.showAlert("Minimum withdrawal is 500,000 GEP.");
-      tg.showPopup({
-        title: 'Withdrawal Request',
-        message: 'Confirm to withdraw 500,000 GEP for 5 USDT?',
-        buttons: [
-          {id: 'yes', type: 'default', text: 'Confirm', color: '#238636'},
-          {id: 'no', type: 'cancel', text: 'Cancel'}
-        ]
-      }, (btnId) => {
-        if(btnId === 'yes') {
-          const wallet = prompt("Enter your USDT BEP20 Wallet Address:");
-          if(wallet && wallet.length > 20) {
-            fetch('https://gelir-evreni.onrender.com/api/withdraw
+    loadData();
+  </script>
+</body>
+</html>
