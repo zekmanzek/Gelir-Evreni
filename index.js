@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// KRİTİK: Beyaz ekranı bitiren satır. public klasörünü dışarı açar.
+// KRİTİK: Görsel arayüzün olduğu klasörü dışarı açar
 app.use(express.static(path.join(__dirname, 'public')));
 
 const token = process.env.BOT_TOKEN;
@@ -20,15 +20,15 @@ mongoose.connect(mongoURI)
   .then(() => console.log("✅ Veritabanı Bağlantısı Başarılı"))
   .catch(err => console.error("❌ Veritabanı Hatası:", err));
 
+// Kullanıcı Şeması
 const userSchema = new mongoose.Schema({
     telegramId: String,
     points: { type: Number, default: 1200 },
-    lastSpin: Date,
-    completedTasks: [String]
+    lastSpin: Date
 });
 const User = mongoose.model('User', userSchema);
 
-// PUANLARI VERİTABANINA KAYDEDEN YENİ BÖLÜM (API)
+// PUAN GÜNCELLEME API (Çark durduğunda burası çalışacak)
 app.post('/api/update-points', async (req, res) => {
     const { telegramId, points } = req.body;
     try {
@@ -39,21 +39,14 @@ app.post('/api/update-points', async (req, res) => {
         );
         res.json({ success: true, points: user.points });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        res.status(500).json({ success: false });
     }
 });
 
+// Telegram Mesajı
 bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
-    const telegramId = msg.from.id.toString();
-
-    let user = await User.findOne({ telegramId });
-    if (!user) {
-        user = new User({ telegramId, points: 1200 });
-        await user.save();
-    }
-
-    bot.sendMessage(chatId, `🚀 Gelir Evreni'ne Hoş Geldin Mehmet!\n\nSenin için dükkanın yorgunluğunu alacak sistemi kurduk. Aşağıdaki butona basarak hemen GEP toplamaya başlayabilirsin.`, {
+    bot.sendMessage(chatId, `🚀 Gelir Evreni'ne Hoş Geldin Mehmet!\n\nSistemin hazır, hemen GEP toplamaya başlayabilirsin.`, {
         reply_markup: {
             inline_keyboard: [[
                 { text: "📱 Uygulamayı Aç", web_app: { url: "https://gelir-evreni.onrender.com" } }
@@ -62,10 +55,10 @@ bot.onText(/\/start/, async (msg) => {
     });
 });
 
-// Sunucuya direkt girildiğinde de sistemi gösterir
+// Beyaz ekranı bitiren yönlendirme
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Sunucu ${PORT} portunda aktif`));
+app.listen(PORT, () => console.log(`🚀 Sunucu Aktif`));
