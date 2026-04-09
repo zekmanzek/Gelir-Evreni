@@ -6,7 +6,6 @@ const path = require("path");
 const axios = require("axios");
 
 const app = express();
-// Render için port ayarı
 const PORT = process.env.PORT || 10000;
 
 // --- AYARLAR ---
@@ -25,15 +24,14 @@ const userSchema = new mongoose.Schema({
   username: String,
   firstName: String,
   points: { type: Number, default: 0 },
-  completedTasks: [String],
-  pendingTasks: [{ taskId: String, clickedAt: { type: Date, default: Date.now } }],
+  completedTasks: [String], 
   lastSpin: { type: Date, default: null },
   lastMining: { type: Date, default: null },
-  inviteCode: { type: String, default: null } // Kilitlenmeyi önlemek için unique kaldırıldı
+  inviteCode: { type: String, default: null }
 });
 
-// Eski index hatalarını tamamen görmezden gelmek için kritik ayar
 userSchema.set('strictIndex', false); 
+const User = mongoose.model("User", userSchema);
 
 const taskSchema = new mongoose.Schema({
   taskId: { type: String, unique: true },
@@ -44,13 +42,11 @@ const taskSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true }
 });
 
-const User = mongoose.model("User", userSchema);
 const Task = mongoose.model("Task", taskSchema);
 
-// --- GÖREVLERİ OLUŞTURMA (SEED) ---
+// --- GÖREVLERİ OLUŞTURMA ---
 const seedTasks = async () => {
   try {
-    await Task.updateMany({}, { $set: { isActive: false } });
     const tasks = [
       { taskId: "tg_proje", title: "Gelir Evreni Proje Katıl", reward: 100, target: "https://t.me/gelirevreniproje", category: "Topluluğumuz" },
       { taskId: "tg_evreni", title: "Gelir Evreni Katıl", reward: 100, target: "https://t.me/gelirevreni", category: "Topluluğumuz" },
@@ -62,21 +58,10 @@ const seedTasks = async () => {
       await Task.findOneAndUpdate({ taskId: t.taskId }, { ...t, isActive: true }, { upsert: true });
     }
     console.log("✅ Görevler güncellendi.");
-  } catch (err) {
-    console.error("❌ Seed hatası:", err);
-  }
+  } catch (err) { console.error("Seed hatası:", err); }
 };
 
-// MongoDB Bağlantısı - Bağlantı kopmalarına karşı ayarlar eklendi
-mongoose.connect(MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-  .then(() => { 
-    console.log("✅ MongoDB Bağlantısı Başarılı");
-    seedTasks(); 
-  })
-  .catch(err => console.error("❌ MongoDB Bağlantı Hatası:", err));
+mongoose.connect(MONGO_URI).then(() => { seedTasks(); });
 
 // --- BOT KOMUTLARI ---
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
@@ -90,57 +75,44 @@ bot.onText(/\/start/, async (msg) => {
         telegramId, 
         firstName: msg.from.first_name, 
         username: msg.from.username,
-        inviteCode: `INV-${telegramId}`, // Davet kodunu burada oluşturuyoruz
-        points: 100 // Yeni gelene hoş geldin puanı
+        inviteCode: `INV-${telegramId}`,
+        points: 100 
       });
     }
-    
-    bot.sendMessage(msg.chat.id, `🌟 *Gelir Evreni'ne Hoş Geldin!*\n\nŞu anki bakiyen: *${user.points} GEP*`, {
+    bot.sendMessage(msg.chat.id, `🌟 *Gelir Evreni'ne Hoş Geldin!*`, {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: APP_URL } }]] }
     });
-  } catch (err) {
-    console.error("Bot Start Hatası:", err);
-  }
+  } catch (err) { console.error(err); }
 });
 
-// --- API ENDPOINTLERİ ---
+// --- API: GÖREV ONAYLAMA ---
+app.post("/api/tasks/complete", async (req, res) => {
+    try {
+        const { telegramId, taskId } = req.body;
+        const user = await User.findOne({ telegramId });
+        const task = await Task.findOne({ taskId });
 
-app.get("/ping", (req, res) => res.send("Bot Ayakta!"));
+        if (!user || !task) return res.status(404).json({ error: "Kayıt bulunamadı" });
+        if (user.completedTasks.includes(taskId)) return res.json({ success: true, message: "Zaten yapıldı" });
 
+        user.points += task.reward;
+        user.completedTasks.push(taskId);
+        await user.save();
+
+        res.json({ success: true, newPoints: user.points });
+    } catch (err) { res.status(500).json({ error: "Hata oluştu" }); }
+});
+
+// --- DİĞER APILER ---
+app.get("/ping", (req, res) => res.send("Aktif"));
 app.post("/api/user/auth", async (req, res) => {
     try {
-        const { initData } = req.body;
-        const params = new URLSearchParams(initData);
+        const params = new URLSearchParams(req.body.initData);
         const tgUser = JSON.parse(params.get("user"));
-        
-        let user = await User.findOne({ telegramId: String(tgUser.id) });
-        const refLink = `https://t.me/gelirevreni_bot?start=${tgUser.id}`;
-        
-        res.json({ success: true, user, refLink });
-    } catch (e) { 
-        console.error("Auth hatası:", e);
-        res.status(500).json({ error: "Auth hatası" }); 
-    }
-});
-
-// Madencilik, Çark ve Çekim API'lerin aynen korundu...
-app.post("/api/mining/claim", async (req, res) => {
-    try {
-        const { telegramId } = req.body;
-        const user = await User.findOne({ telegramId });
-        const now = new Date();
-        const waitTime = 8 * 60 * 60 * 1000; 
-
-        if (user.lastMining && now - user.lastMining < waitTime) {
-            return res.status(400).json({ error: "Madencilik henüz tamamlanmadı!" });
-        }
-
-        user.points += 100;
-        user.lastMining = now;
-        await user.save();
-        res.json({ success: true, reward: 100 });
-    } catch (err) { res.status(500).json({ error: "Madencilik hatası" }); }
+        const user = await User.findOne({ telegramId: String(tgUser.id) });
+        res.json({ success: true, user, refLink: `https://t.me/gelirevreni_bot?start=${tgUser.id}` });
+    } catch (e) { res.status(500).json({ error: "Auth hatası" }); }
 });
 
 app.get("/api/tasks", async (req, res) => {
@@ -148,43 +120,28 @@ app.get("/api/tasks", async (req, res) => {
     res.json({ success: true, tasks });
 });
 
+app.post("/api/mining/claim", async (req, res) => {
+    try {
+        const user = await User.findOne({ telegramId: req.body.telegramId });
+        user.points += 100;
+        user.lastMining = new Date();
+        await user.save();
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: "Hata" }); }
+});
+
 app.post("/api/spin", async (req, res) => {
     try {
-        const { telegramId } = req.body;
-        const user = await User.findOne({ telegramId });
-        const now = new Date();
-        if (user.lastSpin && now - user.lastSpin < 24 * 60 * 60 * 1000) return res.status(400).json({ error: "Günde sadece 1 kez çevirebilirsin!" });
-
+        const user = await User.findOne({ telegramId: req.body.telegramId });
         const rewards = [50, 100, 150, 200, 250, 500];
         const winIndex = Math.floor(Math.random() * rewards.length);
         user.points += rewards[winIndex];
-        user.lastSpin = now;
+        user.lastSpin = new Date();
         await user.save();
         res.json({ success: true, reward: rewards[winIndex], winIndex });
     } catch (err) { res.status(500).json({ error: "Hata" }); }
 });
 
-app.post("/api/withdraw", async (req, res) => {
-    try {
-        const { telegramId, walletAddress, amount } = req.body;
-        const user = await User.findOne({ telegramId });
-        if (user && user.points >= 500000) {
-            bot.sendMessage(ADMIN_ID, `💰 *ÇEKİM TALEBİ*\n\n👤 Kullanıcı: ${user.firstName}\n💵 Miktar: ${amount} GEP\n🏦 Cüzdan: \`${walletAddress}\``, { parse_mode: "Markdown" });
-            res.json({ success: true });
-        } else {
-            res.status(400).json({ error: "Yetersiz bakiye. Minimum 500.000 GEP gerekli." });
-        }
-    } catch (err) { res.status(500).json({ error: "Çekim hatası" }); }
-});
-
-// --- SUNUCU BAŞLATMA VE SELF-PING ---
 app.listen(PORT, () => {
-    console.log(`🚀 Server Aktif: ${PORT}`);
-    
-    // Render'ı uyanık tutmak için her 5 dakikada bir ping atar
-    setInterval(() => {
-        axios.get(`${APP_URL}/ping`)
-            .then(() => console.log("🚀 Bekçi: Bot uyanık tutuluyor."))
-            .catch(err => console.log("⚠️ Bekçi: Sunucu uyanıyor..."));
-    }, 5 * 60 * 1000);
+    setInterval(() => { axios.get(`${APP_URL}/ping`).catch(() => {}); }, 5 * 60 * 1000);
 });
