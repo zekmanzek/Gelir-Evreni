@@ -8,106 +8,123 @@
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #020617; --gold: #ffcc00; --card: rgba(30, 41, 59, 0.7); }
-        body { font-family: 'Urbanist', sans-serif; background: var(--bg); color: #fff; margin: 0; padding-bottom: 80px; }
-        .header { text-align: center; padding: 20px; background: linear-gradient(to bottom, #0f172a, var(--bg)); }
-        .points { font-size: 42px; font-weight: 900; color: var(--gold); }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #334155; }
-        .nav-item { color: #94a3b8; font-size: 12px; text-decoration: none; text-align: center; flex: 1; }
-        .nav-item.active { color: var(--gold); }
-        .page { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        body { font-family: 'Urbanist', sans-serif; background: var(--bg); color: #fff; margin: 0; padding-bottom: 90px; overflow-x: hidden; }
+        .header { text-align: center; padding: 30px 20px; background: linear-gradient(to bottom, #0f172a, var(--bg)); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .points { font-size: 48px; font-weight: 900; color: var(--gold); text-shadow: 0 0 20px rgba(255, 204, 0, 0.3); }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #334155; z-index: 100; }
+        .nav-item { color: #94a3b8; font-size: 11px; text-decoration: none; text-align: center; flex: 1; transition: 0.3s; }
+        .nav-item.active { color: var(--gold); transform: translateY(-5px); }
+        .page { display: none; padding: 20px; animation: fadeIn 0.4s ease; }
         .page.active { display: block; }
-        .btn-main { width: 100%; padding: 18px; background: var(--gold); border: none; border-radius: 15px; font-weight: 900; cursor: pointer; color: #000; margin-top: 10px; }
-        .card { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05); }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .btn-main { width: 100%; padding: 18px; background: var(--gold); border: none; border-radius: 18px; font-weight: 900; cursor: pointer; color: #000; margin-top: 10px; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.2); }
+        .card { background: var(--card); padding: 20px; border-radius: 24px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 9999; transition: 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
+    <div id="loader"><h2 style="color:var(--gold); letter-spacing: 4px;">GELİR EVRENİ</h2></div>
+
     <div class="header">
-        <div style="font-size: 12px; color: #94a3b8;">BAKİYENİZ</div>
+        <div style="font-size: 11px; letter-spacing: 2px; color: #94a3b8; margin-bottom: 5px;">TOPLAM BAKİYE</div>
         <div class="points" id="balance">0</div>
-        <div id="usd">≈ 0.00 USDT</div>
+        <div id="usd" style="color: #00d4ff; font-weight: 700;">≈ 0.00 USDT</div>
     </div>
 
     <div id="page-tasks" class="page active">
-        <h3>🚀 Görevler</h3>
+        <h3 style="margin-left: 5px;">🚀 Görevler</h3>
         <div id="task-list"></div>
     </div>
 
     <div id="page-mine" class="page">
-        <div class="card" style="text-align: center;">
+        <div class="card" style="flex-direction: column; text-align: center; gap: 15px;">
             <h3>⛏️ GEP Madenciliği</h3>
-            <p>Her 8 saatte bir 500 GEP topla.</p>
-            <div id="mine-timer" style="font-size: 24px; font-weight: 700; margin: 15px 0;">HAZIR</div>
+            <p style="color: #94a3b8;">8 saatte bir 500 GEP kazanırsın.</p>
             <button id="btn-mine" class="btn-main" onclick="startMining()">MADENİ TOPLA</button>
         </div>
     </div>
 
     <div id="page-spin" class="page">
-        <div class="card" style="text-align: center;">
-            <h3>🎡 Günlük Şans Çarkı</h3>
-            <p>50 - 500 GEP arası kazan.</p>
+        <div class="card" style="flex-direction: column; text-align: center; gap: 15px;">
+            <h3>🎡 Şans Çarkı</h3>
+            <p style="color: #94a3b8;">Günde bir kez şansını dene!</p>
             <button id="btn-spin" class="btn-main" onclick="spinWheel()">ÇARKI ÇEVİR</button>
         </div>
     </div>
 
     <div id="page-ref" class="page">
-        <div class="card">
+        <div class="card" style="flex-direction: column; gap: 15px;">
             <h3>👥 Arkadaş Davet Et</h3>
-            <p>Her arkadaşın için <b>+500 GEP</b> kazan!</p>
-            <input type="text" id="ref-link" readonly style="width:100%; padding:10px; border-radius:10px; border:none; background:#020617; color:var(--gold);">
+            <p style="color: #94a3b8; text-align: center;">Her davet için <b>+500 GEP</b> kazan.</p>
+            <input type="text" id="ref-link" readonly style="width:100%; padding:15px; border-radius:12px; border:none; background:#020617; color:var(--gold); text-align: center;">
             <button class="btn-main" onclick="copyRef()">LİNKİ KOPYALA</button>
         </div>
     </div>
 
     <nav class="nav-bar">
-        <a href="#" class="nav-item active" onclick="showPage('tasks')">📋 Görev</a>
-        <a href="#" class="nav-item" onclick="showPage('mine')">⛏️ Maden</a>
-        <a href="#" class="nav-item" onclick="showPage('spin')">🎡 Çark</a>
-        <a href="#" class="nav-item" onclick="showPage('ref')">👥 Ref</a>
+        <a href="javascript:void(0)" class="nav-item active" onclick="showPage('tasks', this)">📋 Görev</a>
+        <a href="javascript:void(0)" class="nav-item" onclick="showPage('mine', this)">⛏️ Maden</a>
+        <a href="javascript:void(0)" class="nav-item" onclick="showPage('spin', this)">🎡 Çark</a>
+        <a href="javascript:void(0)" class="nav-item" onclick="showPage('ref', this)">👥 Ref</a>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
-        let user;
         const API = window.location.origin;
+        let user, tasks = [];
 
         async function init() {
-            const uid = tg.initDataUnsafe?.user?.id || "6814040940";
-            const res = await fetch(`${API}/api/user/auth`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ telegramId: uid.toString() })
-            });
-            const data = await res.json();
-            user = data.user;
-            document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
-            updateUI();
-        }
-
-        function showPage(p) {
-            document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`page-${p}`).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
-
-        function updateUI() {
-            document.getElementById('balance').innerText = user.points.toLocaleString();
-            document.getElementById('usd').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`;
-        }
-
-        async function spinWheel() {
-            const res = await fetch(`${API}/api/spin`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ telegramId: user.telegramId })
-            });
-            const data = await res.json();
-            if(data.success) {
-                alert(`Tebrikler! ${data.prize} GEP kazandın.`);
-                user.points = data.points;
+            try {
+                const uid = tg.initDataUnsafe?.user?.id?.toString() || "6814040940";
+                const res = await fetch(`${API}/api/user/auth`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ telegramId: uid })
+                });
+                const data = await res.json();
+                user = data.user;
+                document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
+                
+                const tRes = await fetch(`${API}/api/tasks`);
+                const tData = await tRes.json();
+                tasks = tData.tasks;
+                
                 updateUI();
-            } else alert(data.message);
+                renderTasks();
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+            } catch (e) { console.error(e); }
+        }
+
+        function showPage(p, el) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.getElementById(`page-${p}`).classList.add('active');
+            el.classList.add('active');
+        }
+
+        function renderTasks() {
+            const cont = document.getElementById('task-list');
+            cont.innerHTML = '';
+            tasks.forEach(t => {
+                const done = user.completedTasks.includes(t.taskId);
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `<div><div style="font-weight:700">${t.title}</div><div style="color:var(--gold); font-size:14px;">+${t.reward} GEP</div></div>
+                <button class="btn-main" style="width:80px; padding:10px; margin:0;" ${done?'disabled':''} onclick="completeTask('${t.taskId}','${t.target}')">${done?'BİTTİ':'GİT'}</button>`;
+                cont.appendChild(div);
+            });
+        }
+
+        async function completeTask(tid, link) {
+            tg.openLink(link);
+            const res = await fetch(`${API}/api/tasks/complete`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ telegramId: user.telegramId, taskId: tid })
+            });
+            const data = await res.json();
+            if(data.success) { user.points = data.points; user.completedTasks.push(tid); updateUI(); renderTasks(); }
         }
 
         async function startMining() {
@@ -117,21 +134,33 @@
                 body: JSON.stringify({ telegramId: user.telegramId })
             });
             const data = await res.json();
-            if(data.success) {
-                alert("500 GEP toplandı!");
-                user.points = data.points;
-                updateUI();
-            } else alert("Maden henüz dolmadı!");
+            if(data.success) { user.points = data.points; updateUI(); alert("500 GEP toplandı!"); }
+            else alert("Henüz vakti gelmedi.");
+        }
+
+        async function spinWheel() {
+            const res = await fetch(`${API}/api/spin`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ telegramId: user.telegramId })
+            });
+            const data = await res.json();
+            if(data.success) { user.points = data.points; updateUI(); alert(`Tebrikler! ${data.prize} GEP kazandın.`); }
+            else alert(data.message);
+        }
+
+        function updateUI() {
+            document.getElementById('balance').innerText = user.points.toLocaleString();
+            document.getElementById('usd').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`;
         }
 
         function copyRef() {
-            const copyText = document.getElementById("ref-link");
-            copyText.select();
-            document.execCommand("copy");
-            tg.showAlert("Link kopyalandı! Arkadaşlarına gönder.");
+            document.getElementById('ref-link').select();
+            document.execCommand('copy');
+            tg.showAlert("Referans linkin kopyalandı!");
         }
 
-        init();
+        window.onload = init;
     </script>
 </body>
 </html>
