@@ -6,12 +6,11 @@ const TelegramBot = require('node-telegram-bot-api');
 
 /**
  * Gelir Evreni - Premium Backend Infrastructure
- * This file handles database connections, user authentication, 
- * point logic, and Telegram bot notifications.
+ * Webhook uyumlu Telegram bot + API
  */
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -20,13 +19,13 @@ const token = process.env.BOT_TOKEN;
 const mongoURI = process.env.MONGODB_URI;
 const ADMIN_ID = 1469411131; // Admin Telegram ID for notifications
 
-const bot = new TelegramBot(token, { polling: true });
+// --- Telegram Bot (Webhook Mode) ---
+const bot = new TelegramBot(token);
+bot.setWebHook(`${process.env.RENDER_EXTERNAL_URL}/bot${token}`);
 
-// Avoid logging 409 Conflict errors during polling
-bot.on('polling_error', (error) => {
-    if (error.code !== 'ETELEGRAM' || !error.message.includes('409 Conflict')) {
-        console.log("Bot Error:", error.code);
-    }
+app.post(`/bot${token}`, (req, res) => {
+    bot.processUpdate(req.body);
+    res.sendStatus(200);
 });
 
 // MongoDB Connection
@@ -43,9 +42,7 @@ const User = mongoose.model('User', userSchema);
 
 // --- API ENDPOINTS ---
 
-/**
- * Authenticates user and creates record if new
- */
+// Authenticate user
 app.post('/api/user/auth', async (req, res) => {
     const { telegramId } = req.body;
     if (!telegramId) return res.status(400).json({ error: "ID Required" });
@@ -58,9 +55,7 @@ app.post('/api/user/auth', async (req, res) => {
     res.json({ user });
 });
 
-/**
- * Handles the Lucky Wheel spin logic with 24h cooldown
- */
+// Lucky Wheel spin logic
 app.post('/api/spin', async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
@@ -79,9 +74,7 @@ app.post('/api/spin', async (req, res) => {
     res.json({ success: true, winIndex, reward: rewards[winIndex] });
 });
 
-/**
- * Returns static task list
- */
+// Task list
 app.get('/api/tasks', (req, res) => {
     const tasks = [
         { taskId: 't1', title: 'Resmi Kanala Katıl', reward: 5000, category: 'Topluluğumuz', target: 'https://t.me/gelirevreni' },
@@ -91,16 +84,14 @@ app.get('/api/tasks', (req, res) => {
     res.json({ tasks });
 });
 
-/**
- * Processes withdrawal requests and notifies Admin
- */
+// Withdrawal request
 app.post('/api/withdraw', async (req, res) => {
     const { telegramId, wallet } = req.body;
     const user = await User.findOne({ telegramId });
     if (user && user.points >= 500000) {
         user.points -= 500000;
         await user.save();
-        bot.sendMessage(ADMIN_ID, `💰 **PREMIUM ÖDEME TALEBİ**\n\n👤 Kullanıcı: ${telegramId}\n💳 Cüzdan: ${wallet}\n💎 Miktar: 500.000 GEP (5$)`);
+        bot.sendMessage(ADMIN_ID, `💰 **PREMIUM ÖDEME TALEBİ**\n\n👤 Kullanıcı: ${telegramId}\n💳 Cüzdan: ${wallet}\n💎 Miktar: 500.000 GEP (5$)`, { parse_mode: 'Markdown' });
         res.json({ success: true });
     } else {
         res.json({ success: false, error: "Yetersiz bakiye (Min: 500k GEP)" });
@@ -119,6 +110,7 @@ bot.onText(/\/start/, (msg) => {
     });
 });
 
+// Serve frontend
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 const PORT = process.env.PORT || 10000;
