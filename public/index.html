@@ -13,17 +13,25 @@
         .withdraw-active { background: #238636; color: white; }
         .withdraw-passive { background: #2d334a; color: #8b949e; opacity: 0.6; }
         .package-wrapper { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
-        .package-card { min-width: 90px; background: #1c1f2e; border: 2px solid #2d334a; border-radius: 15px; padding: 10px; text-align: center; }
+        .package-card { min-width: 90px; background: #1c1f2e; border: 2px solid #2d334a; border-radius: 15px; padding: 10px; text-align: center; cursor: pointer; }
         .package-card.active { border-color: #00d4ff; }
         .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-yap { background: #ffcc00; color: #000; padding: 8px 18px; border-radius: 10px; border: none; font-weight: bold; }
-        .wheel-container { position: relative; width: 240px; height: 240px; margin: 20px auto; border-radius: 50%; border: 5px solid #2d334a; overflow: hidden; }
+        .btn-yap { background: #ffcc00; color: #000; padding: 8px 18px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
+
+        /* YENİ ÇARK TASARIMI VE LOGO */
+        .wheel-container { position: relative; width: 260px; height: 260px; margin: 30px auto; border-radius: 50%; border: 10px solid #2d334a; box-shadow: 0 0 20px rgba(0,0,0,0.7); overflow: hidden; }
+        .wheel-pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent; border-top: 30px solid #ffcc00; z-index: 100; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); }
         .wheel { width: 100%; height: 100%; position: relative; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); border-radius: 50%; }
-        .slice { position: absolute; width: 100%; height: 100%; transform-origin: center; display: flex; justify-content: center; clip-path: polygon(50% 50%, 40% 0, 60% 0); }
-        .slice b { margin-top: 20px; text-shadow: 1px 1px 2px black; }
-        .s1 { background: #1c1f2e; transform: rotate(0deg); } .s2 { background: #00d4ff; transform: rotate(60deg); }
-        .s3 { background: #1c1f2e; transform: rotate(120deg); } .s4 { background: #00d4ff; transform: rotate(180deg); }
-        .s5 { background: #1c1f2e; transform: rotate(240deg); } .s6 { background: #00d4ff; transform: rotate(300deg); }
+        .wheel-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background: #0b0e14; border-radius: 50%; border: 4px solid #2d334a; z-index: 200; display: flex; justify-content: center; align-items: center; font-weight: 800; color: #ffcc00; font-size: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .slice { position: absolute; width: 100%; height: 100%; transform-origin: center; display: flex; justify-content: center; align-items: center; font-size: 22px; font-weight: 800; color: white; text-shadow: 2px 2px 4px black; clip-path: polygon(50% 50%, 0 0, 100% 0); }
+        .slice b { transform: translateY(-70px); }
+        
+        .s1 { background: repeating-linear-gradient(45deg, #1c1f2e, #1c1f2e 10px, #111420 10px, #111420 20px); transform: rotate(0deg); }
+        .s2 { background: repeating-linear-gradient(-45deg, #00d4ff, #00d4ff 10px, #00a0d4 10px, #00a0d4 20px); color: #0b0e14; text-shadow: none; transform: rotate(60deg); }
+        .s3 { background: repeating-linear-gradient(45deg, #1c1f2e, #1c1f2e 10px, #111420 10px, #111420 20px); transform: rotate(120deg); }
+        .s4 { background: repeating-linear-gradient(-45deg, #00d4ff, #00d4ff 10px, #00a0d4 10px, #00a0d4 20px); color: #0b0e14; text-shadow: none; transform: rotate(180deg); }
+        .s5 { background: repeating-linear-gradient(45deg, #1c1f2e, #1c1f2e 10px, #111420 10px, #111420 20px); transform: rotate(240deg); }
+        .s6 { background: repeating-linear-gradient(-45deg, #00d4ff, #00d4ff 10px, #00a0d4 10px, #00a0d4 20px); color: #0b0e14; text-shadow: none; transform: rotate(300deg); }
     </style>
 </head>
 <body>
@@ -69,7 +77,19 @@
         function renderTasks(cat) {
             const cont = document.getElementById('tasks-container'); cont.innerHTML = '';
             if (cat === "Şans Çarkı") {
-                cont.innerHTML = `<div style="text-align:center;"><div class="wheel-container"><div class="wheel" id="main-wheel"><div class="slice s1"><b>50</b></div><div class="slice s2"><b>100</b></div><div class="slice s3"><b>150</b></div><div class="slice s4"><b>200</b></div><div class="slice s5"><b>250</b></div><div class="slice s6"><b>500</b></div></div></div><button class="btn-yap" onclick="startSpin()">ÇEVİR</button></div>`;
+                cont.innerHTML = `
+                <div style="text-align:center;">
+                    <div class="wheel-container">
+                        <div class="wheel-pointer"></div>
+                        <div class="wheel" id="main-wheel">
+                            <div class="slice s1"><b>50</b></div><div class="slice s2"><b>100</b></div><div class="slice s3"><b>150</b></div>
+                            <div class="slice s4"><b>200</b></div><div class="slice s5"><b>250</b></div><div class="slice s6"><b>500</b></div>
+                        </div>
+                        <div class="wheel-logo">GEP</div>
+                    </div>
+                    <button class="btn-yap" onclick="startSpin()">ÇEVİR</button>
+                    <p style="font-size: 12px; color: #8b949e; margin-top: 10px;">Günde 1 kez çevirebilirsin!</p>
+                </div>`;
             } else if (cat === "GEP Madencilik") {
                 cont.innerHTML = `<p style="text-align:center;">Yakında!</p>`;
             } else {
