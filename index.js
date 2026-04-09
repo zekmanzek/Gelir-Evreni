@@ -3,10 +3,12 @@ const mongoose = require("mongoose");
 const TelegramBot = require("node-telegram-bot-api");
 const cors = require("cors");
 const path = require("path");
+const axios = require("axios"); // Botu uyanık tutmak için
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+// --- AYARLAR ---
 const BOT_TOKEN = "8565484624:AAEVI0-SFA278gHAX528uREvAb93pc8yJ3s";
 const MONGO_URI = "mongodb+srv://mzybro_db_user:RrdTszJxirbFhHfm@zekman.bi8ty3t.mongodb.net/GelirEvreni?retryWrites=true&w=majority";
 const APP_URL = "https://gelir-evreni.onrender.com";
@@ -16,8 +18,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-mongoose.connect(MONGO_URI).then(() => { seedTasks(); });
-
+// --- VERİTABANI MODELLERİ ---
 const userSchema = new mongoose.Schema({
   telegramId: { type: String, unique: true, required: true },
   username: String,
@@ -28,6 +29,9 @@ const userSchema = new mongoose.Schema({
   lastSpin: { type: Date, default: null },
   lastMining: { type: Date, default: null } 
 });
+
+// Eğer veritabanında eski indexler kalmışsa hata vermemesi için
+userSchema.set('strictIndex', false); 
 
 const taskSchema = new mongoose.Schema({
   taskId: { type: String, unique: true },
@@ -41,32 +45,61 @@ const taskSchema = new mongoose.Schema({
 const User = mongoose.model("User", userSchema);
 const Task = mongoose.model("Task", taskSchema);
 
+// --- GÖREVLERİ OLUŞTURMA (SEED) ---
 const seedTasks = async () => {
-  await Task.updateMany({}, { $set: { isActive: false } });
-  const tasks = [
-    { taskId: "tg_proje", title: "Gelir Evreni Proje Katıl", reward: 100, target: "https://t.me/gelirevreniproje", category: "Topluluğumuz" },
-    { taskId: "tg_evreni", title: "Gelir Evreni Katıl", reward: 100, target: "https://t.me/gelirevreni", category: "Topluluğumuz" },
-    { taskId: "tg_tayfa_ana", title: "Kripto Tayfa Sohbet", reward: 100, target: "https://t.me/kriptotayfa", category: "Topluluğumuz" },
-    { taskId: "tg_ref", title: "Referans Linkim Katıl", reward: 100, target: "https://t.me/referanslinkim", category: "Topluluğumuz" },
-    { taskId: "x_tayfa", title: "Kripto Tayfa X Takip", reward: 100, target: "https://x.com/kriptotayfa", category: "Topluluğumuz" }
-  ];
-  for (const t of tasks) {
-    await Task.findOneAndUpdate({ taskId: t.taskId }, { ...t, isActive: true }, { upsert: true });
+  try {
+    await Task.updateMany({}, { $set: { isActive: false } });
+    const tasks = [
+      { taskId: "tg_proje", title: "Gelir Evreni Proje Katıl", reward: 100, target: "https://t.me/gelirevreniproje", category: "Topluluğumuz" },
+      { taskId: "tg_evreni", title: "Gelir Evreni Katıl", reward: 100, target: "https://t.me/gelirevreni", category: "Topluluğumuz" },
+      { taskId: "tg_tayfa_ana", title: "Kripto Tayfa Sohbet", reward: 100, target: "https://t.me/kriptotayfa", category: "Topluluğumuz" },
+      { taskId: "tg_ref", title: "Referans Linkim Katıl", reward: 100, target: "https://t.me/referanslinkim", category: "Topluluğumuz" },
+      { taskId: "x_tayfa", title: "Kripto Tayfa X Takip", reward: 100, target: "https://x.com/kriptotayfa", category: "Topluluğumuz" }
+    ];
+    for (const t of tasks) {
+      await Task.findOneAndUpdate({ taskId: t.taskId }, { ...t, isActive: true }, { upsert: true });
+    }
+    console.log("✅ Görevler güncellendi.");
+  } catch (err) {
+    console.error("❌ Seed hatası:", err);
   }
 };
 
+mongoose.connect(MONGO_URI)
+  .then(() => { 
+    console.log("✅ MongoDB Bağlantısı Başarılı");
+    seedTasks(); 
+  })
+  .catch(err => console.error("❌ MongoDB Bağlantı Hatası:", err));
+
+// --- BOT KOMUTLARI ---
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 bot.onText(/\/start/, async (msg) => {
-  const telegramId = String(msg.from.id);
-  let user = await User.findOne({ telegramId });
-  if (!user) user = await User.create({ telegramId, firstName: msg.from.first_name, username: msg.from.username });
-  
-  bot.sendMessage(msg.chat.id, `🌟 *Gelir Evreni'ne Hoş Geldin!*`, {
-    parse_mode: "Markdown",
-    reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: APP_URL } }]] }
-  });
+  try {
+    const telegramId = String(msg.from.id);
+    let user = await User.findOne({ telegramId });
+    if (!user) {
+      user = await User.create({ 
+        telegramId, 
+        firstName: msg.from.first_name, 
+        username: msg.from.username 
+      });
+    }
+    
+    bot.sendMessage(msg.chat.id, `🌟 *Gelir Evreni'ne Hoş Geldin!*`, {
+      parse_mode: "Markdown",
+      reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: APP_URL } }]] }
+    });
+  } catch (err) {
+    console.error("Bot Start Hatası:", err);
+  }
 });
+
+// --- API ENDPOINTLERİ ---
+
+// UptimeRobot ve Self-Ping için
+app.get("/ping", (req, res) => res.send("Bot Ayakta!"));
 
 app.post("/api/user/auth", async (req, res) => {
     try {
@@ -118,12 +151,26 @@ app.post("/api/spin", async (req, res) => {
 });
 
 app.post("/api/withdraw", async (req, res) => {
-    const { telegramId, walletAddress, amount } = req.body;
-    const user = await User.findOne({ telegramId });
-    if (user && user.points >= 500000) {
-        bot.sendMessage(ADMIN_ID, `💰 *ÇEKİM TALEBİ*\n\n👤 Kullanıcı: ${user.firstName}\n💵 Miktar: ${amount} GEP\n🏦 Cüzdan: \`${walletAddress}\``, { parse_mode: "Markdown" });
-        res.json({ success: true });
-    }
+    try {
+        const { telegramId, walletAddress, amount } = req.body;
+        const user = await User.findOne({ telegramId });
+        if (user && user.points >= 500000) {
+            bot.sendMessage(ADMIN_ID, `💰 *ÇEKİM TALEBİ*\n\n👤 Kullanıcı: ${user.firstName}\n💵 Miktar: ${amount} GEP\n🏦 Cüzdan: \`${walletAddress}\``, { parse_mode: "Markdown" });
+            res.json({ success: true });
+        } else {
+            res.status(400).json({ error: "Yetersiz bakiye" });
+        }
+    } catch (err) { res.status(500).json({ error: "Çekim hatası" }); }
 });
 
-app.listen(PORT, () => console.log(`🚀 Server Aktif: ${PORT}`));
+// --- SUNUCU BAŞLATMA VE SELF-PING ---
+app.listen(PORT, () => {
+    console.log(`🚀 Server Aktif: ${PORT}`);
+    
+    // Her 10 dakikada bir sunucuyu uyanık tutmak için ping atar
+    setInterval(() => {
+        axios.get(`${APP_URL}/ping`)
+            .then(() => console.log("🚀 Self-ping: Başarılı, bot uyanık."))
+            .catch(err => console.log("⚠️ Self-ping: Sunucu uyanıyor..."));
+    }, 10 * 60 * 1000);
+});
