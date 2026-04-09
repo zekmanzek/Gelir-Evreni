@@ -8,20 +8,39 @@
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg-color: #020617; --card-bg: rgba(15, 23, 42, 0.85); --accent-gold: #ffcc00; --accent-cyan: #00d4ff; --text-main: #f8fafc; --text-dim: #94a3b8; }
-        body { font-family: 'Urbanist', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; min-height: 100vh; }
-        .stats-card { background: var(--card-bg); padding: 30px 20px; border-radius: 28px; text-align: center; margin-bottom: 25px; border: 1px solid rgba(255, 204, 0, 0.2); }
+        body { font-family: 'Urbanist', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; min-height: 100vh; overflow-x: hidden; }
+
+        /* --- LOGOLU PREMIUM KARŞILAMA EKRANI (LOADER) --- */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #0a1120 0%, #020617 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease; }
+        
+        .loader-logo { width: 120px; height: 120px; margin-bottom: 25px; animation: logoPulse 2s infinite ease-in-out; filter: drop-shadow(0 0 15px rgba(255, 204, 0, 0.6)); }
+        @keyframes logoPulse { 0%, 100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.05); opacity: 1; } }
+
+        .loader-text { font-size: 24px; font-weight: 800; color: var(--accent-gold); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 15px; }
+        
+        /* Şık Yüklenme Çubuğu */
+        .loader-bar { width: 180px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 2px; overflow: hidden; position: relative; }
+        .loader-bar::after { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 50%; background: linear-gradient(90deg, transparent, var(--accent-gold), transparent); border-radius: 2px; animation: barLoading 1.5s infinite linear; }
+        @keyframes barLoading { 0% { left: -50%; } 100% { left: 100%; } }
+
+        /* --- ANA UYGULAMA PANELİ --- */
+        .stats-card { background: var(--card-bg); padding: 30px 20px; border-radius: 28px; text-align: center; margin-bottom: 25px; border: 1px solid rgba(255, 204, 0, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .points-val { font-size: 48px; font-weight: 800; color: var(--accent-gold); margin: 5px 0; }
-        .withdraw-btn { width: 100%; padding: 16px; border-radius: 18px; border: none; font-weight: 800; margin-top: 20px; cursor: pointer; }
-        .withdraw-active { background: var(--accent-gold); color: #000; }
+        .withdraw-btn { width: 100%; padding: 16px; border-radius: 18px; border: none; font-weight: 800; margin-top: 20px; cursor: pointer; transition: background 0.3s; }
+        .withdraw-active { background: var(--accent-gold); color: #000; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4); }
         .withdraw-passive { background: #1e293b; color: var(--text-dim); opacity: 0.5; cursor: not-allowed; }
         .task-card { background: var(--card-bg); padding: 20px; border-radius: 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); }
-        .btn-yap { background: var(--accent-gold); color: #000; padding: 10px 20px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; }
+        .btn-yap { background: var(--accent-gold); color: #000; padding: 10px 20px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; transition: opacity 0.2s; }
         .btn-yap:disabled { background: #1e293b; color: #475569; cursor: not-allowed; }
-        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg-color); display: flex; justify-content: center; align-items: center; z-index: 1000; }
     </style>
 </head>
 <body>
-    <div id="loader"><h2 style="color:var(--accent-gold)">GELİR EVRENİ...</h2></div>
+    <div id="loader">
+        <img src="logo.png" alt="Gelir Evreni Logosu" class="loader-logo">
+        <div class="loader-text">GELİR EVRENİ</div>
+        <div class="loader-bar"></div>
+    </div>
+
     <div class="stats-card">
         <div style="font-size: 12px; letter-spacing: 2px; color: var(--text-dim)">TOPLAM GEP BAKİYESİ</div>
         <div class="points-val" id="user-points">0</div>
@@ -51,7 +70,9 @@
                 const tData = await tRes.json();
                 tasks = tData.tasks;
                 renderTasks();
-                document.getElementById('loader').style.display = 'none';
+                // Veriler yüklendiğinde loader'ı kapat
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
             } catch (e) { console.error("Hata:", e); }
         }
 
