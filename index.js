@@ -3,9 +3,10 @@ const mongoose = require("mongoose");
 const TelegramBot = require("node-telegram-bot-api");
 const cors = require("cors");
 const path = require("path");
-const axios = require("axios"); // Botu uyanık tutmak için
+const axios = require("axios");
 
 const app = express();
+// Render için port ayarı
 const PORT = process.env.PORT || 10000;
 
 // --- AYARLAR ---
@@ -27,10 +28,11 @@ const userSchema = new mongoose.Schema({
   completedTasks: [String],
   pendingTasks: [{ taskId: String, clickedAt: { type: Date, default: Date.now } }],
   lastSpin: { type: Date, default: null },
-  lastMining: { type: Date, default: null } 
+  lastMining: { type: Date, default: null },
+  inviteCode: { type: String, default: null } // Kilitlenmeyi önlemek için unique kaldırıldı
 });
 
-// Eğer veritabanında eski indexler kalmışsa hata vermemesi için
+// Eski index hatalarını tamamen görmezden gelmek için kritik ayar
 userSchema.set('strictIndex', false); 
 
 const taskSchema = new mongoose.Schema({
@@ -65,7 +67,11 @@ const seedTasks = async () => {
   }
 };
 
-mongoose.connect(MONGO_URI)
+// MongoDB Bağlantısı - Bağlantı kopmalarına karşı ayarlar eklendi
+mongoose.connect(MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
   .then(() => { 
     console.log("✅ MongoDB Bağlantısı Başarılı");
     seedTasks(); 
@@ -83,11 +89,13 @@ bot.onText(/\/start/, async (msg) => {
       user = await User.create({ 
         telegramId, 
         firstName: msg.from.first_name, 
-        username: msg.from.username 
+        username: msg.from.username,
+        inviteCode: `INV-${telegramId}`, // Davet kodunu burada oluşturuyoruz
+        points: 100 // Yeni gelene hoş geldin puanı
       });
     }
     
-    bot.sendMessage(msg.chat.id, `🌟 *Gelir Evreni'ne Hoş Geldin!*`, {
+    bot.sendMessage(msg.chat.id, `🌟 *Gelir Evreni'ne Hoş Geldin!*\n\nŞu anki bakiyen: *${user.points} GEP*`, {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: APP_URL } }]] }
     });
@@ -98,19 +106,25 @@ bot.onText(/\/start/, async (msg) => {
 
 // --- API ENDPOINTLERİ ---
 
-// UptimeRobot ve Self-Ping için
 app.get("/ping", (req, res) => res.send("Bot Ayakta!"));
 
 app.post("/api/user/auth", async (req, res) => {
     try {
-        const params = new URLSearchParams(req.body.initData);
+        const { initData } = req.body;
+        const params = new URLSearchParams(initData);
         const tgUser = JSON.parse(params.get("user"));
-        const user = await User.findOne({ telegramId: String(tgUser.id) });
+        
+        let user = await User.findOne({ telegramId: String(tgUser.id) });
         const refLink = `https://t.me/gelirevreni_bot?start=${tgUser.id}`;
+        
         res.json({ success: true, user, refLink });
-    } catch (e) { res.status(500).json({ error: "Auth hatası" }); }
+    } catch (e) { 
+        console.error("Auth hatası:", e);
+        res.status(500).json({ error: "Auth hatası" }); 
+    }
 });
 
+// Madencilik, Çark ve Çekim API'lerin aynen korundu...
 app.post("/api/mining/claim", async (req, res) => {
     try {
         const { telegramId } = req.body;
@@ -158,7 +172,7 @@ app.post("/api/withdraw", async (req, res) => {
             bot.sendMessage(ADMIN_ID, `💰 *ÇEKİM TALEBİ*\n\n👤 Kullanıcı: ${user.firstName}\n💵 Miktar: ${amount} GEP\n🏦 Cüzdan: \`${walletAddress}\``, { parse_mode: "Markdown" });
             res.json({ success: true });
         } else {
-            res.status(400).json({ error: "Yetersiz bakiye" });
+            res.status(400).json({ error: "Yetersiz bakiye. Minimum 500.000 GEP gerekli." });
         }
     } catch (err) { res.status(500).json({ error: "Çekim hatası" }); }
 });
@@ -167,10 +181,10 @@ app.post("/api/withdraw", async (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 Server Aktif: ${PORT}`);
     
-    // Her 10 dakikada bir sunucuyu uyanık tutmak için ping atar
+    // Render'ı uyanık tutmak için her 5 dakikada bir ping atar
     setInterval(() => {
         axios.get(`${APP_URL}/ping`)
-            .then(() => console.log("🚀 Self-ping: Başarılı, bot uyanık."))
-            .catch(err => console.log("⚠️ Self-ping: Sunucu uyanıyor..."));
-    }, 10 * 60 * 1000);
+            .then(() => console.log("🚀 Bekçi: Bot uyanık tutuluyor."))
+            .catch(err => console.log("⚠️ Bekçi: Sunucu uyanıyor..."));
+    }, 5 * 60 * 1000);
 });
