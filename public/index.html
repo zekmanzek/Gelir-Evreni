@@ -89,6 +89,34 @@
         .currency { font-size: 24px; font-weight: 800; margin-left: 8px; opacity: 0.9; }
         .usd-val { font-size: 16px; color: #00d4ff; font-weight: 700; opacity: 0.9; margin-top: 4px; }
 
+        /* --- ÇARK TASARIMI --- */
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+        }
+        #wheelCanvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid var(--border-glass);
+            box-shadow: 0 0 30px rgba(255, 204, 0, 0.15);
+            transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1);
+        }
+        .wheel-pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 30px;
+            background: var(--gold);
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+            z-index: 10;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+        }
+
         /* --- SAYFALAR & KARTLAR --- */
         .page { display: none; padding: 24px 16px; animation: slideUp 0.5s ease-out; }
         .page.active { display: block; }
@@ -163,18 +191,21 @@
             <div class="pickaxe" id="mine-icon">⛏️</div>
             <h3>Otomatik Madencilik</h3>
             <p id="mine-status" style="color: var(--text-dim); margin-bottom: 10px;">8 saatte bir 500 GEP madenle.</p>
-            
             <div id="mining-timer">00:00:00</div>
-            
             <button id="btn-mine" class="btn-full" onclick="startMining()">MADENİ BAŞLAT</button>
         </div>
     </div>
 
     <div id="page-spin" class="page">
-        <div class="card" style="flex-direction: column; text-align: center; padding: 40px 20px;">
-            <div style="font-size: 50px; margin-bottom: 20px;">🎡</div>
+        <div class="card" style="flex-direction: column; text-align: center; padding: 20px;">
             <h3>Şans Çarkı</h3>
-            <p style="color: var(--text-dim); margin-bottom: 20px;">Her 24 saatte bir çevir, 50-500 GEP arası kazan.</p>
+            <p style="color: var(--text-dim); font-size: 14px;">Günde 1 kez çevir, ödülünü al!</p>
+            
+            <div class="wheel-container">
+                <div class="wheel-pointer"></div>
+                <canvas id="wheelCanvas" width="500" height="500"></canvas>
+            </div>
+
             <button id="btn-spin" class="btn-full" onclick="spinWheel()">ŞİMDİ ÇEVİR</button>
         </div>
     </div>
@@ -209,6 +240,11 @@
         tg.expand();
         const API = window.location.origin;
         let user, tasks = [], miningInterval;
+        
+        // --- ÇARK AYARLARI ---
+        const prizes = [500, 450, 400, 350, 300, 250, 200, 150, 100, 50];
+        const colors = ['#FFD700', '#FF4500', '#FF1493', '#9400D3', '#0000FF', '#00CED1', '#00FF00', '#ADFF2F', '#FFFF00', '#FFA500'];
+        let isSpinning = false;
 
         async function init() {
             try {
@@ -226,6 +262,7 @@
                 const tData = await tRes.json();
                 tasks = tData.tasks;
                 
+                drawWheel();
                 updateUI();
                 renderTasks();
                 checkMiningTimer();
@@ -237,15 +274,83 @@
             } catch (e) { console.error(e); }
         }
 
+        // --- ÇARK ÇİZİMİ ---
+        function drawWheel() {
+            const canvas = document.getElementById('wheelCanvas');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = canvas.width / 2;
+            const sliceAngle = (2 * Math.PI) / 10;
+
+            for (let i = 0; i < 10; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = colors[i];
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, i * sliceAngle, (i + 1) * sliceAngle);
+                ctx.fill();
+
+                // Yazı ekleme
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(i * sliceAngle + sliceAngle / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#000";
+                ctx.font = "bold 30px Urbanist";
+                ctx.fillText(prizes[i] + " GEP", radius - 20, 10);
+                ctx.restore();
+            }
+        }
+
+        async function spinWheel() {
+            if (isSpinning) return;
+
+            const res = await fetch(`${API}/api/spin`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ telegramId: user.telegramId })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                isSpinning = true;
+                const btn = document.getElementById('btn-spin');
+                const canvas = document.getElementById('wheelCanvas');
+                btn.disabled = true;
+
+                // Ödülün indexini bul
+                const prizeIndex = prizes.indexOf(data.prize);
+                const sliceAngle = 360 / 10;
+                // Ödülün dilim merkezini bul (0. index 0 derecededir, saat yönünde gider)
+                const targetDegree = 360 - (prizeIndex * sliceAngle) - (sliceAngle / 2);
+                const extraSpins = 360 * 5; // 5 tam tur
+                const finalDegree = extraSpins + targetDegree;
+
+                canvas.style.transform = `rotate(${finalDegree}deg)`;
+
+                setTimeout(() => {
+                    isSpinning = false;
+                    user.points = data.points;
+                    updateUI();
+                    tg.showAlert(`🎉 Tebrikler! Çarktan ${data.prize} GEP kazandın!`);
+                    // Çarkı o pozisyonda sabitle (resetlemeden)
+                    const normalizedDegree = finalDegree % 360;
+                    canvas.style.transition = 'none';
+                    canvas.style.transform = `rotate(${normalizedDegree}deg)`;
+                    setTimeout(() => canvas.style.transition = 'transform 5s cubic-bezier(0.15, 0, 0.15, 1)', 50);
+                }, 5100);
+            } else {
+                tg.showAlert("🚫 Bugünlük hakkın doldu, yarın tekrar gel!");
+            }
+        }
+
+        // --- DİĞER FONKSİYONLAR (DEĞİŞMEDİ) ---
         function checkMiningTimer() {
             const lastMine = new Date(user.lastMining).getTime();
             const now = new Date().getTime();
             const cooldown = 8 * 60 * 60 * 1000;
             const diff = now - lastMine;
-
-            if (diff < cooldown) {
-                runTimer(cooldown - diff);
-            }
+            if (diff < cooldown) runTimer(cooldown - diff);
         }
 
         function runTimer(timeLeft) {
@@ -253,13 +358,11 @@
             const timerDiv = document.getElementById('mining-timer');
             const card = document.getElementById('mine-card');
             const status = document.getElementById('mine-status');
-
             btn.disabled = true;
             btn.innerText = "MADEN ÇALIŞIYOR...";
             timerDiv.style.display = "block";
             card.classList.add('mining-active');
             status.innerText = "Kazım devam ediyor, lütfen bekle.";
-
             clearInterval(miningInterval);
             miningInterval = setInterval(() => {
                 timeLeft -= 1000;
@@ -272,7 +375,6 @@
                     status.innerText = "Maden hazır! Kazmaya başlayabilirsin.";
                     return;
                 }
-
                 const h = Math.floor(timeLeft / 3600000);
                 const m = Math.floor((timeLeft % 3600000) / 60000);
                 const s = Math.floor((timeLeft % 60000) / 1000);
@@ -290,12 +392,9 @@
             if(data.success) { 
                 user.points = data.points; 
                 user.lastMining = new Date().toISOString();
-                updateUI(); 
-                runTimer(8 * 60 * 60 * 1000);
+                updateUI(); runTimer(8 * 60 * 60 * 1000);
                 tg.showAlert("⛏️ Maden başarıyla başlatıldı!"); 
-            } else {
-                tg.showAlert("⏳ Henüz bekleme süresi dolmadı.");
-            }
+            } else { tg.showAlert("⏳ Henüz bekleme süresi dolmadı."); }
         }
 
         function showPage(p, el) {
@@ -313,14 +412,7 @@
                 const done = user.completedTasks.includes(t.taskId);
                 const div = document.createElement('div');
                 div.className = 'card';
-                div.innerHTML = `
-                    <div class="card-info">
-                        <h4 style="margin:0; font-size:16px;">${t.title}</h4>
-                        <p style="margin:5px 0 0; color:var(--gold); font-weight:800;">+${t.reward} GEP</p>
-                    </div>
-                    <button class="btn-action" ${done?'disabled':''} onclick="completeTask('${t.taskId}','${t.target}')">
-                        ${done ? 'BİTTİ' : 'GİT'}
-                    </button>`;
+                div.innerHTML = `<div class="card-info"><h4 style="margin:0; font-size:16px;">${t.title}</h4><p style="margin:5px 0 0; color:var(--gold); font-weight:800;">+${t.reward} GEP</p></div><button class="btn-action" ${done?'disabled':''} onclick="completeTask('${t.taskId}','${t.target}')">${done ? 'BİTTİ' : 'GİT'}</button>`;
                 cont.appendChild(div);
             });
         }
@@ -333,27 +425,7 @@
                 body: JSON.stringify({ telegramId: user.telegramId, taskId: tid })
             });
             const data = await res.json();
-            if(data.success) { 
-                user.points = data.points; 
-                user.completedTasks.push(tid); 
-                updateUI(); renderTasks(); 
-            }
-        }
-
-        async function spinWheel() {
-            const res = await fetch(`${API}/api/spin`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ telegramId: user.telegramId })
-            });
-            const data = await res.json();
-            if(data.success) { 
-                user.points = data.points; 
-                updateUI(); 
-                tg.showAlert(`🎉 Tebrikler! +${data.prize} GEP kazandın!`); 
-            } else {
-                tg.showAlert("🚫 Yarın tekrar gel!");
-            }
+            if(data.success) { user.points = data.points; user.completedTasks.push(tid); updateUI(); renderTasks(); }
         }
 
         function updateUI() {
