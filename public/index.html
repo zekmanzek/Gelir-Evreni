@@ -30,7 +30,7 @@
             overflow-x: hidden; 
         }
 
-        /* --- MODERN KARŞILAMA --- */
+        /* --- LOADER --- */
         #loader { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: var(--bg-deep); display: flex; flex-direction: column; 
@@ -42,34 +42,6 @@
             animation: pulse 2s infinite;
         }
         @keyframes pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
-
-        /* --- MADEN KAZMA ANİMASYONU --- */
-        .pickaxe {
-            font-size: 60px;
-            display: inline-block;
-            margin-bottom: 20px;
-            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .mining-active .pickaxe {
-            animation: swing 1.2s infinite ease-in-out;
-        }
-        @keyframes swing {
-            0% { transform: rotate(0deg); }
-            50% { transform: rotate(-45deg) scale(1.15); }
-            100% { transform: rotate(0deg); }
-        }
-
-        /* CANLI SAYAÇ STİLİ */
-        #mining-timer {
-            font-family: 'Courier New', monospace;
-            font-size: 28px;
-            font-weight: 900;
-            color: var(--gold);
-            text-shadow: 0 0 15px var(--gold-glow);
-            margin: 10px 0;
-            letter-spacing: 2px;
-            display: none;
-        }
 
         /* --- HEADER --- */
         .header { 
@@ -89,33 +61,44 @@
         .currency { font-size: 24px; font-weight: 800; margin-left: 8px; opacity: 0.9; }
         .usd-val { font-size: 16px; color: #00d4ff; font-weight: 700; opacity: 0.9; margin-top: 4px; }
 
+        /* --- DAILY CHECK-IN STİLLERİ --- */
+        .streak-container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin: 20px 0;
+        }
+        .streak-day {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 10px 5px;
+            text-align: center;
+            font-size: 10px;
+            transition: 0.3s;
+        }
+        .streak-day.active {
+            background: var(--gold-glow);
+            border-color: var(--gold);
+            color: var(--gold);
+            transform: scale(1.05);
+        }
+        .streak-day.completed {
+            background: rgba(0, 255, 0, 0.1);
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+
+        /* --- MADEN KAZMA ANİMASYONU --- */
+        .pickaxe { font-size: 60px; display: inline-block; margin-bottom: 20px; transition: 0.5s; }
+        .mining-active .pickaxe { animation: swing 1.2s infinite ease-in-out; }
+        @keyframes swing { 0% { transform: rotate(0deg); } 50% { transform: rotate(-45deg) scale(1.15); } 100% { transform: rotate(0deg); } }
+        #mining-timer { font-family: monospace; font-size: 28px; font-weight: 900; color: var(--gold); margin: 10px 0; display: none; }
+
         /* --- ÇARK TASARIMI --- */
-        .wheel-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 20px auto;
-        }
-        #wheelCanvas {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 8px solid var(--border-glass);
-            box-shadow: 0 0 30px rgba(255, 204, 0, 0.15);
-            transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1);
-        }
-        .wheel-pointer {
-            position: absolute;
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 30px;
-            height: 30px;
-            background: var(--gold);
-            clip-path: polygon(50% 100%, 0 0, 100% 0);
-            z-index: 10;
-            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
-        }
+        .wheel-container { position: relative; width: 300px; height: 300px; margin: 20px auto; }
+        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 8px solid var(--border-glass); transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1); }
+        .wheel-pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 30px; height: 30px; background: var(--gold); clip-path: polygon(50% 100%, 0 0, 100% 0); z-index: 10; }
 
         /* --- SAYFALAR & KARTLAR --- */
         .page { display: none; padding: 24px 16px; animation: slideUp 0.5s ease-out; }
@@ -136,10 +119,9 @@
             width: 100%; padding: 20px; border-radius: 20px;
             background: linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%);
             border: none; color: #000; font-weight: 900; font-size: 16px;
-            margin-top: 15px; box-shadow: 0 8px 25px rgba(255, 204, 0, 0.2);
-            cursor: pointer;
+            margin-top: 15px; cursor: pointer;
         }
-        .btn-full:disabled { background: #1e293b; color: #475569; box-shadow: none; cursor: not-allowed; }
+        .btn-full:disabled { background: #1e293b; color: #475569; cursor: not-allowed; }
 
         /* --- NAVİGASYON --- */
         .nav-bar { 
@@ -151,21 +133,12 @@
             border: 1px solid var(--border-glass); 
             z-index: 1000;
         }
-        .nav-item { color: var(--text-dim); text-decoration: none; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-item { color: var(--text-dim); text-decoration: none; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700;}
         .nav-item.active { color: var(--gold); }
         .nav-icon { font-size: 20px; }
 
-        .btn-action {
-            background: var(--gold); 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 14px; 
-            font-weight: 900; 
-            color: #000;
-            cursor: pointer;
-        }
+        .btn-action { background: var(--gold); border: none; padding: 10px 20px; border-radius: 14px; font-weight: 900; color: #000; }
         .btn-action:disabled { background: #334155; color: #94a3b8; }
-
         .ref-box { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); padding: 16px; border-radius: 16px; color: var(--gold); text-align: center; margin: 10px 0; font-weight: 700; font-size: 14px; }
     </style>
 </head>
@@ -199,22 +172,28 @@
     <div id="page-spin" class="page">
         <div class="card" style="flex-direction: column; text-align: center; padding: 20px;">
             <h3>Şans Çarkı</h3>
-            <p style="color: var(--text-dim); font-size: 14px;">Günde 1 kez çevir, ödülünü al!</p>
-            
             <div class="wheel-container">
                 <div class="wheel-pointer"></div>
                 <canvas id="wheelCanvas" width="500" height="500"></canvas>
             </div>
-
             <button id="btn-spin" class="btn-full" onclick="spinWheel()">ŞİMDİ ÇEVİR</button>
         </div>
     </div>
 
-    <div id="page-ref" class="page">
-        <div class="card" style="flex-direction: column; padding: 30px 20px; text-align: center;">
-            <div style="font-size: 50px; margin-bottom: 15px;">👥</div>
-            <h3>Kitleyi Büyüt</h3>
-            <p style="color: var(--text-dim);">Her yeni üye için <b style="color:var(--gold)">+500 GEP</b> kazanırsın.</p>
+    <div id="page-profile" class="page">
+        <div class="card" style="flex-direction: column;">
+            <h3>📅 Günlük Giriş Ödülü</h3>
+            <p style="color: var(--text-dim); font-size: 13px;">Her gün gir, seriyi bozma, 7. gün 1000 GEP al!</p>
+            
+            <div class="streak-container" id="streak-box">
+                </div>
+
+            <button id="btn-checkin" class="btn-full" onclick="claimDaily()">GÜNLÜK ÖDÜLÜ AL</button>
+        </div>
+
+        <div class="card" style="flex-direction: column; text-align: center;">
+            <h3>👥 Referans Sistemi</h3>
+            <p style="color: var(--text-dim);">Her davet <b style="color:var(--gold)">+500 GEP</b></p>
             <input type="text" id="ref-link" class="ref-box" readonly>
             <button class="btn-full" onclick="copyRef()">DAVET LİNKİNİ KOPYALA</button>
         </div>
@@ -230,8 +209,8 @@
         <a href="javascript:void(0)" class="nav-item" onclick="showPage('spin', this)">
             <div class="nav-icon">🎡</div><span>ÇARK</span>
         </a>
-        <a href="javascript:void(0)" class="nav-item" onclick="showPage('ref', this)">
-            <div class="nav-icon">👥</div><span>REF</span>
+        <a href="javascript:void(0)" class="nav-item" onclick="showPage('profile', this)">
+            <div class="nav-icon">👤</div><span>PROFİL</span>
         </a>
     </nav>
 
@@ -241,14 +220,13 @@
         const API = window.location.origin;
         let user, tasks = [], miningInterval;
         
-        // --- ÇARK AYARLARI ---
         const prizes = [500, 450, 400, 350, 300, 250, 200, 150, 100, 50];
         const colors = ['#FFD700', '#FF4500', '#FF1493', '#9400D3', '#0000FF', '#00CED1', '#00FF00', '#ADFF2F', '#FFFF00', '#FFA500'];
         let isSpinning = false;
 
         async function init() {
             try {
-                const uid = tg.initDataUnsafe?.user?.id?.toString() || "6814040940";
+                const uid = tg.initDataUnsafe?.user?.id?.toString() || "1469411131";
                 const res = await fetch(`${API}/api/user/auth`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -266,6 +244,7 @@
                 updateUI();
                 renderTasks();
                 checkMiningTimer();
+                renderStreak();
                 
                 setTimeout(() => {
                     document.getElementById('loader').style.opacity = '0';
@@ -274,7 +253,49 @@
             } catch (e) { console.error(e); }
         }
 
-        // --- ÇARK ÇİZİMİ ---
+        // --- GÜNLÜK GİRİŞ MANTIĞI ---
+        function renderStreak() {
+            const streakBox = document.getElementById('streak-box');
+            streakBox.innerHTML = '';
+            const rewards = [0, 100, 200, 300, 400, 500, 600, 1000];
+            
+            for (let i = 1; i <= 7; i++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = `streak-day ${i <= user.streak ? 'completed' : ''} ${i === (user.streak % 7) + 1 ? 'active' : ''}`;
+                dayDiv.innerHTML = `<div>GÜN ${i}</div><div style="font-weight:900">${rewards[i]}</div>`;
+                streakBox.appendChild(dayDiv);
+            }
+
+            // Buton kontrolü (Bugün alındı mı?)
+            const lastCheckin = new Date(user.lastCheckin).setHours(0,0,0,0);
+            const today = new Date().setHours(0,0,0,0);
+            if (lastCheckin === today) {
+                const btn = document.getElementById('btn-checkin');
+                btn.disabled = true;
+                btn.innerText = "YARIN TEKRAR GEL";
+            }
+        }
+
+        async function claimDaily() {
+            const res = await fetch(`${API}/api/daily-checkin`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ telegramId: user.telegramId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                user.points = data.points;
+                user.streak = data.streak;
+                user.lastCheckin = new Date().toISOString();
+                updateUI();
+                renderStreak();
+                tg.showAlert(`🎁 Tebrikler! ${data.reward} GEP kazandın.`);
+            } else {
+                tg.showAlert(data.message);
+            }
+        }
+
+        // --- DİĞER FONKSİYONLAR ---
         function drawWheel() {
             const canvas = document.getElementById('wheelCanvas');
             const ctx = canvas.getContext('2d');
@@ -289,62 +310,43 @@
                 ctx.moveTo(centerX, centerY);
                 ctx.arc(centerX, centerY, radius, i * sliceAngle, (i + 1) * sliceAngle);
                 ctx.fill();
-
-                // Yazı ekleme
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(i * sliceAngle + sliceAngle / 2);
                 ctx.textAlign = "right";
                 ctx.fillStyle = "#000";
                 ctx.font = "bold 30px Urbanist";
-                ctx.fillText(prizes[i] + " GEP", radius - 20, 10);
+                ctx.fillText(prizes[i], radius - 20, 10);
                 ctx.restore();
             }
         }
 
         async function spinWheel() {
             if (isSpinning) return;
-
             const res = await fetch(`${API}/api/spin`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ telegramId: user.telegramId })
             });
             const data = await res.json();
-
             if (data.success) {
                 isSpinning = true;
-                const btn = document.getElementById('btn-spin');
                 const canvas = document.getElementById('wheelCanvas');
-                btn.disabled = true;
-
-                // Ödülün indexini bul
+                document.getElementById('btn-spin').disabled = true;
                 const prizeIndex = prizes.indexOf(data.prize);
                 const sliceAngle = 360 / 10;
-                // Ödülün dilim merkezini bul (0. index 0 derecededir, saat yönünde gider)
                 const targetDegree = 360 - (prizeIndex * sliceAngle) - (sliceAngle / 2);
-                const extraSpins = 360 * 5; // 5 tam tur
-                const finalDegree = extraSpins + targetDegree;
-
+                const finalDegree = (360 * 5) + targetDegree;
                 canvas.style.transform = `rotate(${finalDegree}deg)`;
-
                 setTimeout(() => {
                     isSpinning = false;
                     user.points = data.points;
                     updateUI();
-                    tg.showAlert(`🎉 Tebrikler! Çarktan ${data.prize} GEP kazandın!`);
-                    // Çarkı o pozisyonda sabitle (resetlemeden)
-                    const normalizedDegree = finalDegree % 360;
-                    canvas.style.transition = 'none';
-                    canvas.style.transform = `rotate(${normalizedDegree}deg)`;
-                    setTimeout(() => canvas.style.transition = 'transform 5s cubic-bezier(0.15, 0, 0.15, 1)', 50);
+                    tg.showAlert(`🎉 Çarktan ${data.prize} GEP kazandın!`);
                 }, 5100);
-            } else {
-                tg.showAlert("🚫 Bugünlük hakkın doldu, yarın tekrar gel!");
-            }
+            } else { tg.showAlert(data.message); }
         }
 
-        // --- DİĞER FONKSİYONLAR (DEĞİŞMEDİ) ---
         function checkMiningTimer() {
             const lastMine = new Date(user.lastMining).getTime();
             const now = new Date().getTime();
@@ -357,22 +359,17 @@
             const btn = document.getElementById('btn-mine');
             const timerDiv = document.getElementById('mining-timer');
             const card = document.getElementById('mine-card');
-            const status = document.getElementById('mine-status');
             btn.disabled = true;
-            btn.innerText = "MADEN ÇALIŞIYOR...";
             timerDiv.style.display = "block";
             card.classList.add('mining-active');
-            status.innerText = "Kazım devam ediyor, lütfen bekle.";
             clearInterval(miningInterval);
             miningInterval = setInterval(() => {
                 timeLeft -= 1000;
                 if (timeLeft <= 0) {
                     clearInterval(miningInterval);
                     btn.disabled = false;
-                    btn.innerText = "MADENİ BAŞLAT";
                     timerDiv.style.display = "none";
                     card.classList.remove('mining-active');
-                    status.innerText = "Maden hazır! Kazmaya başlayabilirsin.";
                     return;
                 }
                 const h = Math.floor(timeLeft / 3600000);
@@ -393,8 +390,7 @@
                 user.points = data.points; 
                 user.lastMining = new Date().toISOString();
                 updateUI(); runTimer(8 * 60 * 60 * 1000);
-                tg.showAlert("⛏️ Maden başarıyla başlatıldı!"); 
-            } else { tg.showAlert("⏳ Henüz bekleme süresi dolmadı."); }
+            } else { tg.showAlert(data.message); }
         }
 
         function showPage(p, el) {
@@ -412,7 +408,7 @@
                 const done = user.completedTasks.includes(t.taskId);
                 const div = document.createElement('div');
                 div.className = 'card';
-                div.innerHTML = `<div class="card-info"><h4 style="margin:0; font-size:16px;">${t.title}</h4><p style="margin:5px 0 0; color:var(--gold); font-weight:800;">+${t.reward} GEP</p></div><button class="btn-action" ${done?'disabled':''} onclick="completeTask('${t.taskId}','${t.target}')">${done ? 'BİTTİ' : 'GİT'}</button>`;
+                div.innerHTML = `<div><h4 style="margin:0">${t.title}</h4><p style="margin:5px 0 0; color:var(--gold);">+${t.reward} GEP</p></div><button class="btn-action" ${done?'disabled':''} onclick="completeTask('${t.taskId}','${t.target}')">${done ? 'BİTTİ' : 'GİT'}</button>`;
                 cont.appendChild(div);
             });
         }
