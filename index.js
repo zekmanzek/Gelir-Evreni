@@ -18,10 +18,10 @@ const bot = new TelegramBot(token, { polling: true });
 
 // --- VERİTABANI BAĞLANTISI ---
 mongoose.connect(mongoURI)
-    .then(() => console.log("✅ Premium DB Connected Successfully"))
+    .then(() => console.log("✅ Gelir Evreni DB Connected"))
     .catch(err => console.error("❌ DB Error:", err));
 
-// --- KULLANICI MODELİ (GÜNCELLENDİ) ---
+// --- KULLANICI MODELİ ---
 const UserSchema = new mongoose.Schema({
     telegramId: { type: String, unique: true },
     points: { type: Number, default: 1000 },
@@ -30,7 +30,6 @@ const UserSchema = new mongoose.Schema({
     lastMining: { type: Date, default: new Date(0) },
     referredBy: { type: String, default: null },
     referralCount: { type: Number, default: 0 },
-    // GÜNLÜK GİRİŞ İÇİN EKLENENLER:
     streak: { type: Number, default: 0 },
     lastCheckin: { type: Date, default: new Date(0) }
 });
@@ -55,8 +54,12 @@ bot.onText(/\/start (.+)/, async (msg, match) => {
     if (!user) {
         user = new User({ telegramId: chatId, referredBy: referrerId });
         await user.save();
+        // Kendini davet etmeyi engelle ve davet edene ödül ver
         if (referrerId !== chatId) {
-            await User.findOneAndUpdate({ telegramId: referrerId }, { $inc: { points: 500, referralCount: 1 } });
+            await User.findOneAndUpdate(
+                { telegramId: referrerId }, 
+                { $inc: { points: 500, referralCount: 1 } }
+            );
         }
     }
     sendWelcome(chatId);
@@ -73,7 +76,7 @@ bot.onText(/\/start$/, async (msg) => {
 });
 
 function sendWelcome(chatId) {
-    bot.sendMessage(chatId, "🚀 **Gelir Evreni'ne Hoş Geldin!**\n\nBurada görevleri yaparak, maden kazarak ve çarkı çevirerek GEP puanları toplayabilirsin.", {
+    bot.sendMessage(chatId, "🚀 **Gelir Evreni'ye Hoş Geldin!**\n\nBurada görevleri yaparak ve arkadaşatını davet ederek GEP toplayabilirsin.", {
         parse_mode: "Markdown",
         reply_markup: {
             inline_keyboard: [[{ 
@@ -86,10 +89,13 @@ function sendWelcome(chatId) {
 
 // --- API ENDPOINTLERİ ---
 
+// Kullanıcı Giriş & Veri Getirme
 app.post('/api/user/auth', async (req, res) => {
     const { telegramId } = req.body;
     try {
         let user = await User.findOne({ telegramId });
+        if (!user) return res.status(404).json({ error: "Kullanıcı bulunamadı." });
+        
         const botInfo = await bot.getMe();
         res.json({ success: true, user, botUsername: botInfo.username });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -97,6 +103,7 @@ app.post('/api/user/auth', async (req, res) => {
 
 app.get('/api/tasks', (req, res) => res.json({ tasks: TASKS }));
 
+// Görev Tamamlama
 app.post('/api/tasks/complete', async (req, res) => {
     const { telegramId, taskId } = req.body;
     try {
@@ -112,7 +119,7 @@ app.post('/api/tasks/complete', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// --- ŞANS ÇARKI (DÜZENLENDİ: Görselle Uyumlu) ---
+// Şans Çarkı
 app.post('/api/spin', async (req, res) => {
     const { telegramId } = req.body;
     try {
@@ -132,7 +139,7 @@ app.post('/api/spin', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// --- GÜNLÜK GİRİŞ (YENİ ÖZELLİK) ---
+// GÜNLÜK GİRİŞ (CHECK-IN)
 app.post('/api/daily-checkin', async (req, res) => {
     const { telegramId } = req.body;
     try {
@@ -142,27 +149,27 @@ app.post('/api/daily-checkin', async (req, res) => {
         const now = new Date();
         const lastDate = new Date(user.lastCheckin);
         
-        // Zaman farkını gün olarak hesapla
-        const diffInMs = now.setHours(0,0,0,0) - lastDate.setHours(0,0,0,0);
-        const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+        // Sadece gün bazında karşılaştırma
+        const today = new Date().setHours(0,0,0,0);
+        const last = new Date(user.lastCheckin).setHours(0,0,0,0);
 
-        if (diffInDays < 1) {
+        if (today === last) {
             return res.json({ success: false, message: "Bugün zaten ödülünü aldın!" });
         }
 
-        // Seri bozuldu mu? (1 günden fazla ara verildiyse sıfırla)
-        if (diffInDays > 1) {
-            user.streak = 1;
+        // Seri kontrolü
+        const oneDayMs = 24 * 60 * 60 * 1000;
+        if (today - last > oneDayMs) {
+            user.streak = 1; // Ara verilmişse sıfırla
         } else {
-            user.streak = (user.streak % 7) + 1; // 7. günden sonra 1'e döner
+            user.streak = (user.streak % 7) + 1;
         }
 
-        // Ödül Tablosu: 100, 200, 300, 400, 500, 600, 1000 (Sürpriz)
         const rewards = [0, 100, 200, 300, 400, 500, 600, 1000];
         const currentReward = rewards[user.streak];
 
         user.points += currentReward;
-        user.lastCheckin = new Date();
+        user.lastCheckin = now;
         await user.save();
 
         res.json({ 
@@ -174,6 +181,7 @@ app.post('/api/daily-checkin', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Madencilik
 app.post('/api/mine', async (req, res) => {
     const { telegramId } = req.body;
     try {
@@ -190,6 +198,7 @@ app.post('/api/mine', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Para Çekme
 app.post('/api/withdraw', async (req, res) => {
     const { telegramId, wallet } = req.body;
     try {
@@ -198,16 +207,17 @@ app.post('/api/withdraw', async (req, res) => {
         if (user && user.points >= minWithdraw) {
             user.points -= minWithdraw;
             await user.save();
-            bot.sendMessage(ADMIN_ID, `💰 **YENİ ÇEKİM TALEBİ**\n\n👤 **Kullanıcı:** ${telegramId}\n🏦 **Cüzdan:** \`${wallet}\`\n💵 **Miktar:** 5 USDT (500k GEP)`, { parse_mode: "Markdown" });
+            bot.sendMessage(ADMIN_ID, `💰 **YENİ ÇEKİM TALEBİ**\n\n👤 **ID:** ${telegramId}\n🏦 **Cüzdan:** \`${wallet}\`\n💵 **Miktar:** 5 USDT`, { parse_mode: "Markdown" });
             return res.json({ success: true });
         }
-        res.json({ success: false, message: "Yetersiz bakiye." });
+        res.json({ success: false, message: "Yetersiz bakiye (Min: 500.000 GEP)." });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Frontend Dosyasını Sunma
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`🚀 Gelir Evreni Server running on port ${PORT}`);
 });
