@@ -18,9 +18,11 @@ const bot = new TelegramBot(token, { polling: true });
 
 mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v2 Connected"));
 
-// --- KULLANICI MODELİ ---
+// --- GÜNCELLENMİŞ KULLANICI MODELİ ---
 const UserSchema = new mongoose.Schema({
     telegramId: { type: String, unique: true },
+    username: { type: String, default: '' }, // Yeni: Kullanıcı adı (@)
+    firstName: { type: String, default: 'Kullanıcı' }, // Yeni: Görünür isim
     points: { type: Number, default: 1000 },
     completedTasks: { type: [String], default: [] },
     lastSpin: { type: Date, default: new Date(0) },
@@ -32,28 +34,42 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', UserSchema);
 
+// --- YARDIMCI FONKSİYON: Kullanıcı Güncelle/Kaydet ---
+async function updateOrCreateUser(msg) {
+    const telegramId = msg.from.id.toString();
+    const username = msg.from.username || '';
+    const firstName = msg.from.first_name || 'Kullanıcı';
+
+    let user = await User.findOne({ telegramId });
+    if (!user) {
+        user = new User({ telegramId, username, firstName });
+        await user.save();
+        return { user, isNew: true };
+    } else {
+        // İsim veya kullanıcı adı değiştiyse güncelle
+        if (user.username !== username || user.firstName !== firstName) {
+            user.username = username;
+            user.firstName = firstName;
+            await user.save();
+        }
+        return { user, isNew: false };
+    }
+}
+
 // --- TELEGRAM BOT MANTIĞI (/start KOMUTU) ---
 bot.onText(/\/start (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
-    const telegramId = msg.from.id.toString();
-    const referrerId = match[1]; // Referansla gelen kişinin referans linkindeki ID
+    const { user, isNew } = await updateOrCreateUser(msg);
+    const referrerId = match[1];
 
     try {
-        let user = await User.findOne({ telegramId });
-        if (!user) {
-            // Yeni kullanıcıyı oluştur
-            user = new User({ telegramId });
-            await user.save();
-
-            // Referans olan kişiyi bul ve ödüllendir
-            if (referrerId && referrerId !== telegramId) {
-                const referrer = await User.findOne({ telegramId: referrerId });
-                if (referrer) {
-                    referrer.points += 500; // Referans ödülü
-                    referrer.referralCount += 1;
-                    await referrer.save();
-                    bot.sendMessage(referrerId, `🎉 Yeni bir referans! +500 GEP kazandın.`);
-                }
+        if (isNew && referrerId && referrerId !== user.telegramId) {
+            const referrer = await User.findOne({ telegramId: referrerId });
+            if (referrer) {
+                referrer.points += 500;
+                referrer.referralCount += 1;
+                await referrer.save();
+                bot.sendMessage(referrerId, `🎉 Yeni bir referans! ${user.firstName} katıldı. +500 GEP kazandın.`);
             }
         }
         sendWelcomeMessage(chatId);
@@ -62,14 +78,8 @@ bot.onText(/\/start (.+)/, async (msg, match) => {
 
 bot.onText(/\/start$/, async (msg) => {
     const chatId = msg.chat.id;
-    const telegramId = msg.from.id.toString();
-
     try {
-        let user = await User.findOne({ telegramId });
-        if (!user) {
-            user = new User({ telegramId });
-            await user.save();
-        }
+        await updateOrCreateUser(msg);
         sendWelcomeMessage(chatId);
     } catch (e) { console.error("Start Error:", e); }
 });
@@ -103,13 +113,14 @@ let TASKS = [
 ];
 
 app.post('/api/user/auth', async (req, res) => {
-    const { telegramId } = req.body;
+    const { telegramId, username, firstName } = req.body; // WebApp'ten gelen bilgileri al
     try {
         let user = await User.findOne({ telegramId });
         if (!user) {
-            // Web App üzerinden doğrudan giriş yapılırsa kullanıcıyı oluştur
-            user = new User({ telegramId });
-            await user.save();
+            user = new User({ telegramId, username, firstName });
+        } else {
+            if (username) user.username = username;
+            if (firstName) user.firstName = firstName;
         }
         user.level = calculateLevel(user.points);
         await user.save();
@@ -119,13 +130,19 @@ app.post('/api/user/auth', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// GÜNCELLENMİŞ LİDERLİK TABLOSU API
 app.get('/api/leaderboard', async (req, res) => {
     try {
-        const topUsers = await User.find().sort({ points: -1 }).limit(10).select('telegramId points level');
+        // Sıralamada gösterilecek alanlara username ve firstName ekledik
+        const topUsers = await User.find()
+            .sort({ points: -1 })
+            .limit(10)
+            .select('telegramId points level username firstName');
         res.json({ success: true, leaderboard: topUsers });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Madencilik
 app.post('/api/mine', async (req, res) => {
     const { telegramId } = req.body;
     try {
@@ -163,7 +180,6 @@ app.post('/api/tasks/complete', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Admin API
 app.post('/api/admin/add-task', (req, res) => {
     const { adminId, task } = req.body;
     if (adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
