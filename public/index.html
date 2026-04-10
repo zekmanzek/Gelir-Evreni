@@ -25,7 +25,31 @@
         .loader-logo { font-size: 28px; font-weight: 900; color: var(--gold); letter-spacing: 6px; text-shadow: 0 0 20px var(--gold-glow); animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
 
-        .announcement-bar { background: linear-gradient(90deg, #ef4444, #f59e0b); color: white; padding: 10px; text-align: center; font-size: 13px; font-weight: 800; display: none; position: sticky; top: 0; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        /* KAYAN YAZI (MARQUEE) TASARIMI */
+        .announcement-container { 
+            background: linear-gradient(90deg, #ef4444, #f59e0b); 
+            color: white; 
+            overflow: hidden; 
+            white-space: nowrap; 
+            position: sticky; 
+            top: 0; 
+            z-index: 2000; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            height: 35px;
+            display: none;
+            align-items: center;
+        }
+        .announcement-scroll {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 20s linear infinite;
+            font-size: 13px;
+            font-weight: 800;
+        }
+        @keyframes marquee {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
 
         .level-badge { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 900; text-transform: uppercase; margin-bottom: 12px; display: inline-block; letter-spacing: 1px; }
         .level-Bronz { background: #cd7f32; color: #fff; }
@@ -47,7 +71,6 @@
         .card { background: var(--card-glass); backdrop-filter: blur(12px); padding: 20px; border-radius: 24px; margin-bottom: 16px; border: 1px solid var(--border-glass); display: flex; justify-content: space-between; align-items: center; }
         .btn-full { width: 100%; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%); border: none; color: #000; font-weight: 900; font-size: 15px; margin-top: 10px; cursor: pointer; transition: 0.3s; }
         .btn-full:disabled { background: #1e293b !important; color: #475569 !important; cursor: not-allowed; opacity: 0.6; }
-        .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); color: white; }
 
         .nav-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 10px; border-radius: 22px; border: 1px solid var(--border-glass); z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .nav-item { color: var(--text-dim); text-decoration: none; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -61,12 +84,15 @@
         .streak-day { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 10px; padding: 8px 2px; text-align: center; font-size: 9px; }
         .streak-day.completed { background: rgba(0, 255, 0, 0.1); border-color: #00ff00; color: #00ff00; }
         
-        .admin-task-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border-glass); width: 100%; }
-        .btn-delete { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; }
+        .admin-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border-glass); width: 100%; font-size: 13px; }
+        .btn-delete { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="global-announcement" class="announcement-bar">📢 Duyuru Yükleniyor...</div>
+    <div id="ann-container" class="announcement-container">
+        <div id="ann-scroll" class="announcement-scroll"></div>
+    </div>
+    
     <div id="loader"><div class="loader-logo">GELİR EVRENİ</div></div>
 
     <div class="header">
@@ -136,15 +162,12 @@
             </div>
         </div>
 
-        <div class="card" style="flex-direction: column; border: 1px solid #ef4444;">
-            <h3>⚠️ Kritik İşlemler</h3>
-            <button class="btn-full btn-danger" onclick="globalReset()">GÜNLÜK ÖDÜLLERİ SIFIRLA (HERKES)</button>
-        </div>
-
         <div class="card" style="flex-direction: column;">
-            <h3>📢 Global Duyuru Yayınla</h3>
-            <input type="text" id="adm-ann-text" placeholder="Duyuru metni" class="ref-box">
-            <button class="btn-full" onclick="setAnnouncement()">DUYURUYU GÜNCELLE</button>
+            <h3>📢 Duyuru Yönetimi</h3>
+            <input type="text" id="adm-ann-text" placeholder="Yeni duyuru yazın..." class="ref-box">
+            <button class="btn-full" onclick="addAnnouncement()">YENİ DUYURU EKLE</button>
+            <hr style="width:100%; border:0; border-top:1px solid var(--border-glass); margin:15px 0;">
+            <div id="admin-ann-list" style="width:100%;"></div>
         </div>
 
         <div class="card" style="flex-direction: column;">
@@ -190,7 +213,7 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         const API = window.location.origin;
-        let user, tasks = [], miningInterval;
+        let user, tasks = [], announcements = [], miningInterval;
 
         async function init() {
             try {
@@ -207,12 +230,9 @@
                 const data = await res.json();
                 user = data.user;
                 user.isAdmin = data.isAdmin;
+                announcements = data.announcements || [];
 
-                // Duyuru Kontrolü
-                if(data.announcement) {
-                    document.getElementById('global-announcement').innerText = "📢 " + data.announcement;
-                    document.getElementById('global-announcement').style.display = 'block';
-                }
+                renderAnnouncements();
 
                 document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
                 
@@ -232,6 +252,18 @@
                     setTimeout(() => document.getElementById('loader').style.display = 'none', 600);
                 }, 1000);
             } catch (e) { console.error(e); }
+        }
+
+        // DUYURU RENDER SİSTEMİ (KAYAN YAZI)
+        function renderAnnouncements() {
+            const container = document.getElementById('ann-container');
+            const scroll = document.getElementById('ann-scroll');
+            if (announcements.length > 0) {
+                scroll.innerText = announcements.join(" 📢 ") + " 📢 ";
+                container.style.display = 'flex';
+            } else {
+                container.style.display = 'none';
+            }
         }
 
         async function refreshTasks() {
@@ -319,7 +351,7 @@
             document.getElementById(`page-${p}`).classList.add('active');
             el.classList.add('active');
             if(p === 'leaderboard') loadLeaderboard();
-            if(p === 'admin') { loadAdminStats(); renderAdminTasks(); }
+            if(p === 'admin') { loadAdminStats(); renderAdminTasks(); renderAdminAnnouncements(); }
             window.scrollTo(0, 0);
         }
 
@@ -402,27 +434,47 @@
             const data = await res.json();
             document.getElementById('adm-stat-users').innerText = data.totalUsers;
             document.getElementById('adm-stat-points').innerText = data.totalPoints.toLocaleString();
+            announcements = data.announcements || [];
         }
 
-        async function globalReset() {
-            if(!confirm("Herkesin ödül hakkı sıfırlanacak?")) return;
-            const res = await fetch(`${API}/api/admin/global-reset`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId })
-            });
-            const data = await res.json();
-            tg.showAlert(data.message);
+        // ADMİN ÇOKLU DUYURU FONKSİYONLARI
+        function renderAdminAnnouncements() {
+            const list = document.getElementById('admin-ann-list');
+            list.innerHTML = announcements.map(ann => `
+                <div class="admin-list-item">
+                    <span>${ann}</span>
+                    <button class="btn-delete" onclick="deleteAnnouncement('${ann}')">SİL</button>
+                </div>
+            `).join('');
         }
 
-        async function setAnnouncement() {
+        async function addAnnouncement() {
             const text = document.getElementById('adm-ann-text').value;
-            await fetch(`${API}/api/admin/set-announcement`, {
+            if(!text) return;
+            const res = await fetch(`${API}/api/admin/add-announcement`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ adminId: user.telegramId, text })
             });
-            tg.showAlert("✅ Duyuru güncellendi!");
+            const data = await res.json();
+            announcements = data.announcements;
+            document.getElementById('adm-ann-text').value = '';
+            renderAdminAnnouncements();
+            renderAnnouncements();
+            tg.showAlert("Eklendi!");
+        }
+
+        async function deleteAnnouncement(text) {
+            const res = await fetch(`${API}/api/admin/delete-announcement`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminId: user.telegramId, text })
+            });
+            const data = await res.json();
+            announcements = data.announcements;
+            renderAdminAnnouncements();
+            renderAnnouncements();
+            tg.showAlert("Silindi!");
         }
 
         async function manageUser(action) {
@@ -440,7 +492,7 @@
         function renderAdminTasks() {
             const list = document.getElementById('admin-task-list');
             list.innerHTML = tasks.map(t => `
-                <div class="admin-task-item">
+                <div class="admin-list-item">
                     <span>${t.title} (${t.reward})</span>
                     <button class="btn-delete" onclick="deleteAdminTask('${t.taskId}')">SİL</button>
                 </div>
