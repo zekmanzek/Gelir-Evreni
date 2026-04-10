@@ -16,7 +16,7 @@ const ADMIN_ID = "1469411131";
 
 const bot = new TelegramBot(token, { polling: true });
 
-mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v2 Connected"));
+mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v2.5 Connected"));
 
 // --- MODELLER ---
 const UserSchema = new mongoose.Schema({
@@ -34,9 +34,9 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', UserSchema);
 
-// Sistem Ayarları Modeli (Duyuru ve Maden Çarpanı için)
+// Sistem Ayarları Modeli - Çoklu Duyuru Listesi Eklendi
 const SettingsSchema = new mongoose.Schema({
-    announcement: { type: String, default: '' },
+    announcements: { type: [String], default: [] },
     miningMultiplier: { type: Number, default: 1 }
 });
 const Settings = mongoose.model('Settings', SettingsSchema);
@@ -141,41 +141,27 @@ app.post('/api/user/auth', async (req, res) => {
             user, 
             botUsername: botInfo.username, 
             isAdmin: telegramId === ADMIN_ID,
-            announcement: settings ? settings.announcement : "" 
+            announcements: settings ? settings.announcements : [] 
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// --- GÜNLÜK GİRİŞ (CHECK-IN) SİSTEMİ ---
 app.post('/api/user/checkin', async (req, res) => {
     const { telegramId } = req.body;
     try {
         const user = await User.findOne({ telegramId });
         if (!user) return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı." });
-
         const now = new Date();
         const lastCheckin = new Date(user.lastCheckin || 0);
         const diff = now - lastCheckin;
         const oneDay = 24 * 60 * 60 * 1000;
-
-        if (diff < oneDay) {
-            return res.json({ success: false, message: "Bugün zaten ödülünü aldın!" });
-        }
-
-        // Seri (Streak) Mantığı
-        if (diff > oneDay * 2) {
-            user.streak = 1;
-        } else {
-            user.streak = (user.streak % 7) + 1;
-        }
-
+        if (diff < oneDay) return res.json({ success: false, message: "Bugün zaten ödülünü aldın!" });
+        user.streak = (diff > oneDay * 2) ? 1 : (user.streak % 7) + 1;
         const rewards = [0, 100, 200, 300, 400, 500, 600, 1000];
         const reward = rewards[user.streak];
-
         user.points += reward;
         user.lastCheckin = now;
         await user.save();
-
         res.json({ success: true, points: user.points, streak: user.streak, message: `${reward} GEP kazandın!` });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -193,7 +179,6 @@ app.post('/api/mine', async (req, res) => {
             if (user.level === 'Altın') baseReward += 250;
             if (user.level === 'Platin') baseReward += 500;
             if (user.level === 'Elmas') baseReward += 1000;
-
             const finalReward = baseReward * (settings.miningMultiplier || 1);
             user.points += finalReward;
             user.lastMining = now;
@@ -234,19 +219,22 @@ app.post('/api/admin/stats', async (req, res) => {
     const totalUsers = await User.countDocuments();
     const totalPointsResult = await User.aggregate([{ $group: { _id: null, total: { $sum: "$points" } } }]);
     const settings = await Settings.findOne();
-    res.json({ totalUsers, totalPoints: totalPointsResult[0]?.total || 0, multiplier: settings.miningMultiplier });
+    res.json({ totalUsers, totalPoints: totalPointsResult[0]?.total || 0, multiplier: settings.miningMultiplier, announcements: settings.announcements });
 });
 
-app.post('/api/admin/global-reset', async (req, res) => {
+// ÇOKLU DUYURU YÖNETİMİ
+app.post('/api/admin/add-announcement', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-    await User.updateMany({}, { $set: { lastCheckin: new Date(0) } });
-    res.json({ success: true, message: "Tüm günlük ödüller sıfırlandı!" });
+    await Settings.updateOne({}, { $push: { announcements: req.body.text } });
+    const s = await Settings.findOne();
+    res.json({ success: true, announcements: s.announcements });
 });
 
-app.post('/api/admin/set-announcement', async (req, res) => {
+app.post('/api/admin/delete-announcement', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-    await Settings.updateOne({}, { announcement: req.body.text });
-    res.json({ success: true });
+    await Settings.updateOne({}, { $pull: { announcements: req.body.text } });
+    const s = await Settings.findOne();
+    res.json({ success: true, announcements: s.announcements });
 });
 
 app.post('/api/admin/user-manage', async (req, res) => {
