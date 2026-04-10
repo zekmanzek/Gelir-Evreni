@@ -21,8 +21,8 @@ mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v2 Connected
 // --- GÜNCELLENMİŞ KULLANICI MODELİ ---
 const UserSchema = new mongoose.Schema({
     telegramId: { type: String, unique: true },
-    username: { type: String, default: '' }, // Kullanıcı adı (@)
-    firstName: { type: String, default: 'Kullanıcı' }, // Görünür isim
+    username: { type: String, default: '' }, 
+    firstName: { type: String, default: 'Kullanıcı' }, 
     points: { type: Number, default: 1000 },
     completedTasks: { type: [String], default: [] },
     lastSpin: { type: Date, default: new Date(0) },
@@ -34,7 +34,7 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', UserSchema);
 
-// --- YARDIMCI FONKSİYON: Kullanıcı Güncelle/Kaydet ---
+// --- YARDIMCI FONKSİYONLAR ---
 async function updateOrCreateUser(msg) {
     const telegramId = msg.from.id.toString();
     const username = msg.from.username || '';
@@ -55,7 +55,22 @@ async function updateOrCreateUser(msg) {
     }
 }
 
-// --- TELEGRAM BOT MANTIĞI (/start KOMUTU) ---
+const calculateLevel = (points) => {
+    if (points >= 1000000) return 'Elmas';
+    if (points >= 500000) return 'Platin';
+    if (points >= 100000) return 'Altın';
+    if (points >= 25000) return 'Gümüş';
+    return 'Bronz';
+};
+
+// --- GÖREVLER (TASKS) ---
+let TASKS = [
+    { taskId: 'task_1', title: 'Gelir Evreni Proje Katıl', reward: 100, target: 'https://t.me/gelirevreniproje' },
+    { taskId: 'task_2', title: 'Gelir Evreni Kanalına Katıl', reward: 100, target: 'https://t.me/gelirevreni' },
+    { taskId: 'task_3', title: 'Kripto Tayfa Duyuru Katıl', reward: 100, target: 'https://t.me/kripto_tayfa' }
+];
+
+// --- TELEGRAM BOT MANTIĞI ---
 bot.onText(/\/start (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const { user, isNew } = await updateOrCreateUser(msg);
@@ -94,19 +109,7 @@ function sendWelcomeMessage(chatId) {
     });
 }
 
-const calculateLevel = (points) => {
-    if (points >= 1000000) return 'Elmas';
-    if (points >= 500000) return 'Platin';
-    if (points >= 100000) return 'Altın';
-    if (points >= 25000) return 'Gümüş';
-    return 'Bronz';
-};
-
-let TASKS = [
-    { taskId: 'task_1', title: 'Gelir Evreni Proje Katıl', reward: 100, target: 'https://t.me/gelirevreniproje' },
-    { taskId: 'task_2', title: 'Gelir Evreni Kanalına Katıl', reward: 100, target: 'https://t.me/gelirevreni' },
-    { taskId: 'task_3', title: 'Kripto Tayfa Duyuru Katıl', reward: 100, target: 'https://t.me/kripto_tayfa' }
-];
+// --- API ROTLARI ---
 
 app.post('/api/user/auth', async (req, res) => {
     const { telegramId, username, firstName } = req.body;
@@ -158,6 +161,8 @@ app.post('/api/mine', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/api/tasks', (req, res) => res.json({ tasks: TASKS }));
+
 app.post('/api/tasks/complete', async (req, res) => {
     const { telegramId, taskId } = req.body;
     try {
@@ -173,14 +178,28 @@ app.post('/api/tasks/complete', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// --- ADMIN API ROTLARI ---
+
 app.post('/api/admin/add-task', (req, res) => {
     const { adminId, task } = req.body;
     if (adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    
+    // Aynı ID'ye sahip görev varsa ekleme
+    if (TASKS.find(t => t.taskId === task.taskId)) {
+        return res.status(400).json({ success: false, message: "Bu ID ile zaten bir görev var." });
+    }
+
     TASKS.push(task);
     res.json({ success: true, tasks: TASKS });
 });
 
-app.get('/api/tasks', (req, res) => res.json({ tasks: TASKS }));
+app.post('/api/admin/delete-task', (req, res) => {
+    const { adminId, taskId } = req.body;
+    if (adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+
+    TASKS = TASKS.filter(t => t.taskId !== taskId);
+    res.json({ success: true, tasks: TASKS });
+});
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
