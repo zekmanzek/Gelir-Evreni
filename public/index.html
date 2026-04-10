@@ -25,7 +25,6 @@
         .loader-logo { font-size: 28px; font-weight: 900; color: var(--gold); letter-spacing: 6px; text-shadow: 0 0 20px var(--gold-glow); animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
 
-        /* KAYAN YAZI (MARQUEE) TASARIMI */
         .announcement-container { 
             background: linear-gradient(90deg, #ef4444, #f59e0b); 
             color: white; 
@@ -87,7 +86,6 @@
         .admin-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border-glass); width: 100%; font-size: 13px; }
         .btn-delete { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
         
-        /* Yeni Kullanıcı Tablosu Stilleri */
         .user-table { width: 100%; border-collapse: collapse; margin-top: 10px; color: #fff; font-size: 12px; }
         .user-table th { text-align: left; padding: 8px; border-bottom: 1px solid var(--border-glass); color: var(--text-dim); }
         .user-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
@@ -125,7 +123,7 @@
     <div id="page-mine" class="page">
         <div id="mine-card" class="card" style="flex-direction: column; text-align: center; padding: 40px 20px;">
             <div style="font-size: 60px; margin-bottom: 15px;" id="mine-icon">⛏️</div>
-            <h3>Otomatik Madencilik</h3>
+            <h3 id="mine-status-text">1000 GEP İçin Maden Hazır</h3>
             <div id="mining-timer" style="font-family: monospace; font-size: 32px; font-weight: 900; color: var(--gold); margin: 15px 0; display: none;">00:00:00</div>
             <button id="btn-mine" class="btn-full" onclick="startMining()">MADENİ BAŞLAT</button>
         </div>
@@ -276,7 +274,6 @@
             } catch (e) { console.error(e); }
         }
 
-        // DUYURU RENDER SİSTEMİ (KAYAN YAZI)
         function renderAnnouncements() {
             const container = document.getElementById('ann-container');
             const scroll = document.getElementById('ann-scroll');
@@ -333,7 +330,7 @@
                 user.lastMining = new Date().toISOString();
                 updateUI(); 
                 tg.showAlert(`🚀 Maden kazıldı! +${data.reward} GEP aldın.`);
-                runTimer(8 * 60 * 60 * 1000);
+                runTimer(4 * 60 * 60 * 1000); // 4 Saat Cooldown
             } else { tg.showAlert(data.message); }
         }
 
@@ -341,7 +338,7 @@
             if (!user.lastMining) return;
             const lastMine = new Date(user.lastMining).getTime();
             const now = new Date().getTime();
-            const cooldown = 8 * 60 * 60 * 1000;
+            const cooldown = 4 * 60 * 60 * 1000; // 4 Saat
             const diff = now - lastMine;
             if (diff < cooldown) runTimer(cooldown - diff);
         }
@@ -349,8 +346,12 @@
         function runTimer(timeLeft) {
             const btn = document.getElementById('btn-mine');
             const timerDiv = document.getElementById('mining-timer');
+            const statusText = document.getElementById('mine-status-text');
+            
             btn.disabled = true;
             timerDiv.style.display = "block";
+            statusText.innerText = "1000 GEP İçin Kalan Süre"; // Yazı Güncellendi
+            
             clearInterval(miningInterval);
             miningInterval = setInterval(() => {
                 timeLeft -= 1000;
@@ -358,6 +359,7 @@
                     clearInterval(miningInterval);
                     btn.disabled = false;
                     timerDiv.style.display = "none";
+                    statusText.innerText = "1000 GEP İçin Maden Hazır"; // Yazı Güncellendi
                     return;
                 }
                 const h = Math.floor(timeLeft / 3600000);
@@ -446,7 +448,6 @@
             } else { tg.showAlert(data.message); }
         }
 
-        // --- ADMİN FONKSİYONLARI ---
         async function loadAdminStats() {
             const res = await fetch(`${API}/api/admin/stats`, {
                 method: 'POST',
@@ -459,7 +460,6 @@
             announcements = data.announcements || [];
         }
 
-        // KULLANICI LİSTESİ YÜKLEME (YENİ)
         async function loadAllUsersList() {
             const tbody = document.getElementById('all-users-tbody');
             const scrollArea = document.getElementById('user-list-scroll');
@@ -483,7 +483,6 @@
             } catch (e) { console.error(e); tg.showAlert("Hata oluştu!"); }
         }
 
-        // ADMİN ÇOKLU DUYURU FONKSİYONLARI
         function renderAdminAnnouncements() {
             const list = document.getElementById('admin-ann-list');
             list.innerHTML = announcements.map(ann => `
