@@ -134,7 +134,7 @@
     </div>
 
     <div id="page-tasks" class="page active">
-        <h3>🚀 Günlük Görevler</h3>
+        <h3>🚀 Aktif Görevler</h3>
         <div id="task-list"></div>
     </div>
 
@@ -297,7 +297,7 @@
             const input = document.getElementById('ref-link');
             input.select();
             document.execCommand('copy');
-            tg.showScanQrPopup({ text: "Link Kopyalandı!" }); // Alternatif görsel bildirim
+            tg.showScanQrPopup({ text: "Link Kopyalandı!" }); 
             setTimeout(() => tg.closeScanQrPopup(), 1000);
             tg.showAlert("✅ Referans linkin panoya kopyalandı!");
         }
