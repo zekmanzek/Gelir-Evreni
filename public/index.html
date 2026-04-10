@@ -3,73 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gelir Evreni</title>
+    <title>Gelir Evreni | Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #020617; --gold: #ffcc00; --card: rgba(30, 41, 59, 0.7); }
-        body { font-family: 'Urbanist', sans-serif; background: var(--bg); color: #fff; margin: 0; padding-bottom: 90px; overflow-x: hidden; }
-        .header { text-align: center; padding: 30px 20px; background: linear-gradient(to bottom, #0f172a, var(--bg)); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .points { font-size: 48px; font-weight: 900; color: var(--gold); text-shadow: 0 0 20px rgba(255, 204, 0, 0.3); }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #334155; z-index: 100; }
-        .nav-item { color: #94a3b8; font-size: 11px; text-decoration: none; text-align: center; flex: 1; transition: 0.3s; }
-        .nav-item.active { color: var(--gold); transform: translateY(-5px); }
-        .page { display: none; padding: 20px; animation: fadeIn 0.4s ease; }
+        :root { 
+            --bg-deep: #020617; 
+            --gold: #ffcc00; 
+            --gold-glow: rgba(255, 204, 0, 0.4);
+            --card-glass: rgba(15, 23, 42, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body { 
+            font-family: 'Urbanist', sans-serif; 
+            background-color: var(--bg-deep); 
+            background-image: radial-gradient(circle at 50% -20%, #1e293b 0%, var(--bg-deep) 70%);
+            color: var(--text-main); 
+            margin: 0; 
+            padding-bottom: 100px; 
+            min-height: 100vh;
+            overflow-x: hidden; 
+        }
+
+        /* --- MODERN KARŞILAMA --- */
+        #loader { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bg-deep); display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 9999; transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .loader-logo { 
+            font-size: 28px; font-weight: 900; color: var(--gold); 
+            letter-spacing: 6px; text-shadow: 0 0 20px var(--gold-glow);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
+
+        /* --- HEADER --- */
+        .header { 
+            text-align: center; padding: 40px 20px; 
+            border-bottom: 1px solid var(--border-glass);
+            backdrop-filter: blur(10px);
+        }
+        .balance-label { font-size: 12px; letter-spacing: 3px; color: var(--text-dim); font-weight: 700; margin-bottom: 8px; }
+        .points { font-size: 54px; font-weight: 900; color: var(--gold); margin: 0; filter: drop-shadow(0 0 15px var(--gold-glow)); }
+        .usd-val { font-size: 16px; color: #00d4ff; font-weight: 700; opacity: 0.9; }
+
+        /* --- SAYFALAR & KARTLAR --- */
+        .page { display: none; padding: 24px 16px; animation: slideUp 0.5s ease-out; }
         .page.active { display: block; }
-        .btn-main { width: 100%; padding: 18px; background: var(--gold); border: none; border-radius: 18px; font-weight: 900; cursor: pointer; color: #000; margin-top: 10px; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.2); }
-        .card { background: var(--card); padding: 20px; border-radius: 24px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 9999; transition: 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        h3 { font-weight: 800; font-size: 20px; margin-bottom: 20px; color: var(--text-main); padding-left: 4px; }
+
+        .card { 
+            background: var(--card-glass); 
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 20px; 
+            border-radius: 24px; 
+            margin-bottom: 16px; 
+            border: 1px solid var(--border-glass); 
+            display: flex; justify-content: space-between; align-items: center;
+            transition: transform 0.2s;
+        }
+        .card:active { transform: scale(0.98); }
+
+        .card-info h4 { margin: 0; font-size: 16px; font-weight: 700; }
+        .card-info p { margin: 4px 0 0; font-size: 14px; color: var(--gold); font-weight: 800; }
+
+        /* --- BUTONLAR --- */
+        .btn-action { 
+            background: var(--gold); color: #000; 
+            padding: 10px 20px; border-radius: 14px; 
+            border: none; font-weight: 900; font-size: 13px;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.2);
+            transition: 0.3s;
+        }
+        .btn-action:disabled { background: #1e293b; color: #475569; box-shadow: none; opacity: 0.6; }
+
+        .btn-full { 
+            width: 100%; padding: 20px; border-radius: 20px;
+            background: linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%);
+            border: none; color: #000; font-weight: 900; font-size: 16px;
+            margin-top: 15px; box-shadow: 0 8px 25px rgba(255, 204, 0, 0.2);
+        }
+
+        /* --- NAVİGASYON --- */
+        .nav-bar { 
+            position: fixed; bottom: 20px; left: 20px; right: 20px;
+            background: rgba(15, 23, 42, 0.8); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex; justify-content: space-around; 
+            padding: 12px 10px; border-radius: 25px; 
+            border: 1px solid var(--border-glass); 
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .nav-item { 
+            color: var(--text-dim); text-decoration: none; text-align: center; 
+            flex: 1; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 4px;
+        }
+        .nav-item span { font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+        .nav-item.active { color: var(--gold); }
+        .nav-icon { font-size: 20px; }
+
+        /* --- REFERANS INPUT --- */
+        .ref-box {
+            width: 100%; background: rgba(0,0,0,0.3); 
+            border: 1px solid var(--border-glass);
+            padding: 16px; border-radius: 16px; color: var(--gold);
+            text-align: center; font-family: monospace; font-size: 14px;
+            margin: 10px 0;
+        }
+
     </style>
 </head>
 <body>
-    <div id="loader"><h2 style="color:var(--gold); letter-spacing: 4px;">GELİR EVRENİ</h2></div>
+    <div id="loader"><div class="loader-logo">GELİR EVRENİ</div></div>
 
     <div class="header">
-        <div style="font-size: 11px; letter-spacing: 2px; color: #94a3b8; margin-bottom: 5px;">TOPLAM BAKİYE</div>
+        <div class="balance-label">TOPLAM PORTFÖY</div>
         <div class="points" id="balance">0</div>
-        <div id="usd" style="color: #00d4ff; font-weight: 700;">≈ 0.00 USDT</div>
+        <div class="usd-val" id="usd">≈ 0.00 USDT</div>
     </div>
 
     <div id="page-tasks" class="page active">
-        <h3 style="margin-left: 5px;">🚀 Görevler</h3>
+        <h3>🚀 Günlük Görevler</h3>
         <div id="task-list"></div>
     </div>
 
     <div id="page-mine" class="page">
-        <div class="card" style="flex-direction: column; text-align: center; gap: 15px;">
-            <h3>⛏️ GEP Madenciliği</h3>
-            <p style="color: #94a3b8;">8 saatte bir 500 GEP kazanırsın.</p>
-            <button id="btn-mine" class="btn-main" onclick="startMining()">MADENİ TOPLA</button>
+        <div class="card" style="flex-direction: column; text-align: center; padding: 40px 20px;">
+            <div style="font-size: 50px; margin-bottom: 20px;">⛏️</div>
+            <h3>Otomatik Madencilik</h3>
+            <p style="color: var(--text-dim); margin-bottom: 20px;">Sistemi çalıştır ve 8 saatte bir ödülünü cüzdanına ekle.</p>
+            <button id="btn-mine" class="btn-full" onclick="startMining()">MADENİ BAŞLAT</button>
         </div>
     </div>
 
     <div id="page-spin" class="page">
-        <div class="card" style="flex-direction: column; text-align: center; gap: 15px;">
-            <h3>🎡 Şans Çarkı</h3>
-            <p style="color: #94a3b8;">Günde bir kez şansını dene!</p>
-            <button id="btn-spin" class="btn-main" onclick="spinWheel()">ÇARKI ÇEVİR</button>
+        <div class="card" style="flex-direction: column; text-align: center; padding: 40px 20px;">
+            <div style="font-size: 50px; margin-bottom: 20px;">🎡</div>
+            <h3>Şans Çarkı</h3>
+            <p style="color: var(--text-dim); margin-bottom: 20px;">Her 24 saatte bir çevir, 50-500 GEP arası kazan.</p>
+            <button id="btn-spin" class="btn-full" onclick="spinWheel()">ŞİMDİ ÇEVİR</button>
         </div>
     </div>
 
     <div id="page-ref" class="page">
-        <div class="card" style="flex-direction: column; gap: 15px;">
-            <h3>👥 Arkadaş Davet Et</h3>
-            <p style="color: #94a3b8; text-align: center;">Her davet için <b>+500 GEP</b> kazan.</p>
-            <input type="text" id="ref-link" readonly style="width:100%; padding:15px; border-radius:12px; border:none; background:#020617; color:var(--gold); text-align: center;">
-            <button class="btn-main" onclick="copyRef()">LİNKİ KOPYALA</button>
+        <div class="card" style="flex-direction: column; padding: 30px 20px; text-align: center;">
+            <div style="font-size: 50px; margin-bottom: 15px;">👥</div>
+            <h3>Kitleyi Büyüt</h3>
+            <p style="color: var(--text-dim);">Davet ettiğin her aktif üye için anında <b style="color:var(--gold)">+500 GEP</b> kazanırsın.</p>
+            <input type="text" id="ref-link" class="ref-box" readonly>
+            <button class="btn-full" onclick="copyRef()">DAVET LİNKİNİ KOPYALA</button>
         </div>
     </div>
 
     <nav class="nav-bar">
-        <a href="javascript:void(0)" class="nav-item active" onclick="showPage('tasks', this)">📋 Görev</a>
-        <a href="javascript:void(0)" class="nav-item" onclick="showPage('mine', this)">⛏️ Maden</a>
-        <a href="javascript:void(0)" class="nav-item" onclick="showPage('spin', this)">🎡 Çark</a>
-        <a href="javascript:void(0)" class="nav-item" onclick="showPage('ref', this)">👥 Ref</a>
+        <a href="javascript:void(0)" class="nav-item active" onclick="showPage('tasks', this)">
+            <div class="nav-icon">📋</div><span>GÖREV</span>
+        </a>
+        <a href="javascript:void(0)" class="nav-item" onclick="showPage('mine', this)">
+            <div class="nav-icon">⛏️</div><span>MADEN</span>
+        </a>
+        <a href="javascript:void(0)" class="nav-item" onclick="showPage('spin', this)">
+            <div class="nav-icon">🎡</div><span>ÇARK</span>
+        </a>
+        <a href="javascript:void(0)" class="nav-item" onclick="showPage('ref', this)">
+            <div class="nav-icon">👥</div><span>REF</span>
+        </a>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.expand();
         const API = window.location.origin;
         let user, tasks = [];
 
@@ -91,8 +205,11 @@
                 
                 updateUI();
                 renderTasks();
-                document.getElementById('loader').style.opacity = '0';
-                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+                
+                setTimeout(() => {
+                    document.getElementById('loader').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loader').style.display = 'none', 600);
+                }, 1000);
             } catch (e) { console.error(e); }
         }
 
@@ -101,6 +218,7 @@
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             document.getElementById(`page-${p}`).classList.add('active');
             el.classList.add('active');
+            window.scrollTo(0, 0);
         }
 
         function renderTasks() {
@@ -110,8 +228,14 @@
                 const done = user.completedTasks.includes(t.taskId);
                 const div = document.createElement('div');
                 div.className = 'card';
-                div.innerHTML = `<div><div style="font-weight:700">${t.title}</div><div style="color:var(--gold); font-size:14px;">+${t.reward} GEP</div></div>
-                <button class="btn-main" style="width:80px; padding:10px; margin:0;" ${done?'disabled':''} onclick="completeTask('${t.taskId}','${t.target}')">${done?'BİTTİ':'GİT'}</button>`;
+                div.innerHTML = `
+                    <div class="card-info">
+                        <h4>${t.title}</h4>
+                        <p>+${t.reward} GEP</p>
+                    </div>
+                    <button class="btn-action" ${done?'disabled':''} onclick="completeTask('${t.taskId}','${t.target}')">
+                        ${done ? 'TAMAMLANDI' : 'BAŞLAT'}
+                    </button>`;
                 cont.appendChild(div);
             });
         }
@@ -124,7 +248,12 @@
                 body: JSON.stringify({ telegramId: user.telegramId, taskId: tid })
             });
             const data = await res.json();
-            if(data.success) { user.points = data.points; user.completedTasks.push(tid); updateUI(); renderTasks(); }
+            if(data.success) { 
+                user.points = data.points; 
+                user.completedTasks.push(tid); 
+                updateUI(); 
+                renderTasks(); 
+            }
         }
 
         async function startMining() {
@@ -134,8 +263,13 @@
                 body: JSON.stringify({ telegramId: user.telegramId })
             });
             const data = await res.json();
-            if(data.success) { user.points = data.points; updateUI(); alert("500 GEP toplandı!"); }
-            else alert("Henüz vakti gelmedi.");
+            if(data.success) { 
+                user.points = data.points; 
+                updateUI(); 
+                tg.showAlert("✅ 500 GEP başarıyla madenlendi!"); 
+            } else {
+                tg.showAlert("⏳ Maden henüz hazır değil. Lütfen bekleyin.");
+            }
         }
 
         async function spinWheel() {
@@ -145,8 +279,13 @@
                 body: JSON.stringify({ telegramId: user.telegramId })
             });
             const data = await res.json();
-            if(data.success) { user.points = data.points; updateUI(); alert(`Tebrikler! ${data.prize} GEP kazandın.`); }
-            else alert(data.message);
+            if(data.success) { 
+                user.points = data.points; 
+                updateUI(); 
+                tg.showAlert(`🎉 Tebrikler! Çarktan ${data.prize} GEP kazandın!`); 
+            } else {
+                tg.showAlert("🚫 Bugün zaten çevirdin. Yarın tekrar gel!");
+            }
         }
 
         function updateUI() {
@@ -155,9 +294,12 @@
         }
 
         function copyRef() {
-            document.getElementById('ref-link').select();
+            const input = document.getElementById('ref-link');
+            input.select();
             document.execCommand('copy');
-            tg.showAlert("Referans linkin kopyalandı!");
+            tg.showScanQrPopup({ text: "Link Kopyalandı!" }); // Alternatif görsel bildirim
+            setTimeout(() => tg.closeScanQrPopup(), 1000);
+            tg.showAlert("✅ Referans linkin panoya kopyalandı!");
         }
 
         window.onload = init;
