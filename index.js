@@ -18,7 +18,7 @@ const bot = new TelegramBot(token, { polling: true });
 
 mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v2 Connected"));
 
-// --- GÜNCELLENMİŞ KULLANICI MODELİ ---
+// --- MODELLER ---
 const UserSchema = new mongoose.Schema({
     telegramId: { type: String, unique: true },
     username: { type: String, default: '' }, 
@@ -33,6 +33,19 @@ const UserSchema = new mongoose.Schema({
     level: { type: String, default: 'Bronz' }
 });
 const User = mongoose.model('User', UserSchema);
+
+// Sistem Ayarları Modeli (Duyuru ve Maden Çarpanı için)
+const SettingsSchema = new mongoose.Schema({
+    announcement: { type: String, default: '' },
+    miningMultiplier: { type: Number, default: 1 }
+});
+const Settings = mongoose.model('Settings', SettingsSchema);
+
+async function initSettings() {
+    let s = await Settings.findOne();
+    if (!s) await new Settings().save();
+}
+initSettings();
 
 // --- YARDIMCI FONKSİYONLAR ---
 async function updateOrCreateUser(msg) {
@@ -63,7 +76,6 @@ const calculateLevel = (points) => {
     return 'Bronz';
 };
 
-// --- GÖREVLER (TASKS) ---
 let TASKS = [
     { taskId: 'task_1', title: 'Gelir Evreni Proje Katıl', reward: 100, target: 'https://t.me/gelirevreniproje' },
     { taskId: 'task_2', title: 'Gelir Evreni Kanalına Katıl', reward: 100, target: 'https://t.me/gelirevreni' },
@@ -75,7 +87,6 @@ bot.onText(/\/start (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const { user, isNew } = await updateOrCreateUser(msg);
     const referrerId = match[1];
-
     try {
         if (isNew && referrerId && referrerId !== user.telegramId) {
             const referrer = await User.findOne({ telegramId: referrerId });
@@ -110,7 +121,6 @@ function sendWelcomeMessage(chatId) {
 }
 
 // --- API ROTLARI ---
-
 app.post('/api/user/auth', async (req, res) => {
     const { telegramId, username, firstName } = req.body;
     try {
@@ -124,18 +134,15 @@ app.post('/api/user/auth', async (req, res) => {
         user.level = calculateLevel(user.points);
         await user.save();
 
+        const settings = await Settings.findOne();
         const botInfo = await bot.getMe();
-        res.json({ success: true, user, botUsername: botInfo.username, isAdmin: telegramId === ADMIN_ID });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.get('/api/leaderboard', async (req, res) => {
-    try {
-        const topUsers = await User.find()
-            .sort({ points: -1 })
-            .limit(10)
-            .select('telegramId points level username firstName');
-        res.json({ success: true, leaderboard: topUsers });
+        res.json({ 
+            success: true, 
+            user, 
+            botUsername: botInfo.username, 
+            isAdmin: telegramId === ADMIN_ID,
+            announcement: settings ? settings.announcement : "" 
+        });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -143,6 +150,7 @@ app.post('/api/mine', async (req, res) => {
     const { telegramId } = req.body;
     try {
         const user = await User.findOne({ telegramId });
+        const settings = await Settings.findOne();
         const now = new Date();
         const cooldown = 8 * 60 * 60 * 1000;
         if (user && (now - new Date(user.lastMining)) > cooldown) {
@@ -152,12 +160,20 @@ app.post('/api/mine', async (req, res) => {
             if (user.level === 'Platin') baseReward += 500;
             if (user.level === 'Elmas') baseReward += 1000;
 
-            user.points += baseReward;
+            const finalReward = baseReward * (settings.miningMultiplier || 1);
+            user.points += finalReward;
             user.lastMining = now;
             await user.save();
-            return res.json({ success: true, points: user.points, reward: baseReward });
+            return res.json({ success: true, points: user.points, reward: finalReward });
         }
         res.json({ success: false, message: "Maden henüz hazır değil." });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/leaderboard', async (req, res) => {
+    try {
+        const topUsers = await User.find().sort({ points: -1 }).limit(10).select('telegramId points level username firstName');
+        res.json({ success: true, leaderboard: topUsers });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -178,17 +194,42 @@ app.post('/api/tasks/complete', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// --- ADMIN API ROTLARI ---
+// --- ADMIN KOMUTA MERKEZİ ---
+app.post('/api/admin/stats', async (req, res) => {
+    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    const totalUsers = await User.countDocuments();
+    const totalPointsResult = await User.aggregate([{ $group: { _id: null, total: { $sum: "$points" } } }]);
+    const settings = await Settings.findOne();
+    res.json({ totalUsers, totalPoints: totalPointsResult[0]?.total || 0, multiplier: settings.miningMultiplier });
+});
+
+app.post('/api/admin/global-reset', async (req, res) => {
+    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    await User.updateMany({}, { $set: { lastCheckin: new Date(0) } });
+    res.json({ success: true, message: "Tüm günlük ödüller sıfırlandı!" });
+});
+
+app.post('/api/admin/set-announcement', async (req, res) => {
+    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    await Settings.updateOne({}, { announcement: req.body.text });
+    res.json({ success: true });
+});
+
+app.post('/api/admin/user-manage', async (req, res) => {
+    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    const { targetId, action, amount } = req.body;
+    const targetUser = await User.findOne({ telegramId: targetId });
+    if (!targetUser) return res.json({ success: false, message: "Kullanıcı bulunamadı." });
+    if (action === 'add') targetUser.points += parseInt(amount);
+    if (action === 'set') targetUser.points = parseInt(amount);
+    await targetUser.save();
+    res.json({ success: true, newPoints: targetUser.points });
+});
 
 app.post('/api/admin/add-task', (req, res) => {
     const { adminId, task } = req.body;
     if (adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-    
-    // Aynı ID'ye sahip görev varsa ekleme
-    if (TASKS.find(t => t.taskId === task.taskId)) {
-        return res.status(400).json({ success: false, message: "Bu ID ile zaten bir görev var." });
-    }
-
+    if (TASKS.find(t => t.taskId === task.taskId)) return res.status(400).json({ success: false, message: "Bu ID ile zaten bir görev var." });
     TASKS.push(task);
     res.json({ success: true, tasks: TASKS });
 });
@@ -196,7 +237,6 @@ app.post('/api/admin/add-task', (req, res) => {
 app.post('/api/admin/delete-task', (req, res) => {
     const { adminId, taskId } = req.body;
     if (adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-
     TASKS = TASKS.filter(t => t.taskId !== taskId);
     res.json({ success: true, tasks: TASKS });
 });
