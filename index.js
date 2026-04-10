@@ -34,7 +34,6 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', UserSchema);
 
-// Sistem Ayarları Modeli - Çoklu Duyuru Listesi Eklendi
 const SettingsSchema = new mongoose.Schema({
     announcements: { type: [String], default: [] },
     miningMultiplier: { type: Number, default: 1 }
@@ -214,6 +213,16 @@ app.post('/api/tasks/complete', async (req, res) => {
 });
 
 // --- ADMIN KOMUTA MERKEZİ ---
+
+// KULLANICI LİSTESİ (YENİ)
+app.post('/api/admin/all-users', async (req, res) => {
+    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    try {
+        const users = await User.find().sort({ points: -1 });
+        res.json({ success: true, users });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/api/admin/stats', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     const totalUsers = await User.countDocuments();
@@ -222,7 +231,6 @@ app.post('/api/admin/stats', async (req, res) => {
     res.json({ totalUsers, totalPoints: totalPointsResult[0]?.total || 0, multiplier: settings.miningMultiplier, announcements: settings.announcements });
 });
 
-// ÇOKLU DUYURU YÖNETİMİ
 app.post('/api/admin/add-announcement', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     await Settings.updateOne({}, { $push: { announcements: req.body.text } });
