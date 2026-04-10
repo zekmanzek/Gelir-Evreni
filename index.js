@@ -146,6 +146,40 @@ app.post('/api/user/auth', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// --- GÜNLÜK GİRİŞ (CHECK-IN) SİSTEMİ ---
+app.post('/api/user/checkin', async (req, res) => {
+    const { telegramId } = req.body;
+    try {
+        const user = await User.findOne({ telegramId });
+        if (!user) return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı." });
+
+        const now = new Date();
+        const lastCheckin = new Date(user.lastCheckin || 0);
+        const diff = now - lastCheckin;
+        const oneDay = 24 * 60 * 60 * 1000;
+
+        if (diff < oneDay) {
+            return res.json({ success: false, message: "Bugün zaten ödülünü aldın!" });
+        }
+
+        // Seri (Streak) Mantığı
+        if (diff > oneDay * 2) {
+            user.streak = 1;
+        } else {
+            user.streak = (user.streak % 7) + 1;
+        }
+
+        const rewards = [0, 100, 200, 300, 400, 500, 600, 1000];
+        const reward = rewards[user.streak];
+
+        user.points += reward;
+        user.lastCheckin = now;
+        await user.save();
+
+        res.json({ success: true, points: user.points, streak: user.streak, message: `${reward} GEP kazandın!` });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/api/mine', async (req, res) => {
     const { telegramId } = req.body;
     try {
