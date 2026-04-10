@@ -171,9 +171,11 @@ app.post('/api/mine', async (req, res) => {
         const user = await User.findOne({ telegramId });
         const settings = await Settings.findOne();
         const now = new Date();
-        const cooldown = 8 * 60 * 60 * 1000;
+        // Madencilik döngüsü 4 saat (4 * 60 * 60 * 1000 ms) olarak güncellendi.
+        const cooldown = 4 * 60 * 60 * 1000;
         if (user && (now - new Date(user.lastMining)) > cooldown) {
-            let baseReward = 500;
+            // Temel ödül 1000 GEP olarak güncellendi.
+            let baseReward = 1000;
             if (user.level === 'Gümüş') baseReward += 100;
             if (user.level === 'Altın') baseReward += 250;
             if (user.level === 'Platin') baseReward += 500;
