@@ -78,8 +78,16 @@
             backdrop-filter: blur(10px);
         }
         .balance-label { font-size: 12px; letter-spacing: 3px; color: var(--text-dim); font-weight: 700; margin-bottom: 8px; }
-        .points { font-size: 54px; font-weight: 900; color: var(--gold); margin: 0; filter: drop-shadow(0 0 15px var(--gold-glow)); }
-        .usd-val { font-size: 16px; color: #00d4ff; font-weight: 700; opacity: 0.9; }
+        .points-container { 
+            display: flex; 
+            align-items: baseline; 
+            justify-content: center; 
+            color: var(--gold);
+            filter: drop-shadow(0 0 15px var(--gold-glow));
+        }
+        .points { font-size: 54px; font-weight: 900; margin: 0; }
+        .currency { font-size: 24px; font-weight: 800; margin-left: 8px; opacity: 0.9; }
+        .usd-val { font-size: 16px; color: #00d4ff; font-weight: 700; opacity: 0.9; margin-top: 4px; }
 
         /* --- SAYFALAR & KARTLAR --- */
         .page { display: none; padding: 24px 16px; animation: slideUp 0.5s ease-out; }
@@ -119,7 +127,18 @@
         .nav-item.active { color: var(--gold); }
         .nav-icon { font-size: 20px; }
 
-        .ref-box { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); padding: 16px; border-radius: 16px; color: var(--gold); text-align: center; margin: 10px 0; }
+        .btn-action {
+            background: var(--gold); 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 14px; 
+            font-weight: 900; 
+            color: #000;
+            cursor: pointer;
+        }
+        .btn-action:disabled { background: #334155; color: #94a3b8; }
+
+        .ref-box { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); padding: 16px; border-radius: 16px; color: var(--gold); text-align: center; margin: 10px 0; font-weight: 700; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -127,7 +146,10 @@
 
     <div class="header">
         <div class="balance-label">GÜNCEL BAKİYE</div>
-        <div class="points" id="balance">0</div>
+        <div class="points-container">
+            <div class="points" id="balance">0</div>
+            <div class="currency">GEP</div>
+        </div>
         <div class="usd-val" id="usd">≈ 0.00 USDT</div>
     </div>
 
@@ -206,7 +228,7 @@
                 
                 updateUI();
                 renderTasks();
-                checkMiningTimer(); // Başlangıçta sayacı kontrol et
+                checkMiningTimer();
                 
                 setTimeout(() => {
                     document.getElementById('loader').style.opacity = '0';
@@ -215,7 +237,6 @@
             } catch (e) { console.error(e); }
         }
 
-        // --- MADEN SAYAÇ MANTIĞI ---
         function checkMiningTimer() {
             const lastMine = new Date(user.lastMining).getTime();
             const now = new Date().getTime();
@@ -277,7 +298,6 @@
             }
         }
 
-        // --- DİĞER FONKSİYONLAR ---
         function showPage(p, el) {
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
@@ -295,8 +315,8 @@
                 div.className = 'card';
                 div.innerHTML = `
                     <div class="card-info">
-                        <h4>${t.title}</h4>
-                        <p>+${t.reward} GEP</p>
+                        <h4 style="margin:0; font-size:16px;">${t.title}</h4>
+                        <p style="margin:5px 0 0; color:var(--gold); font-weight:800;">+${t.reward} GEP</p>
                     </div>
                     <button class="btn-action" ${done?'disabled':''} onclick="completeTask('${t.taskId}','${t.target}')">
                         ${done ? 'BİTTİ' : 'GİT'}
