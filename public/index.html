@@ -86,6 +86,11 @@
         
         .admin-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border-glass); width: 100%; font-size: 13px; }
         .btn-delete { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
+        
+        /* Yeni Kullanıcı Tablosu Stilleri */
+        .user-table { width: 100%; border-collapse: collapse; margin-top: 10px; color: #fff; font-size: 12px; }
+        .user-table th { text-align: left; padding: 8px; border-bottom: 1px solid var(--border-glass); color: var(--text-dim); }
+        .user-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
     </style>
 </head>
 <body>
@@ -159,6 +164,23 @@
             <div class="stat-card">
                 <div style="font-size:10px; color:var(--text-dim)">KASADAKİ GEP</div>
                 <div id="adm-stat-points" style="font-size:18px; font-weight:900; color:#00d4ff;">0</div>
+            </div>
+        </div>
+
+        <div class="card" style="flex-direction: column;">
+            <h3>👥 Tüm Kullanıcılar</h3>
+            <button class="btn-full" style="background:#f1c40f; color:#000; margin-bottom:10px;" onclick="loadAllUsersList()">LİSTEYİ YÜKLE / GÜNCELLE</button>
+            <div id="user-list-scroll" style="width:100%; max-height: 250px; overflow-y: auto; display: none;">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Kullanıcı</th>
+                            <th>Puan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="all-users-tbody"></tbody>
+                </table>
             </div>
         </div>
 
@@ -435,6 +457,30 @@
             document.getElementById('adm-stat-users').innerText = data.totalUsers;
             document.getElementById('adm-stat-points').innerText = data.totalPoints.toLocaleString();
             announcements = data.announcements || [];
+        }
+
+        // KULLANICI LİSTESİ YÜKLEME (YENİ)
+        async function loadAllUsersList() {
+            const tbody = document.getElementById('all-users-tbody');
+            const scrollArea = document.getElementById('user-list-scroll');
+            try {
+                const res = await fetch(`${API}/api/admin/all-users`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ adminId: user.telegramId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    tbody.innerHTML = data.users.map(u => `
+                        <tr>
+                            <td>${u.telegramId}</td>
+                            <td>${u.firstName}<br><span style="color:var(--gold)">@${u.username || 'yok'}</span></td>
+                            <td style="font-weight:900">${u.points.toLocaleString()}</td>
+                        </tr>
+                    `).join('');
+                    scrollArea.style.display = 'block';
+                }
+            } catch (e) { console.error(e); tg.showAlert("Hata oluştu!"); }
         }
 
         // ADMİN ÇOKLU DUYURU FONKSİYONLARI
