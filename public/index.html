@@ -17,126 +17,40 @@
             --text-dim: #94a3b8;
         }
 
+        /* Mevcut CSS kodlarını buraya (seninkilerle aynı şekilde) dahil edebilirsin. 
+           Okunabilirlik için tekrar yazmıyorum, senin stil dosyan mükemmel. */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body { 
-            font-family: 'Urbanist', sans-serif; 
-            background-color: var(--bg-deep); 
-            background-image: radial-gradient(circle at 50% -20%, #1e293b 0%, var(--bg-deep) 70%);
-            color: var(--text-main); 
-            margin: 0; 
-            padding-bottom: 100px; 
-            min-height: 100vh;
-            overflow-x: hidden; 
-        }
-
-        /* --- LOADER --- */
-        #loader { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--bg-deep); display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; z-index: 9999; transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
-        }
-        .loader-logo { 
-            font-size: 28px; font-weight: 900; color: var(--gold); 
-            letter-spacing: 6px; text-shadow: 0 0 20px var(--gold-glow);
-            animation: pulse 2s infinite;
-        }
+        body { font-family: 'Urbanist', sans-serif; background-color: var(--bg-deep); background-image: radial-gradient(circle at 50% -20%, #1e293b 0%, var(--bg-deep) 70%); color: var(--text-main); margin: 0; padding-bottom: 100px; min-height: 100vh; overflow-x: hidden; }
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-deep); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .loader-logo { font-size: 28px; font-weight: 900; color: var(--gold); letter-spacing: 6px; text-shadow: 0 0 20px var(--gold-glow); animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
-
-        /* --- HEADER --- */
-        .header { 
-            text-align: center; padding: 40px 20px; 
-            border-bottom: 1px solid var(--border-glass);
-            backdrop-filter: blur(10px);
-        }
+        .header { text-align: center; padding: 40px 20px; border-bottom: 1px solid var(--border-glass); backdrop-filter: blur(10px); }
         .balance-label { font-size: 12px; letter-spacing: 3px; color: var(--text-dim); font-weight: 700; margin-bottom: 8px; }
-        .points-container { 
-            display: flex; 
-            align-items: baseline; 
-            justify-content: center; 
-            color: var(--gold);
-            filter: drop-shadow(0 0 15px var(--gold-glow));
-        }
+        .points-container { display: flex; align-items: baseline; justify-content: center; color: var(--gold); filter: drop-shadow(0 0 15px var(--gold-glow)); }
         .points { font-size: 54px; font-weight: 900; margin: 0; }
         .currency { font-size: 24px; font-weight: 800; margin-left: 8px; opacity: 0.9; }
         .usd-val { font-size: 16px; color: #00d4ff; font-weight: 700; opacity: 0.9; margin-top: 4px; }
-
-        /* --- DAILY CHECK-IN STİLLERİ --- */
-        .streak-container {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
-            margin: 20px 0;
-        }
-        .streak-day {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-glass);
-            border-radius: 12px;
-            padding: 10px 5px;
-            text-align: center;
-            font-size: 10px;
-            transition: 0.3s;
-        }
-        .streak-day.active {
-            background: var(--gold-glow);
-            border-color: var(--gold);
-            color: var(--gold);
-            transform: scale(1.05);
-        }
-        .streak-day.completed {
-            background: rgba(0, 255, 0, 0.1);
-            border-color: #00ff00;
-            color: #00ff00;
-        }
-
-        /* --- MADEN KAZMA ANİMASYONU --- */
+        .streak-container { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin: 20px 0; }
+        .streak-day { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-glass); border-radius: 12px; padding: 10px 5px; text-align: center; font-size: 10px; transition: 0.3s; }
+        .streak-day.active { background: var(--gold-glow); border-color: var(--gold); color: var(--gold); transform: scale(1.05); }
+        .streak-day.completed { background: rgba(0, 255, 0, 0.1); border-color: #00ff00; color: #00ff00; }
         .pickaxe { font-size: 60px; display: inline-block; margin-bottom: 20px; transition: 0.5s; }
         .mining-active .pickaxe { animation: swing 1.2s infinite ease-in-out; }
         @keyframes swing { 0% { transform: rotate(0deg); } 50% { transform: rotate(-45deg) scale(1.15); } 100% { transform: rotate(0deg); } }
         #mining-timer { font-family: monospace; font-size: 28px; font-weight: 900; color: var(--gold); margin: 10px 0; display: none; }
-
-        /* --- ÇARK TASARIMI --- */
         .wheel-container { position: relative; width: 300px; height: 300px; margin: 20px auto; }
         #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 8px solid var(--border-glass); transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1); }
         .wheel-pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 30px; height: 30px; background: var(--gold); clip-path: polygon(50% 100%, 0 0, 100% 0); z-index: 10; }
-
-        /* --- SAYFALAR & KARTLAR --- */
         .page { display: none; padding: 24px 16px; animation: slideUp 0.5s ease-out; }
         .page.active { display: block; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .card { 
-            background: var(--card-glass); 
-            backdrop-filter: blur(12px);
-            padding: 20px; 
-            border-radius: 24px; 
-            margin-bottom: 16px; 
-            border: 1px solid var(--border-glass); 
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .btn-full { 
-            width: 100%; padding: 20px; border-radius: 20px;
-            background: linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%);
-            border: none; color: #000; font-weight: 900; font-size: 16px;
-            margin-top: 15px; cursor: pointer;
-        }
+        .card { background: var(--card-glass); backdrop-filter: blur(12px); padding: 20px; border-radius: 24px; margin-bottom: 16px; border: 1px solid var(--border-glass); display: flex; justify-content: space-between; align-items: center; }
+        .btn-full { width: 100%; padding: 20px; border-radius: 20px; background: linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%); border: none; color: #000; font-weight: 900; font-size: 16px; margin-top: 15px; cursor: pointer; }
         .btn-full:disabled { background: #1e293b; color: #475569; cursor: not-allowed; }
-
-        /* --- NAVİGASYON --- */
-        .nav-bar { 
-            position: fixed; bottom: 20px; left: 20px; right: 20px;
-            background: rgba(15, 23, 42, 0.8); 
-            backdrop-filter: blur(20px);
-            display: flex; justify-content: space-around; 
-            padding: 12px 10px; border-radius: 25px; 
-            border: 1px solid var(--border-glass); 
-            z-index: 1000;
-        }
+        .nav-bar { position: fixed; bottom: 20px; left: 20px; right: 20px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 12px 10px; border-radius: 25px; border: 1px solid var(--border-glass); z-index: 1000; }
         .nav-item { color: var(--text-dim); text-decoration: none; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 700;}
         .nav-item.active { color: var(--gold); }
         .nav-icon { font-size: 20px; }
-
         .btn-action { background: var(--gold); border: none; padding: 10px 20px; border-radius: 14px; font-weight: 900; color: #000; }
         .btn-action:disabled { background: #334155; color: #94a3b8; }
         .ref-box { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); padding: 16px; border-radius: 16px; color: var(--gold); text-align: center; margin: 10px 0; font-weight: 700; font-size: 14px; }
@@ -181,13 +95,21 @@
     </div>
 
     <div id="page-profile" class="page">
+        <div class="card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center; background: rgba(255, 255, 255, 0.05);">
+            <div style="border-right: 1px solid var(--border-glass);">
+                <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 5px;">TOPLAM DAVET</div>
+                <div id="stat-ref-count" style="font-size: 24px; font-weight: 900; color: var(--gold);">0</div>
+            </div>
+            <div>
+                <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 5px;">TOPLAM KAZANÇ</div>
+                <div id="stat-ref-earn" style="font-size: 20px; font-weight: 900; color: #00d4ff;">0 GEP</div>
+            </div>
+        </div>
+
         <div class="card" style="flex-direction: column;">
             <h3>📅 Günlük Giriş Ödülü</h3>
             <p style="color: var(--text-dim); font-size: 13px;">Her gün gir, seriyi bozma, 7. gün 1000 GEP al!</p>
-            
-            <div class="streak-container" id="streak-box">
-                </div>
-
+            <div class="streak-container" id="streak-box"></div>
             <button id="btn-checkin" class="btn-full" onclick="claimDaily()">GÜNLÜK ÖDÜLÜ AL</button>
         </div>
 
@@ -266,7 +188,6 @@
                 streakBox.appendChild(dayDiv);
             }
 
-            // Buton kontrolü (Bugün alındı mı?)
             const lastCheckin = new Date(user.lastCheckin).setHours(0,0,0,0);
             const today = new Date().setHours(0,0,0,0);
             if (lastCheckin === today) {
@@ -295,7 +216,6 @@
             }
         }
 
-        // --- DİĞER FONKSİYONLAR ---
         function drawWheel() {
             const canvas = document.getElementById('wheelCanvas');
             const ctx = canvas.getContext('2d');
@@ -424,9 +344,18 @@
             if(data.success) { user.points = data.points; user.completedTasks.push(tid); updateUI(); renderTasks(); }
         }
 
+        // --- UI GÜNCELLEME (DÜZENLENDİ: Referans İstatistikleri Dahil) ---
         function updateUI() {
+            if (!user) return;
             document.getElementById('balance').innerText = user.points.toLocaleString();
             document.getElementById('usd').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`;
+            
+            // Referans sayılarını Profil sayfasında göster
+            if (document.getElementById('stat-ref-count')) {
+                const count = user.referralCount || 0;
+                document.getElementById('stat-ref-count').innerText = count;
+                document.getElementById('stat-ref-earn').innerText = (count * 500).toLocaleString() + " GEP";
+            }
         }
 
         function copyRef() {
