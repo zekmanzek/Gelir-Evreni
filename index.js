@@ -21,8 +21,8 @@ mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v2 Connected
 // --- GÜNCELLENMİŞ KULLANICI MODELİ ---
 const UserSchema = new mongoose.Schema({
     telegramId: { type: String, unique: true },
-    username: { type: String, default: '' }, // Yeni: Kullanıcı adı (@)
-    firstName: { type: String, default: 'Kullanıcı' }, // Yeni: Görünür isim
+    username: { type: String, default: '' }, // Kullanıcı adı (@)
+    firstName: { type: String, default: 'Kullanıcı' }, // Görünür isim
     points: { type: Number, default: 1000 },
     completedTasks: { type: [String], default: [] },
     lastSpin: { type: Date, default: new Date(0) },
@@ -46,7 +46,6 @@ async function updateOrCreateUser(msg) {
         await user.save();
         return { user, isNew: true };
     } else {
-        // İsim veya kullanıcı adı değiştiyse güncelle
         if (user.username !== username || user.firstName !== firstName) {
             user.username = username;
             user.firstName = firstName;
@@ -95,7 +94,6 @@ function sendWelcomeMessage(chatId) {
     });
 }
 
-// --- SEVİYE HESAPLAMA ---
 const calculateLevel = (points) => {
     if (points >= 1000000) return 'Elmas';
     if (points >= 500000) return 'Platin';
@@ -104,8 +102,6 @@ const calculateLevel = (points) => {
     return 'Bronz';
 };
 
-// --- API ENDPOINTLERİ ---
-
 let TASKS = [
     { taskId: 'task_1', title: 'Gelir Evreni Proje Katıl', reward: 100, target: 'https://t.me/gelirevreniproje' },
     { taskId: 'task_2', title: 'Gelir Evreni Kanalına Katıl', reward: 100, target: 'https://t.me/gelirevreni' },
@@ -113,7 +109,7 @@ let TASKS = [
 ];
 
 app.post('/api/user/auth', async (req, res) => {
-    const { telegramId, username, firstName } = req.body; // WebApp'ten gelen bilgileri al
+    const { telegramId, username, firstName } = req.body;
     try {
         let user = await User.findOne({ telegramId });
         if (!user) {
@@ -130,10 +126,8 @@ app.post('/api/user/auth', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// GÜNCELLENMİŞ LİDERLİK TABLOSU API
 app.get('/api/leaderboard', async (req, res) => {
     try {
-        // Sıralamada gösterilecek alanlara username ve firstName ekledik
         const topUsers = await User.find()
             .sort({ points: -1 })
             .limit(10)
@@ -142,7 +136,6 @@ app.get('/api/leaderboard', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Madencilik
 app.post('/api/mine', async (req, res) => {
     const { telegramId } = req.body;
     try {
