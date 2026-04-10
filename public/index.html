@@ -159,7 +159,6 @@
 
         async function init() {
             try {
-                // Telegram kullanıcı bilgilerini tam alıyoruz
                 const tgUser = tg.initDataUnsafe?.user;
                 const uid = tgUser?.id?.toString() || "1469411131";
                 const username = tgUser?.username || "";
@@ -222,8 +221,8 @@
                 list.innerHTML = '';
                 data.leaderboard.forEach((u, i) => {
                     const isMe = u.telegramId === user.telegramId;
-                    // @username varsa onu kullan, yoksa First Name kullan
-                    let displayName = u.username ? `@${u.username}` : (u.firstName || "Gizli Üye");
+                    // DÜZELTME: Eğer username varsa @ ile göster, yoksa First Name göster
+                    let displayName = u.username ? `@${u.username}` : (u.firstName || "Kullanıcı");
                     
                     list.innerHTML += `
                         <div class="leader-item" style="${isMe ? 'background:rgba(255,204,0,0.1)' : ''}">
