@@ -61,6 +61,13 @@
         .streak-container { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 15px 0; }
         .streak-day { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 10px; padding: 8px 2px; text-align: center; font-size: 9px; }
         .streak-day.completed { background: rgba(0, 255, 0, 0.1); border-color: #00ff00; color: #00ff00; }
+
+        /* Admin Ekstra Stilleri */
+        .admin-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; width: 100%; }
+        .stat-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; text-align: center; border: 1px solid var(--border-glass); }
+        .user-table { width: 100%; border-collapse: collapse; color: #fff; font-size: 11px; }
+        .user-table th { text-align: left; padding: 8px; border-bottom: 1px solid var(--border-glass); color: var(--text-dim); }
+        .user-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
         
         .ad-card { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1px solid rgba(34, 197, 94, 0.3); }
     </style>
@@ -133,11 +140,47 @@
         </div>
     </div>
 
+    <div id="page-admin" class="page">
+        <h3 style="margin-left:10px;">📊 Sistem İstatistikleri</h3>
+        <div class="admin-card-grid">
+            <div class="stat-card">
+                <div style="font-size:10px; color:var(--text-dim)">TOPLAM ÜYE</div>
+                <div id="adm-stat-users" style="font-size:18px; font-weight:900; color:var(--gold)">0</div>
+            </div>
+            <div class="stat-card">
+                <div style="font-size:10px; color:var(--text-dim)">TOPLAM GEP</div>
+                <div id="adm-stat-points" style="font-size:18px; font-weight:900; color:#00d4ff;">0</div>
+            </div>
+        </div>
+
+        <div class="card" style="flex-direction: column;">
+            <h3>🛠️ Kullanıcı Yönetimi</h3>
+            <input type="text" id="adm-target-id" class="ref-box" placeholder="Kullanıcı Telegram ID">
+            <input type="number" id="adm-amount" class="ref-box" placeholder="Miktar (Örn: 5000)">
+            <div style="display:flex; gap:10px; width:100%;">
+                <button class="btn-full" onclick="manageUser('add')" style="margin-top:0; font-size:12px;">EKLE</button>
+                <button class="btn-full" onclick="manageUser('set')" style="margin-top:0; font-size:12px; background:white;">EŞİTLE</button>
+            </div>
+        </div>
+
+        <div class="card" style="flex-direction: column;">
+            <h3>👥 Tüm Kullanıcılar</h3>
+            <button class="btn-full" style="background:#f1c40f; color:#000; margin-bottom:10px;" onclick="loadAdminUserList()">LİSTEYİ GÜNCELLE</button>
+            <div style="width:100%; max-height: 200px; overflow-y: auto;">
+                <table class="user-table">
+                    <thead><tr><th>ID</th><th>İsim</th><th>Puan</th></tr></thead>
+                    <tbody id="adm-all-users-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <nav class="nav-bar">
         <a href="javascript:void(0)" class="nav-item active" onclick="showPage('tasks', this)"><div style="font-size:20px;">📋</div><span>GÖREV</span></a>
         <a href="javascript:void(0)" class="nav-item" onclick="showPage('leaderboard', this)"><div style="font-size:20px;">🏆</div><span>SIRALAMA</span></a>
         <a href="javascript:void(0)" class="nav-item" onclick="showPage('mine', this)"><div style="font-size:20px;">⛏️</div><span>MADEN</span></a>
         <a href="javascript:void(0)" class="nav-item" onclick="showPage('profile', this)"><div style="font-size:20px;">👤</div><span>PROFİL</span></a>
+        <a href="javascript:void(0)" id="nav-admin" class="nav-item" style="display:none" onclick="showPage('admin', this)"><div style="font-size:20px;">⚙️</div><span>ADMİN</span></a>
     </nav>
 
     <script>
@@ -152,8 +195,7 @@
             try {
                 const tgUser = tg.initDataUnsafe?.user;
                 if (!tgUser) {
-                    // Eğer Telegram verisi yoksa (tarayıcı testi için)
-                    alert("Lütfen Telegram üzerinden giriş yapın.");
+                    alert("Telegram verisi bulunamadı.");
                     document.getElementById('loader').style.display = 'none';
                     return;
                 }
@@ -171,8 +213,14 @@
                 const data = await res.json();
                 if (data.success) {
                     user = data.user;
+                    user.isAdmin = data.isAdmin; // Backend'den adminlik durumunu al
                     document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
                     
+                    if(user.isAdmin) {
+                        document.getElementById('nav-admin').style.display = 'flex';
+                        loadAdminStats();
+                    }
+
                     await refreshTasks();
                     updateUI();
                     renderTasks();
@@ -188,7 +236,6 @@
             } catch (e) { 
                 console.error("Init Error:", e);
             } finally {
-                // Hata olsa da olmasa da loader'ı kapat
                 setTimeout(() => {
                     const loader = document.getElementById('loader');
                     loader.style.opacity = '0';
@@ -197,13 +244,69 @@
             }
         }
 
+        // --- ADMİN FONKSİYONLARI ---
+        async function loadAdminStats() {
+            if(!user.isAdmin) return;
+            const res = await fetch(`${API}/api/admin/stats`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminId: user.telegramId })
+            });
+            const data = await res.json();
+            document.getElementById('adm-stat-users').innerText = data.totalUsers;
+            document.getElementById('adm-stat-points').innerText = data.totalPoints.toLocaleString();
+        }
+
+        async function loadAdminUserList() {
+            const res = await fetch(`${API}/api/admin/all-users`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminId: user.telegramId })
+            });
+            const data = await res.json();
+            const tbody = document.getElementById('adm-all-users-tbody');
+            tbody.innerHTML = data.users.map(u => `
+                <tr>
+                    <td>${u.telegramId}</td>
+                    <td>${u.firstName}</td>
+                    <td>${u.points.toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function manageUser(action) {
+            const targetId = document.getElementById('adm-target-id').value;
+            const amount = document.getElementById('adm-amount').value;
+            if(!targetId || !amount) return tg.showAlert("ID ve Miktar girin!");
+
+            const res = await fetch(`${API}/api/admin/user-manage`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    adminId: user.telegramId, 
+                    targetId, 
+                    action, 
+                    amount 
+                })
+            });
+            const data = await res.json();
+            if(data.success) {
+                tg.showAlert(`İşlem Başarılı! Yeni Puan: ${data.newPoints}`);
+                loadAdminStats();
+                loadAdminUserList();
+            } else {
+                tg.showAlert("Hata: " + data.message);
+            }
+        }
+
+        // --- DİĞER FONKSİYONLAR (MEVCUT) ---
         async function showAd() {
             AdController.show().then(async (result) => {
                 if (result.done) {
                     const res = await fetch(`${API}/adsgram-reward?teleId=${user.telegramId}&status=done`);
                     if (res.ok) {
                         tg.showAlert("🎉 Tebrikler! +500 GEP kazandın.");
-                        init(); // Verileri tazele
+                        init(); 
                     }
                 }
             }).catch(() => {
@@ -250,14 +353,10 @@
         }
 
         function checkMiningTimer() {
-            if (!user.lastMining || new Date(user.lastMining).getTime() === 0) {
-                document.getElementById('mine-status-text').innerText = "1000 GEP İçin Maden Hazır";
-                return;
-            }
+            if (!user.lastMining || new Date(user.lastMining).getTime() === 0) return;
             const cooldown = 4 * 60 * 60 * 1000;
             const diff = new Date().getTime() - new Date(user.lastMining).getTime();
             if (diff < cooldown) runTimer(cooldown - diff);
-            else document.getElementById('mine-status-text').innerText = "1000 GEP İçin Maden Hazır";
         }
 
         function runTimer(timeLeft) {
