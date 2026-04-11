@@ -27,30 +27,9 @@
         .loader-logo { font-size: 28px; font-weight: 900; color: var(--gold); letter-spacing: 6px; text-shadow: 0 0 20px var(--gold-glow); animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
 
-        .announcement-container { 
-            background: linear-gradient(90deg, #ef4444, #f59e0b); 
-            color: white; 
-            overflow: hidden; 
-            white-space: nowrap; 
-            position: sticky; 
-            top: 0; 
-            z-index: 2000; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            height: 35px;
-            display: none;
-            align-items: center;
-        }
-        .announcement-scroll {
-            display: inline-block;
-            padding-left: 100%;
-            animation: marquee 20s linear infinite;
-            font-size: 13px;
-            font-weight: 800;
-        }
-        @keyframes marquee {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(-100%, 0); }
-        }
+        .announcement-container { background: linear-gradient(90deg, #ef4444, #f59e0b); color: white; overflow: hidden; white-space: nowrap; position: sticky; top: 0; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); height: 35px; display: none; align-items: center; }
+        .announcement-scroll { display: inline-block; padding-left: 100%; animation: marquee 20s linear infinite; font-size: 13px; font-weight: 800; }
+        @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
         .level-badge { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 900; text-transform: uppercase; margin-bottom: 12px; display: inline-block; letter-spacing: 1px; }
         .level-Bronz { background: #cd7f32; color: #fff; }
@@ -77,22 +56,12 @@
         .nav-item { color: var(--text-dim); text-decoration: none; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
         .nav-item.active { color: var(--gold); }
         
-        .admin-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; width: 100%; }
-        .stat-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; text-align: center; border: 1px solid var(--border-glass); }
         .ref-box { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); padding: 14px; border-radius: 14px; color: var(--gold); text-align: center; margin: 8px 0; font-weight: 700; outline: none; }
         
         .streak-container { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 15px 0; }
         .streak-day { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 10px; padding: 8px 2px; text-align: center; font-size: 9px; }
         .streak-day.completed { background: rgba(0, 255, 0, 0.1); border-color: #00ff00; color: #00ff00; }
         
-        .admin-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border-glass); width: 100%; font-size: 13px; }
-        .btn-delete { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
-        
-        .user-table { width: 100%; border-collapse: collapse; margin-top: 10px; color: #fff; font-size: 12px; }
-        .user-table th { text-align: left; padding: 8px; border-bottom: 1px solid var(--border-glass); color: var(--text-dim); }
-        .user-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
-        
-        /* AD CARD (YENİ) */
         .ad-card { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1px solid rgba(34, 197, 94, 0.3); }
     </style>
 </head>
@@ -104,7 +73,7 @@
     <div id="loader"><div class="loader-logo">GELİR EVRENİ</div></div>
 
     <div class="header">
-        <div id="user-level" class="level-badge level-Bronz">Yükleniyor...</div>
+        <div id="user-level" class="level-badge level-Bronz">...</div>
         <div class="balance-label">GÜNCEL BAKİYE</div>
         <div class="points-container">
             <div class="points" id="balance">0</div>
@@ -119,7 +88,7 @@
     </div>
 
     <div id="page-leaderboard" class="page">
-        <h3 style="margin-left: 10px;">🏆 En Zengin 10 Madenci</h3>
+        <h3 style="margin-left: 10px;">🏆 Top 10 Madenci</h3>
         <div class="card" style="flex-direction: column; padding: 0; overflow: hidden;">
             <div id="leader-list" style="width: 100%;"></div>
         </div>
@@ -128,7 +97,7 @@
     <div id="page-mine" class="page">
         <div id="mine-card" class="card" style="flex-direction: column; text-align: center; padding: 40px 20px;">
             <div style="font-size: 60px; margin-bottom: 15px;" id="mine-icon">⛏️</div>
-            <h3 id="mine-status-text">1000 GEP İçin Maden Hazır</h3>
+            <h3 id="mine-status-text">Maden Hazırlanıyor...</h3>
             <div id="mining-timer" style="font-family: monospace; font-size: 32px; font-weight: 900; color: var(--gold); margin: 15px 0; display: none;">00:00:00</div>
             <button id="btn-mine" class="btn-full" onclick="startMining()">MADENİ BAŞLAT</button>
         </div>
@@ -138,7 +107,7 @@
         <div class="card ad-card" style="flex-direction: column; text-align: center;">
             <div style="font-size: 30px; margin-bottom: 10px;">📺</div>
             <h3 style="margin: 0;">Reklam İzle Kazan</h3>
-            <p style="font-size: 12px; color: var(--text-dim); margin: 5px 0;">Her reklam izleme için +500 GEP kazanırsın.</p>
+            <p style="font-size: 12px; color: var(--text-dim); margin: 5px 0;">Her reklam için +500 GEP kazanırsın.</p>
             <button class="btn-full" style="background: var(--success); color: white;" onclick="showAd()">REKLAMI BAŞLAT</button>
         </div>
 
@@ -148,7 +117,7 @@
                 <div id="stat-ref-count" style="font-size: 22px; font-weight: 900; color: var(--gold);">0</div>
             </div>
             <div>
-                <div style="font-size: 10px; color: var(--text-dim);">REFERANS GELİRİ</div>
+                <div style="font-size: 10px; color: var(--text-dim);">REF GELİRİ</div>
                 <div id="stat-ref-earn" style="font-size: 18px; font-weight: 900; color: #00d4ff;">0 GEP</div>
             </div>
         </div>
@@ -158,123 +127,88 @@
             <button id="btn-checkin" class="btn-full" onclick="claimDaily()">GÜNLÜK ÖDÜLÜ AL</button>
         </div>
         <div class="card" style="flex-direction: column; text-align: center;">
-            <h3>👥 Arkadaşlarını Çağır</h3>
-            <input type="text" id="ref-link" class="ref-box" readonly>
+            <h3>👥 Arkadaş Davet Et</h3>
+            <input type="text" id="ref-link" class="ref-box" readonly onclick="this.select()">
             <button class="btn-full" onclick="copyRef()">LİNKİ KOPYALA</button>
         </div>
     </div>
-
-    <div id="page-admin" class="page">
-        <h3 style="margin-left:10px;">📊 Sistem İstatistikleri</h3>
-        <div class="admin-card-grid">
-            <div class="stat-card">
-                <div style="font-size:10px; color:var(--text-dim)">TOPLAM ÜYE</div>
-                <div id="adm-stat-users" style="font-size:18px; font-weight:900; color:var(--gold)">0</div>
-            </div>
-            <div class="stat-card">
-                <div style="font-size:10px; color:var(--text-dim)">KASADAKİ GEP</div>
-                <div id="adm-stat-points" style="font-size:18px; font-weight:900; color:#00d4ff;">0</div>
-            </div>
-        </div>
-        <div class="card" style="flex-direction: column;">
-            <h3>👥 Tüm Kullanıcılar</h3>
-            <button class="btn-full" style="background:#f1c40f; color:#000; margin-bottom:10px;" onclick="loadAllUsersList()">LİSTEYİ YÜKLE</button>
-            <div id="user-list-scroll" style="width:100%; max-height: 250px; overflow-y: auto; display: none;">
-                <table class="user-table">
-                    <thead><tr><th>ID</th><th>Kullanıcı</th><th>Puan</th></tr></thead>
-                    <tbody id="all-users-tbody"></tbody>
-                </table>
-            </div>
-        </div>
-        </div>
 
     <nav class="nav-bar">
         <a href="javascript:void(0)" class="nav-item active" onclick="showPage('tasks', this)"><div style="font-size:20px;">📋</div><span>GÖREV</span></a>
         <a href="javascript:void(0)" class="nav-item" onclick="showPage('leaderboard', this)"><div style="font-size:20px;">🏆</div><span>SIRALAMA</span></a>
         <a href="javascript:void(0)" class="nav-item" onclick="showPage('mine', this)"><div style="font-size:20px;">⛏️</div><span>MADEN</span></a>
         <a href="javascript:void(0)" class="nav-item" onclick="showPage('profile', this)"><div style="font-size:20px;">👤</div><span>PROFİL</span></a>
-        <a href="javascript:void(0)" id="nav-admin" class="nav-item" style="display:none" onclick="showPage('admin', this)"><div style="font-size:20px;">⚙️</div><span>ADMİN</span></a>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
         const API = window.location.origin;
-        let user, tasks = [], announcements = [], miningInterval;
+        let user, tasks = [], miningInterval;
 
-        // ADSGRAM AYARI (BURAYA KENDİ BLOCK ID'Nİ YAZ)
         const AdController = window.Adsgram.init({ blockId: "27433" }); 
 
         async function init() {
             try {
                 const tgUser = tg.initDataUnsafe?.user;
-                const uid = tgUser?.id?.toString() || "1469411131";
-                const username = tgUser?.username || "";
-                const firstName = tgUser?.first_name || "Kullanıcı";
+                if (!tgUser) {
+                    // Eğer Telegram verisi yoksa (tarayıcı testi için)
+                    alert("Lütfen Telegram üzerinden giriş yapın.");
+                    document.getElementById('loader').style.display = 'none';
+                    return;
+                }
 
                 const res = await fetch(`${API}/api/user/auth`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ telegramId: uid, username, firstName })
+                    body: JSON.stringify({ 
+                        telegramId: tgUser.id.toString(), 
+                        username: tgUser.username || "", 
+                        firstName: tgUser.first_name || "Kullanıcı" 
+                    })
                 });
+
                 const data = await res.json();
-                user = data.user;
-                user.isAdmin = data.isAdmin;
-                announcements = data.announcements || [];
-
-                renderAnnouncements();
-                document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
-                
-                await refreshTasks();
-                updateUI();
-                renderTasks();
-                checkMiningTimer();
-                renderStreak();
-                
-                if (user.isAdmin) {
-                    document.getElementById('nav-admin').style.display = 'flex';
-                    loadAdminStats();
+                if (data.success) {
+                    user = data.user;
+                    document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
+                    
+                    await refreshTasks();
+                    updateUI();
+                    renderTasks();
+                    checkMiningTimer();
+                    renderStreak();
+                    
+                    if (data.announcements?.length > 0) {
+                        const annScroll = document.getElementById('ann-scroll');
+                        annScroll.innerText = data.announcements.join(" 📢 ") + " 📢 ";
+                        document.getElementById('ann-container').style.display = 'flex';
+                    }
                 }
-
+            } catch (e) { 
+                console.error("Init Error:", e);
+            } finally {
+                // Hata olsa da olmasa da loader'ı kapat
                 setTimeout(() => {
-                    document.getElementById('loader').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loader').style.display = 'none', 600);
-                }, 1000);
-            } catch (e) { console.error(e); }
-        }
-
-        // REKLAM GÖSTERME FONKSİYONU
-        async function showAd() {
-            AdController.show().then(async (result) => {
-                // Reklam başarıyla izlendiğinde backend'e haber ver
-                const res = await fetch(`${API}/adsgram-reward?teleId=${user.telegramId}&status=done`);
-                if (res.ok) {
-                    tg.showAlert("🎉 Tebrikler! Reklam izlediğin için +500 GEP kazandın.");
-                    // Bakiyeyi güncellemek için kullanıcıyı tekrar çekiyoruz
-                    init(); 
-                }
-            }).catch((result) => {
-                tg.showAlert("Reklam yüklenemedi veya yarıda kesildi.");
-                console.log(result);
-            });
-        }
-
-        // Diğer fonksiyonların (updateUI, showPage, startMining vb.) aynı şekilde devam ediyor...
-        function renderAnnouncements() {
-            const container = document.getElementById('ann-container');
-            const scroll = document.getElementById('ann-scroll');
-            if (announcements.length > 0) {
-                scroll.innerText = announcements.join(" 📢 ") + " 📢 ";
-                container.style.display = 'flex';
-            } else {
-                container.style.display = 'none';
+                    const loader = document.getElementById('loader');
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 600);
+                }, 800);
             }
         }
 
-        async function refreshTasks() {
-            const tRes = await fetch(`${API}/api/tasks`);
-            const tData = await tRes.json();
-            tasks = tData.tasks;
+        async function showAd() {
+            AdController.show().then(async (result) => {
+                if (result.done) {
+                    const res = await fetch(`${API}/adsgram-reward?teleId=${user.telegramId}&status=done`);
+                    if (res.ok) {
+                        tg.showAlert("🎉 Tebrikler! +500 GEP kazandın.");
+                        init(); // Verileri tazele
+                    }
+                }
+            }).catch(() => {
+                tg.showAlert("Reklam yüklenemedi.");
+            });
         }
 
         function updateUI() {
@@ -297,7 +231,6 @@
             document.getElementById(`page-${p}`).classList.add('active');
             el.classList.add('active');
             if(p === 'leaderboard') loadLeaderboard();
-            window.scrollTo(0, 0);
         }
 
         async function startMining() {
@@ -317,12 +250,14 @@
         }
 
         function checkMiningTimer() {
-            if (!user.lastMining) return;
-            const lastMine = new Date(user.lastMining).getTime();
-            const now = new Date().getTime();
+            if (!user.lastMining || new Date(user.lastMining).getTime() === 0) {
+                document.getElementById('mine-status-text').innerText = "1000 GEP İçin Maden Hazır";
+                return;
+            }
             const cooldown = 4 * 60 * 60 * 1000;
-            const diff = now - lastMine;
+            const diff = new Date().getTime() - new Date(user.lastMining).getTime();
             if (diff < cooldown) runTimer(cooldown - diff);
+            else document.getElementById('mine-status-text').innerText = "1000 GEP İçin Maden Hazır";
         }
 
         function runTimer(timeLeft) {
@@ -331,7 +266,7 @@
             const statusText = document.getElementById('mine-status-text');
             btn.disabled = true;
             timerDiv.style.display = "block";
-            statusText.innerText = "1000 GEP İçin Kalan Süre";
+            statusText.innerText = "Kalan Süre:";
             clearInterval(miningInterval);
             miningInterval = setInterval(() => {
                 timeLeft -= 1000;
@@ -347,6 +282,12 @@
                 const s = Math.floor((timeLeft % 60000) / 1000);
                 timerDiv.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             }, 1000);
+        }
+
+        async function refreshTasks() {
+            const tRes = await fetch(`${API}/api/tasks`);
+            const tData = await tRes.json();
+            tasks = tData.tasks;
         }
 
         function renderTasks() {
@@ -371,23 +312,24 @@
 
         async function completeTask(tid, link) {
             tg.openLink(link);
-            const res = await fetch(`${API}/api/tasks/complete`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ telegramId: user.telegramId, taskId: tid })
-            });
-            const data = await res.json();
-            if(data.success) { 
-                user.points = data.points; 
-                user.completedTasks.push(tid); 
-                updateUI(); 
-                renderTasks(); 
-            }
+            setTimeout(async () => {
+                const res = await fetch(`${API}/api/tasks/complete`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ telegramId: user.telegramId, taskId: tid })
+                });
+                const data = await res.json();
+                if(data.success) { 
+                    user.points = data.points; 
+                    user.completedTasks.push(tid); 
+                    updateUI(); 
+                    renderTasks(); 
+                }
+            }, 2000);
         }
 
         function renderStreak() {
             const streakBox = document.getElementById('streak-box');
-            if(!streakBox) return;
             streakBox.innerHTML = '';
             const rewards = [0, 100, 200, 300, 400, 500, 600, 1000];
             for (let i = 1; i <= 7; i++) {
@@ -408,10 +350,9 @@
             if(data.success) {
                 user.points = data.points;
                 user.streak = data.streak;
-                user.lastCheckin = new Date().toISOString();
                 updateUI();
                 renderStreak();
-                tg.showAlert(`🎁 Ödül alındı!`);
+                tg.showAlert(`🎁 Günlük ödülün alındı!`);
             } else { tg.showAlert(data.message); }
         }
 
@@ -431,7 +372,7 @@
             const input = document.getElementById('ref-link');
             input.select();
             document.execCommand('copy');
-            tg.showAlert("✅ Kopyalandı!");
+            tg.showAlert("✅ Link kopyalandı!");
         }
 
         window.onload = init;
