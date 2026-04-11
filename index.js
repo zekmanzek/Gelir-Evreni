@@ -14,7 +14,13 @@ const token = process.env.BOT_TOKEN;
 const mongoURI = process.env.MONGODB_URI;
 const ADMIN_ID = "1469411131"; 
 
-const bot = new TelegramBot(token, { polling: true });
+// Çakışmaları önlemek için bot ayarları
+const bot = new TelegramBot(token, { 
+    polling: {
+        autoStart: true,
+        params: { timeout: 10 }
+    } 
+});
 
 mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v2.5 Connected"));
 
@@ -109,12 +115,11 @@ bot.onText(/\/start$/, async (msg) => {
 });
 
 function sendWelcomeMessage(chatId) {
-    const appUrl = `https://${process.env.RENDER_EXTERNAL_HOSTNAME || 'gelir-evreni.onrender.com'}`;
     bot.sendMessage(chatId, `🚀 *Gelir Evreni'ne Hoş Geldin!*\n\nBurada maden kazarak, görevleri yaparak ve arkadaşlarını davet ederek GEP kazanabilirsin.`, {
         parse_mode: 'Markdown',
         reply_markup: {
             inline_keyboard: [
-                [{ text: "Uygulamayı Aç 📱", web_app: { url: appUrl } }]
+                [{ text: "Uygulamayı Aç 📱", web_app: { url: `https://gelir-evreni.onrender.com` } }]
             ]
         }
     });
@@ -127,7 +132,6 @@ app.get('/adsgram-reward', async (req, res) => {
     const { userid, status } = req.query;
     if (!userid) return res.status(400).send('User ID missing');
     
-    // Adsgram'dan status=reward gelirse ödül ver
     if(status !== 'reward') return res.status(400).send('Invalid status');
 
     try {
@@ -150,8 +154,6 @@ app.get('/adsgram-reward', async (req, res) => {
 
 app.post('/api/user/auth', async (req, res) => {
     const { telegramId, username, firstName } = req.body;
-    if(!telegramId) return res.status(400).json({ success: false, message: "ID Eksik" });
-
     try {
         let user = await User.findOne({ telegramId });
         if (!user) {
@@ -175,9 +177,100 @@ app.post('/api/user/auth', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ... (Diğer API rotaların (checkin, mine, leaderboard vb.) aynı kalabilir) ...
-// Not: Kodun çok uzun olmaması için geri kalan standart rotaları buraya eklemedim, 
-// mevcuttaki checkin, mine ve admin rotalarını bu kodun altına eklemeye devam edebilirsin.
+app.post('/api/user/checkin', async (req, res) => {
+    const { telegramId } = req.body;
+    try {
+        const user = await User.findOne({ telegramId });
+        if (!user) return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı." });
+        const now = new Date();
+        const lastCheckin = new Date(user.lastCheckin || 0);
+        const diff = now - lastCheckin;
+        const oneDay = 24 * 60 * 60 * 1000;
+        if (diff < oneDay) return res.json({ success: false, message: "Bugün zaten ödülünü aldın!" });
+        user.streak = (diff > oneDay * 2) ? 1 : (user.streak % 7) + 1;
+        const rewards = [0, 100, 200, 300, 400, 500, 600, 1000];
+        const reward = rewards[user.streak];
+        user.points += reward;
+        user.lastCheckin = now;
+        await user.save();
+        res.json({ success: true, points: user.points, streak: user.streak, message: `${reward} GEP kazandın!` });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/mine', async (req, res) => {
+    const { telegramId } = req.body;
+    try {
+        const user = await User.findOne({ telegramId });
+        const settings = await Settings.findOne();
+        const now = new Date();
+        const cooldown = 4 * 60 * 60 * 1000;
+        if (user && (now - new Date(user.lastMining)) > cooldown) {
+            let baseReward = 1000;
+            if (user.level === 'Gümüş') baseReward += 100;
+            if (user.level === 'Altın') baseReward += 250;
+            if (user.level === 'Platin') baseReward += 500;
+            if (user.level === 'Elmas') baseReward += 1000;
+            const finalReward = baseReward * (settings.miningMultiplier || 1);
+            user.points += finalReward;
+            user.lastMining = now;
+            await user.save();
+            return res.json({ success: true, points: user.points, reward: finalReward });
+        }
+        res.json({ success: false, message: "Maden henüz hazır değil." });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/leaderboard', async (req, res) => {
+    try {
+        const topUsers = await User.find().sort({ points: -1 }).limit(10).select('telegramId points level username firstName');
+        res.json({ success: true, leaderboard: topUsers });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/tasks', (req, res) => res.json({ tasks: TASKS }));
+
+app.post('/api/tasks/complete', async (req, res) => {
+    const { telegramId, taskId } = req.body;
+    try {
+        const user = await User.findOne({ telegramId });
+        const task = TASKS.find(t => t.taskId === taskId);
+        if (user && task && !user.completedTasks.includes(taskId)) {
+            user.points += task.reward;
+            user.completedTasks.push(taskId);
+            await user.save();
+            return res.json({ success: true, points: user.points });
+        }
+        res.json({ success: false, message: "Hata!" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- ADMIN KOMUTA MERKEZİ ---
+app.post('/api/admin/all-users', async (req, res) => {
+    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    try {
+        const users = await User.find().sort({ points: -1 });
+        res.json({ success: true, users });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/stats', async (req, res) => {
+    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    const totalUsers = await User.countDocuments();
+    const totalPointsResult = await User.aggregate([{ $group: { _id: null, total: { $sum: "$points" } } }]);
+    const settings = await Settings.findOne();
+    res.json({ totalUsers, totalPoints: totalPointsResult[0]?.total || 0, multiplier: settings.miningMultiplier, announcements: settings.announcements });
+});
+
+app.post('/api/admin/user-manage', async (req, res) => {
+    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    const { targetId, action, amount } = req.body;
+    const targetUser = await User.findOne({ telegramId: targetId });
+    if (!targetUser) return res.json({ success: false, message: "Kullanıcı bulunamadı." });
+    if (action === 'add') targetUser.points += parseInt(amount);
+    if (action === 'set') targetUser.points = parseInt(amount);
+    await targetUser.save();
+    res.json({ success: true, newPoints: targetUser.points });
+});
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
