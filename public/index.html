@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gelir Evreni | Komuta Merkezi</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://adsgram.ai/sdk-v1.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -126,6 +127,7 @@
             <h3 id="mine-status-text">1000 GEP İçin Maden Hazır</h3>
             <div id="mining-timer" style="font-family: monospace; font-size: 32px; font-weight: 900; color: var(--gold); margin: 15px 0; display: none;">00:00:00</div>
             <button id="btn-mine" class="btn-full" onclick="startMining()">MADENİ BAŞLAT</button>
+            <button id="btn-ad" class="btn-full" style="background: linear-gradient(135deg, #00d4ff 0%, #0055ff 100%); margin-top: 15px;" onclick="showAd()">REKLAM İZLE (+500 GEP)</button>
         </div>
     </div>
 
@@ -235,6 +237,9 @@
         const API = window.location.origin;
         let user, tasks = [], announcements = [], miningInterval;
 
+        // Adsgram Başlatma
+        const AdController = window.Adsgram.init({ blockId: "27433" });
+
         async function init() {
             try {
                 const tgUser = tg.initDataUnsafe?.user;
@@ -272,6 +277,33 @@
                     setTimeout(() => document.getElementById('loader').style.display = 'none', 600);
                 }, 1000);
             } catch (e) { console.error(e); }
+        }
+
+        async function showAd() {
+            const btn = document.getElementById('btn-ad');
+            btn.disabled = true;
+            btn.innerText = "YÜKLENİYOR...";
+            
+            try {
+                const result = await AdController.show();
+                if (result.done) {
+                    tg.showAlert("🎉 Tebrikler! 500 GEP kazandın.");
+                    // Puanı güncellemek için tekrar auth çekiyoruz (en güvenli yol)
+                    const res = await fetch(`${API}/api/user/auth`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ telegramId: user.telegramId })
+                    });
+                    const data = await res.json();
+                    user.points = data.user.points;
+                    updateUI();
+                }
+            } catch (e) {
+                tg.showAlert("Reklam şu an hazır değil, lütfen biraz sonra tekrar dene.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "REKLAM İZLE (+500 GEP)";
+            }
         }
 
         function renderAnnouncements() {
@@ -330,7 +362,7 @@
                 user.lastMining = new Date().toISOString();
                 updateUI(); 
                 tg.showAlert(`🚀 Maden kazıldı! +${data.reward} GEP aldın.`);
-                runTimer(4 * 60 * 60 * 1000); // 4 Saat Cooldown
+                runTimer(4 * 60 * 60 * 1000);
             } else { tg.showAlert(data.message); }
         }
 
@@ -338,7 +370,7 @@
             if (!user.lastMining) return;
             const lastMine = new Date(user.lastMining).getTime();
             const now = new Date().getTime();
-            const cooldown = 4 * 60 * 60 * 1000; // 4 Saat
+            const cooldown = 4 * 60 * 60 * 1000;
             const diff = now - lastMine;
             if (diff < cooldown) runTimer(cooldown - diff);
         }
@@ -350,7 +382,7 @@
             
             btn.disabled = true;
             timerDiv.style.display = "block";
-            statusText.innerText = "1000 GEP İçin Kalan Süre"; // Yazı Güncellendi
+            statusText.innerText = "1000 GEP İçin Kalan Süre";
             
             clearInterval(miningInterval);
             miningInterval = setInterval(() => {
@@ -359,7 +391,7 @@
                     clearInterval(miningInterval);
                     btn.disabled = false;
                     timerDiv.style.display = "none";
-                    statusText.innerText = "1000 GEP İçin Maden Hazır"; // Yazı Güncellendi
+                    statusText.innerText = "1000 GEP İçin Maden Hazır";
                     return;
                 }
                 const h = Math.floor(timeLeft / 3600000);
