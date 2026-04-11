@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gelir Evreni | Komuta Merkezi</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://adsgram.ai/sdk-v1.js"></script>
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -17,6 +17,7 @@
             --text-main: #f8fafc;
             --text-dim: #94a3b8;
             --danger: #ef4444;
+            --success: #22c55e;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -90,6 +91,9 @@
         .user-table { width: 100%; border-collapse: collapse; margin-top: 10px; color: #fff; font-size: 12px; }
         .user-table th { text-align: left; padding: 8px; border-bottom: 1px solid var(--border-glass); color: var(--text-dim); }
         .user-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        
+        /* AD CARD (YENİ) */
+        .ad-card { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1px solid rgba(34, 197, 94, 0.3); }
     </style>
 </head>
 <body>
@@ -127,11 +131,17 @@
             <h3 id="mine-status-text">1000 GEP İçin Maden Hazır</h3>
             <div id="mining-timer" style="font-family: monospace; font-size: 32px; font-weight: 900; color: var(--gold); margin: 15px 0; display: none;">00:00:00</div>
             <button id="btn-mine" class="btn-full" onclick="startMining()">MADENİ BAŞLAT</button>
-            <button id="btn-ad" class="btn-full" style="background: linear-gradient(135deg, #00d4ff 0%, #0055ff 100%); margin-top: 15px;" onclick="showAd()">REKLAM İZLE (+500 GEP)</button>
         </div>
     </div>
 
     <div id="page-profile" class="page">
+        <div class="card ad-card" style="flex-direction: column; text-align: center;">
+            <div style="font-size: 30px; margin-bottom: 10px;">📺</div>
+            <h3 style="margin: 0;">Reklam İzle Kazan</h3>
+            <p style="font-size: 12px; color: var(--text-dim); margin: 5px 0;">Her reklam izleme için +500 GEP kazanırsın.</p>
+            <button class="btn-full" style="background: var(--success); color: white;" onclick="showAd()">REKLAMI BAŞLAT</button>
+        </div>
+
         <div class="card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center;">
             <div style="border-right: 1px solid var(--border-glass);">
                 <div style="font-size: 10px; color: var(--text-dim);">DAVETLER</div>
@@ -166,69 +176,24 @@
                 <div id="adm-stat-points" style="font-size:18px; font-weight:900; color:#00d4ff;">0</div>
             </div>
         </div>
-
         <div class="card" style="flex-direction: column;">
             <h3>👥 Tüm Kullanıcılar</h3>
-            <button class="btn-full" style="background:#f1c40f; color:#000; margin-bottom:10px;" onclick="loadAllUsersList()">LİSTEYİ YÜKLE / GÜNCELLE</button>
+            <button class="btn-full" style="background:#f1c40f; color:#000; margin-bottom:10px;" onclick="loadAllUsersList()">LİSTEYİ YÜKLE</button>
             <div id="user-list-scroll" style="width:100%; max-height: 250px; overflow-y: auto; display: none;">
                 <table class="user-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Kullanıcı</th>
-                            <th>Puan</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>ID</th><th>Kullanıcı</th><th>Puan</th></tr></thead>
                     <tbody id="all-users-tbody"></tbody>
                 </table>
             </div>
         </div>
-
-        <div class="card" style="flex-direction: column;">
-            <h3>📢 Duyuru Yönetimi</h3>
-            <input type="text" id="adm-ann-text" placeholder="Yeni duyuru yazın..." class="ref-box">
-            <button class="btn-full" onclick="addAnnouncement()">YENİ DUYURU EKLE</button>
-            <hr style="width:100%; border:0; border-top:1px solid var(--border-glass); margin:15px 0;">
-            <div id="admin-ann-list" style="width:100%;"></div>
         </div>
-
-        <div class="card" style="flex-direction: column;">
-            <h3>👤 Kullanıcı Müdahalesi</h3>
-            <input type="text" id="adm-user-id" placeholder="Telegram ID" class="ref-box">
-            <input type="number" id="adm-user-amount" placeholder="Miktar" class="ref-box">
-            <div style="display:flex; gap:10px; width:100%;">
-                <button class="btn-full" style="background:#22c55e" onclick="manageUser('add')">PUAN EKLE</button>
-                <button class="btn-full" onclick="manageUser('set')">EŞİTLE</button>
-            </div>
-        </div>
-
-        <div class="card" style="flex-direction: column;">
-            <h3>⚙️ Görev Yönetimi</h3>
-            <input type="text" id="adm-title" placeholder="Görev Başlığı" class="ref-box">
-            <input type="text" id="adm-link" placeholder="Link (https://...)" class="ref-box">
-            <input type="number" id="adm-reward" placeholder="Ödül Miktarı" class="ref-box">
-            <button class="btn-full" onclick="addAdminTask()">GÖREVİ EKLE</button>
-            <hr style="width:100%; border:0; border-top:1px solid var(--border-glass); margin:15px 0;">
-            <div id="admin-task-list" style="width: 100%;"></div>
-        </div>
-    </div>
 
     <nav class="nav-bar">
-        <a href="javascript:void(0)" class="nav-item active" onclick="showPage('tasks', this)">
-            <div style="font-size:20px;">📋</div><span>GÖREV</span>
-        </a>
-        <a href="javascript:void(0)" class="nav-item" onclick="showPage('leaderboard', this)">
-            <div style="font-size:20px;">🏆</div><span>SIRALAMA</span>
-        </a>
-        <a href="javascript:void(0)" class="nav-item" onclick="showPage('mine', this)">
-            <div style="font-size:20px;">⛏️</div><span>MADEN</span>
-        </a>
-        <a href="javascript:void(0)" class="nav-item" onclick="showPage('profile', this)">
-            <div style="font-size:20px;">👤</div><span>PROFİL</span>
-        </a>
-        <a href="javascript:void(0)" id="nav-admin" class="nav-item" style="display:none" onclick="showPage('admin', this)">
-            <div style="font-size:20px;">⚙️</div><span>ADMİN</span>
-        </a>
+        <a href="javascript:void(0)" class="nav-item active" onclick="showPage('tasks', this)"><div style="font-size:20px;">📋</div><span>GÖREV</span></a>
+        <a href="javascript:void(0)" class="nav-item" onclick="showPage('leaderboard', this)"><div style="font-size:20px;">🏆</div><span>SIRALAMA</span></a>
+        <a href="javascript:void(0)" class="nav-item" onclick="showPage('mine', this)"><div style="font-size:20px;">⛏️</div><span>MADEN</span></a>
+        <a href="javascript:void(0)" class="nav-item" onclick="showPage('profile', this)"><div style="font-size:20px;">👤</div><span>PROFİL</span></a>
+        <a href="javascript:void(0)" id="nav-admin" class="nav-item" style="display:none" onclick="showPage('admin', this)"><div style="font-size:20px;">⚙️</div><span>ADMİN</span></a>
     </nav>
 
     <script>
@@ -237,8 +202,8 @@
         const API = window.location.origin;
         let user, tasks = [], announcements = [], miningInterval;
 
-        // Adsgram Başlatma
-        const AdController = window.Adsgram.init({ blockId: "27433" });
+        // ADSGRAM AYARI (BURAYA KENDİ BLOCK ID'Nİ YAZ)
+        const AdController = window.Adsgram.init({ blockId: "27433" }); 
 
         async function init() {
             try {
@@ -258,7 +223,6 @@
                 announcements = data.announcements || [];
 
                 renderAnnouncements();
-
                 document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
                 
                 await refreshTasks();
@@ -279,33 +243,23 @@
             } catch (e) { console.error(e); }
         }
 
+        // REKLAM GÖSTERME FONKSİYONU
         async function showAd() {
-            const btn = document.getElementById('btn-ad');
-            btn.disabled = true;
-            btn.innerText = "YÜKLENİYOR...";
-            
-            try {
-                const result = await AdController.show();
-                if (result.done) {
-                    tg.showAlert("🎉 Tebrikler! 500 GEP kazandın.");
-                    // Puanı güncellemek için tekrar auth çekiyoruz (en güvenli yol)
-                    const res = await fetch(`${API}/api/user/auth`, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ telegramId: user.telegramId })
-                    });
-                    const data = await res.json();
-                    user.points = data.user.points;
-                    updateUI();
+            AdController.show().then(async (result) => {
+                // Reklam başarıyla izlendiğinde backend'e haber ver
+                const res = await fetch(`${API}/adsgram-reward?teleId=${user.telegramId}&status=done`);
+                if (res.ok) {
+                    tg.showAlert("🎉 Tebrikler! Reklam izlediğin için +500 GEP kazandın.");
+                    // Bakiyeyi güncellemek için kullanıcıyı tekrar çekiyoruz
+                    init(); 
                 }
-            } catch (e) {
-                tg.showAlert("Reklam şu an hazır değil, lütfen biraz sonra tekrar dene.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "REKLAM İZLE (+500 GEP)";
-            }
+            }).catch((result) => {
+                tg.showAlert("Reklam yüklenemedi veya yarıda kesildi.");
+                console.log(result);
+            });
         }
 
+        // Diğer fonksiyonların (updateUI, showPage, startMining vb.) aynı şekilde devam ediyor...
         function renderAnnouncements() {
             const container = document.getElementById('ann-container');
             const scroll = document.getElementById('ann-scroll');
@@ -335,19 +289,15 @@
                 document.getElementById('stat-ref-count').innerText = user.referralCount || 0;
                 document.getElementById('stat-ref-earn').innerText = ((user.referralCount || 0) * 500).toLocaleString() + " GEP";
             }
+        }
 
-            const checkinBtn = document.getElementById('btn-checkin');
-            if (checkinBtn && user.lastCheckin) {
-                const last = new Date(user.lastCheckin).getTime();
-                const now = new Date().getTime();
-                if (now - last < 24 * 60 * 60 * 1000) {
-                    checkinBtn.disabled = true;
-                    checkinBtn.innerText = "YARIN TEKRAR GEL";
-                } else {
-                    checkinBtn.disabled = false;
-                    checkinBtn.innerText = "GÜNLÜK ÖDÜLÜ AL";
-                }
-            }
+        function showPage(p, el) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.getElementById(`page-${p}`).classList.add('active');
+            el.classList.add('active');
+            if(p === 'leaderboard') loadLeaderboard();
+            window.scrollTo(0, 0);
         }
 
         async function startMining() {
@@ -379,11 +329,9 @@
             const btn = document.getElementById('btn-mine');
             const timerDiv = document.getElementById('mining-timer');
             const statusText = document.getElementById('mine-status-text');
-            
             btn.disabled = true;
             timerDiv.style.display = "block";
             statusText.innerText = "1000 GEP İçin Kalan Süre";
-            
             clearInterval(miningInterval);
             miningInterval = setInterval(() => {
                 timeLeft -= 1000;
@@ -399,16 +347,6 @@
                 const s = Math.floor((timeLeft % 60000) / 1000);
                 timerDiv.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             }, 1000);
-        }
-
-        function showPage(p, el) {
-            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            document.getElementById(`page-${p}`).classList.add('active');
-            el.classList.add('active');
-            if(p === 'leaderboard') loadLeaderboard();
-            if(p === 'admin') { loadAdminStats(); renderAdminTasks(); renderAdminAnnouncements(); }
-            window.scrollTo(0, 0);
         }
 
         function renderTasks() {
@@ -461,7 +399,6 @@
         }
 
         async function claimDaily() {
-            const btn = document.getElementById('btn-checkin');
             const res = await fetch(`${API}/api/user/checkin`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -472,130 +409,10 @@
                 user.points = data.points;
                 user.streak = data.streak;
                 user.lastCheckin = new Date().toISOString();
-                btn.disabled = true;
-                btn.innerText = "ÖDÜL ALINDI";
                 updateUI();
                 renderStreak();
-                tg.showAlert(`🎁 Ödül alındı! Yeni bakiye: ${data.points} GEP`);
+                tg.showAlert(`🎁 Ödül alındı!`);
             } else { tg.showAlert(data.message); }
-        }
-
-        async function loadAdminStats() {
-            const res = await fetch(`${API}/api/admin/stats`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId })
-            });
-            const data = await res.json();
-            document.getElementById('adm-stat-users').innerText = data.totalUsers;
-            document.getElementById('adm-stat-points').innerText = data.totalPoints.toLocaleString();
-            announcements = data.announcements || [];
-        }
-
-        async function loadAllUsersList() {
-            const tbody = document.getElementById('all-users-tbody');
-            const scrollArea = document.getElementById('user-list-scroll');
-            try {
-                const res = await fetch(`${API}/api/admin/all-users`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ adminId: user.telegramId })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    tbody.innerHTML = data.users.map(u => `
-                        <tr>
-                            <td>${u.telegramId}</td>
-                            <td>${u.firstName}<br><span style="color:var(--gold)">@${u.username || 'yok'}</span></td>
-                            <td style="font-weight:900">${u.points.toLocaleString()}</td>
-                        </tr>
-                    `).join('');
-                    scrollArea.style.display = 'block';
-                }
-            } catch (e) { console.error(e); tg.showAlert("Hata oluştu!"); }
-        }
-
-        function renderAdminAnnouncements() {
-            const list = document.getElementById('admin-ann-list');
-            list.innerHTML = announcements.map(ann => `
-                <div class="admin-list-item">
-                    <span>${ann}</span>
-                    <button class="btn-delete" onclick="deleteAnnouncement('${ann}')">SİL</button>
-                </div>
-            `).join('');
-        }
-
-        async function addAnnouncement() {
-            const text = document.getElementById('adm-ann-text').value;
-            if(!text) return;
-            const res = await fetch(`${API}/api/admin/add-announcement`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId, text })
-            });
-            const data = await res.json();
-            announcements = data.announcements;
-            document.getElementById('adm-ann-text').value = '';
-            renderAdminAnnouncements();
-            renderAnnouncements();
-            tg.showAlert("Eklendi!");
-        }
-
-        async function deleteAnnouncement(text) {
-            const res = await fetch(`${API}/api/admin/delete-announcement`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId, text })
-            });
-            const data = await res.json();
-            announcements = data.announcements;
-            renderAdminAnnouncements();
-            renderAnnouncements();
-            tg.showAlert("Silindi!");
-        }
-
-        async function manageUser(action) {
-            const targetId = document.getElementById('adm-user-id').value;
-            const amount = document.getElementById('adm-user-amount').value;
-            const res = await fetch(`${API}/api/admin/user-manage`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId, targetId, action, amount })
-            });
-            const data = await res.json();
-            tg.showAlert(data.success ? "Başarılı!" : data.message);
-        }
-
-        function renderAdminTasks() {
-            const list = document.getElementById('admin-task-list');
-            list.innerHTML = tasks.map(t => `
-                <div class="admin-list-item">
-                    <span>${t.title} (${t.reward})</span>
-                    <button class="btn-delete" onclick="deleteAdminTask('${t.taskId}')">SİL</button>
-                </div>
-            `).join('');
-        }
-
-        async function addAdminTask() {
-            const title = document.getElementById('adm-title').value;
-            const link = document.getElementById('adm-link').value;
-            const reward = document.getElementById('adm-reward').value;
-            await fetch(`${API}/api/admin/add-task`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId, task: { taskId: 'task_'+Date.now(), title, target: link, reward: parseInt(reward) } })
-            });
-            tg.showAlert("Eklendi!");
-            await refreshTasks(); renderAdminTasks(); renderTasks();
-        }
-
-        async function deleteAdminTask(tid) {
-            await fetch(`${API}/api/admin/delete-task`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId, taskId: tid })
-            });
-            await refreshTasks(); renderAdminTasks(); renderTasks();
         }
 
         async function loadLeaderboard() {
