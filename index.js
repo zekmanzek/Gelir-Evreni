@@ -120,6 +120,32 @@ function sendWelcomeMessage(chatId) {
 }
 
 // --- API ROTLARI ---
+
+// *** ADSGRAM S2S ÖDÜL ROTASI (YENİ EKLENDİ) ***
+app.get('/adsgram-reward', async (req, res) => {
+    const { userid } = req.query;
+    if (!userid) return res.status(400).send('User ID missing');
+
+    try {
+        // Kullanıcıyı bul ve GEP puanını (points) 1000 artır
+        const user = await User.findOneAndUpdate(
+            { telegramId: userid.toString() },
+            { $inc: { points: 1000 } }, 
+            { new: true }
+        );
+
+        if (user) {
+            console.log(`✅ Adsgram Ödülü: ${userid} kullanıcısına 1000 GEP eklendi.`);
+            res.status(200).send('OK');
+        } else {
+            res.status(404).send('User not found');
+        }
+    } catch (err) {
+        console.error('Adsgram Callback Hatası:', err);
+        res.status(500).send('Error');
+    }
+});
+
 app.post('/api/user/auth', async (req, res) => {
     const { telegramId, username, firstName } = req.body;
     try {
@@ -171,10 +197,8 @@ app.post('/api/mine', async (req, res) => {
         const user = await User.findOne({ telegramId });
         const settings = await Settings.findOne();
         const now = new Date();
-        // Madencilik döngüsü 4 saat (4 * 60 * 60 * 1000 ms) olarak güncellendi.
         const cooldown = 4 * 60 * 60 * 1000;
         if (user && (now - new Date(user.lastMining)) > cooldown) {
-            // Temel ödül 1000 GEP olarak güncellendi.
             let baseReward = 1000;
             if (user.level === 'Gümüş') baseReward += 100;
             if (user.level === 'Altın') baseReward += 250;
@@ -216,7 +240,6 @@ app.post('/api/tasks/complete', async (req, res) => {
 
 // --- ADMIN KOMUTA MERKEZİ ---
 
-// KULLANICI LİSTESİ (YENİ)
 app.post('/api/admin/all-users', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     try {
