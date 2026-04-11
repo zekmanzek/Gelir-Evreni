@@ -22,7 +22,7 @@ const bot = new TelegramBot(token, {
     } 
 });
 
-mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v2.5 Connected"));
+mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v2.6 Connected (Adsgram S2S Ready)"));
 
 // --- MODELLER ---
 const UserSchema = new mongoose.Schema({
@@ -127,14 +127,20 @@ function sendWelcomeMessage(chatId) {
 
 // --- API ROTLARI ---
 
-// *** ADSGRAM S2S ÖDÜL ROTASI ***
+// *** ADSGRAM S2S ÖDÜL ROTASI (GÜNCELLENDİ) ***
 app.get('/adsgram-reward', async (req, res) => {
+    // Paneldeki [userId] buraya 'userid' olarak, {status} ise 'status' olarak düşer
     const { userid, status } = req.query;
-    if (!userid) return res.status(400).send('User ID missing');
     
-    if(status !== 'reward') return res.status(400).send('Invalid status');
+    if (!userid) return res.status(400).send('User ID missing');
 
     try {
+        // Status kontrolü (Panelde status={status} olarak ayarladık)
+        if(status !== 'reward') {
+            console.log(`⚠️ Reklam tamamlanmadı: ${userid}`);
+            return res.status(400).send('Invalid status');
+        }
+
         const user = await User.findOneAndUpdate(
             { telegramId: userid.toString() },
             { $inc: { points: 1000 } }, 
@@ -142,12 +148,15 @@ app.get('/adsgram-reward', async (req, res) => {
         );
 
         if (user) {
-            bot.sendMessage(userid, "📺 Reklam izleme ödülü: +1000 GEP hesabına eklendi!").catch(e => {});
+            // Kullanıcıya bot üzerinden anlık bildirim gönderiyoruz
+            bot.sendMessage(userid, "📺 *Reklam İzleme Ödülü!*\n\nHarika! Bir reklam izledin ve hesabına *+1000 GEP* eklendi. Madene devam!", { parse_mode: 'Markdown' }).catch(e => {});
+            console.log(`✅ Reklam Ödülü Verildi: ${userid}`);
             res.status(200).send('OK');
         } else {
             res.status(404).send('User not found');
         }
     } catch (err) {
+        console.error("Adsgram S2S Error:", err);
         res.status(500).send('Error');
     }
 });
