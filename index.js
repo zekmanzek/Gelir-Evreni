@@ -14,15 +14,9 @@ const token = process.env.BOT_TOKEN;
 const mongoURI = process.env.MONGODB_URI;
 const ADMIN_ID = "1469411131"; 
 
-// Çakışmaları önlemek için bot ayarları
-const bot = new TelegramBot(token, { 
-    polling: {
-        autoStart: true,
-        params: { timeout: 10 }
-    } 
-});
+const bot = new TelegramBot(token, { polling: true });
 
-mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v2.6 Connected (Adsgram S2S Ready)"));
+mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v2.5 Connected"));
 
 // --- MODELLER ---
 const UserSchema = new mongoose.Schema({
@@ -119,48 +113,13 @@ function sendWelcomeMessage(chatId) {
         parse_mode: 'Markdown',
         reply_markup: {
             inline_keyboard: [
-                [{ text: "Uygulamayı Aç 📱", web_app: { url: `https://gelir-evreni.onrender.com` } }]
+                [{ text: "Uygulamayı Aç 📱", web_app: { url: `https://${process.env.RENDER_EXTERNAL_HOSTNAME || 'senin-linkin.com'}` } }]
             ]
         }
     });
 }
 
 // --- API ROTLARI ---
-
-// *** ADSGRAM S2S ÖDÜL ROTASI (GÜNCELLENDİ) ***
-app.get('/adsgram-reward', async (req, res) => {
-    // Paneldeki [userId] buraya 'userid' olarak, {status} ise 'status' olarak düşer
-    const { userid, status } = req.query;
-    
-    if (!userid) return res.status(400).send('User ID missing');
-
-    try {
-        // Status kontrolü (Panelde status={status} olarak ayarladık)
-        if(status !== 'reward') {
-            console.log(`⚠️ Reklam tamamlanmadı: ${userid}`);
-            return res.status(400).send('Invalid status');
-        }
-
-        const user = await User.findOneAndUpdate(
-            { telegramId: userid.toString() },
-            { $inc: { points: 1000 } }, 
-            { new: true }
-        );
-
-        if (user) {
-            // Kullanıcıya bot üzerinden anlık bildirim gönderiyoruz
-            bot.sendMessage(userid, "📺 *Reklam İzleme Ödülü!*\n\nHarika! Bir reklam izledin ve hesabına *+1000 GEP* eklendi. Madene devam!", { parse_mode: 'Markdown' }).catch(e => {});
-            console.log(`✅ Reklam Ödülü Verildi: ${userid}`);
-            res.status(200).send('OK');
-        } else {
-            res.status(404).send('User not found');
-        }
-    } catch (err) {
-        console.error("Adsgram S2S Error:", err);
-        res.status(500).send('Error');
-    }
-});
-
 app.post('/api/user/auth', async (req, res) => {
     const { telegramId, username, firstName } = req.body;
     try {
@@ -212,8 +171,10 @@ app.post('/api/mine', async (req, res) => {
         const user = await User.findOne({ telegramId });
         const settings = await Settings.findOne();
         const now = new Date();
+        // Madencilik döngüsü 4 saat (4 * 60 * 60 * 1000 ms) olarak güncellendi.
         const cooldown = 4 * 60 * 60 * 1000;
         if (user && (now - new Date(user.lastMining)) > cooldown) {
+            // Temel ödül 1000 GEP olarak güncellendi.
             let baseReward = 1000;
             if (user.level === 'Gümüş') baseReward += 100;
             if (user.level === 'Altın') baseReward += 250;
@@ -254,6 +215,8 @@ app.post('/api/tasks/complete', async (req, res) => {
 });
 
 // --- ADMIN KOMUTA MERKEZİ ---
+
+// KULLANICI LİSTESİ (YENİ)
 app.post('/api/admin/all-users', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     try {
@@ -270,6 +233,20 @@ app.post('/api/admin/stats', async (req, res) => {
     res.json({ totalUsers, totalPoints: totalPointsResult[0]?.total || 0, multiplier: settings.miningMultiplier, announcements: settings.announcements });
 });
 
+app.post('/api/admin/add-announcement', async (req, res) => {
+    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    await Settings.updateOne({}, { $push: { announcements: req.body.text } });
+    const s = await Settings.findOne();
+    res.json({ success: true, announcements: s.announcements });
+});
+
+app.post('/api/admin/delete-announcement', async (req, res) => {
+    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    await Settings.updateOne({}, { $pull: { announcements: req.body.text } });
+    const s = await Settings.findOne();
+    res.json({ success: true, announcements: s.announcements });
+});
+
 app.post('/api/admin/user-manage', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     const { targetId, action, amount } = req.body;
@@ -279,6 +256,21 @@ app.post('/api/admin/user-manage', async (req, res) => {
     if (action === 'set') targetUser.points = parseInt(amount);
     await targetUser.save();
     res.json({ success: true, newPoints: targetUser.points });
+});
+
+app.post('/api/admin/add-task', (req, res) => {
+    const { adminId, task } = req.body;
+    if (adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    if (TASKS.find(t => t.taskId === task.taskId)) return res.status(400).json({ success: false, message: "Bu ID ile zaten bir görev var." });
+    TASKS.push(task);
+    res.json({ success: true, tasks: TASKS });
+});
+
+app.post('/api/admin/delete-task', (req, res) => {
+    const { adminId, taskId } = req.body;
+    if (adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    TASKS = TASKS.filter(t => t.taskId !== taskId);
+    res.json({ success: true, tasks: TASKS });
 });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
