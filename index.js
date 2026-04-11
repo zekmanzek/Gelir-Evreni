@@ -14,13 +14,13 @@ const token = process.env.BOT_TOKEN;
 const mongoURI = process.env.MONGODB_URI;
 const ADMIN_ID = "1469411131"; 
 
-// Bot bağlantı hatası sistemin geri kalanını durdurmasın diye .catch ekledik
+// Bot bağlantı hatası sistemi durdurmasın
 const bot = new TelegramBot(token, { polling: true });
-bot.on('error', (error) => console.log("Bot Hatası (Önemsiz):", error.message));
+bot.on('error', (error) => console.log("Bot Hatası:", error.message));
 
 mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v2.5 Connected"));
 
-// --- MODELLER (Değişmedi) ---
+// --- MODELLER ---
 const UserSchema = new mongoose.Schema({
     telegramId: { type: String, unique: true },
     username: { type: String, default: '' }, 
@@ -48,7 +48,15 @@ async function initSettings() {
 }
 initSettings();
 
-// --- YARDIMCI FONKSİYONLAR (Değişmedi) ---
+// --- YARDIMCI FONKSİYONLAR ---
+const calculateLevel = (points) => {
+    if (points >= 1000000) return 'Elmas';
+    if (points >= 500000) return 'Platin';
+    if (points >= 100000) return 'Altın';
+    if (points >= 25000) return 'Gümüş';
+    return 'Bronz';
+};
+
 async function updateOrCreateUser(msg) {
     const telegramId = msg.from.id.toString();
     const username = msg.from.username || '';
@@ -69,37 +77,43 @@ async function updateOrCreateUser(msg) {
     }
 }
 
-const calculateLevel = (points) => {
-    if (points >= 1000000) return 'Elmas';
-    if (points >= 500000) return 'Platin';
-    if (points >= 100000) return 'Altın';
-    if (points >= 25000) return 'Gümüş';
-    return 'Bronz';
-};
-
 let TASKS = [
     { taskId: 'task_1', title: 'Gelir Evreni Proje Katıl', reward: 100, target: 'https://t.me/gelirevreniproje' },
     { taskId: 'task_2', title: 'Gelir Evreni Kanalına Katıl', reward: 100, target: 'https://t.me/gelirevreni' },
     { taskId: 'task_3', title: 'Kripto Tayfa Duyuru Katıl', reward: 100, target: 'https://t.me/kripto_tayfa' }
 ];
 
-// --- ADSGRAM REWARD (YENİ EKLENDİ - SİSTEMİ BOZMAZ) ---
+// --- ADSGRAM REWARD ROTASI ---
 app.get('/adsgram-reward', async (req, res) => {
     const { teleId, status } = req.query;
-    if (status !== 'done') return res.send('Reward not ready');
+    
+    // Sadece 'done' durumunda işlem yap
+    if (status !== 'done') {
+        return res.status(400).send('Reward not ready');
+    }
+
     try {
         const user = await User.findOne({ telegramId: teleId });
         if (user) {
-            user.points += 500;
-            user.level = calculateLevel(user.points);
+            user.points += 500; // Reklam izleme ödülü
+            user.level = calculateLevel(user.points); // Seviyeyi güncelle
             await user.save();
+            
+            // Kullanıcıya bot üzerinden bildirim gönder (Opsiyonel)
+            try {
+                bot.sendMessage(teleId, "📺 Reklam izleme ödülü: +500 GEP hesabına eklendi!");
+            } catch (err) { console.log("Bildirim gönderilemedi."); }
+
             return res.send('OK');
         }
         res.status(404).send('User not found');
-    } catch (e) { res.status(500).send('Error'); }
+    } catch (e) { 
+        console.error("Adsgram Reward Error:", e);
+        res.status(500).send('Error'); 
+    }
 });
 
-// --- TELEGRAM BOT MANTIĞI (Değişmedi) ---
+// --- TELEGRAM BOT MANTIĞI ---
 bot.onText(/\/start (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const { user, isNew } = await updateOrCreateUser(msg);
@@ -110,6 +124,7 @@ bot.onText(/\/start (.+)/, async (msg, match) => {
             if (referrer) {
                 referrer.points += 500;
                 referrer.referralCount += 1;
+                referrer.level = calculateLevel(referrer.points);
                 await referrer.save();
                 bot.sendMessage(referrerId, `🎉 Yeni bir referans! ${user.firstName} katıldı. +500 GEP kazandın.`);
             }
@@ -127,7 +142,7 @@ bot.onText(/\/start$/, async (msg) => {
 });
 
 function sendWelcomeMessage(chatId) {
-    bot.sendMessage(chatId, `🚀 *Gelir Evreni'ne Hoş Geldin!*\n\nBurada maden kazarak, görevleri yaparak ve arkadaşlarını davet ederek GEP kazanabilirsin.`, {
+    bot.sendMessage(chatId, `🚀 *Gelir Evreni'ne Hoş Geldin!*\n\nBurada maden kazarak, görevleri yaparak ve reklam izleyerek GEP kazanabilirsin.`, {
         parse_mode: 'Markdown',
         reply_markup: {
             inline_keyboard: [
@@ -152,13 +167,11 @@ app.post('/api/user/auth', async (req, res) => {
         await user.save();
 
         const settings = await Settings.findOne();
-        
-        // KRİTİK DÜZELTME: botInfo hatası uygulamayı dondurmasın
         let botUsername = 'gelirevreni_bot';
         try {
             const botInfo = await bot.getMe();
             botUsername = botInfo.username;
-        } catch(err) { console.log("Bot username alınamadı, varsayılan kullanılıyor."); }
+        } catch(err) { console.log("Bot username alınamadı."); }
 
         res.json({ 
             success: true, 
@@ -170,7 +183,6 @@ app.post('/api/user/auth', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Maden, Checkin ve Leaderboard kısımları orijinal kodunla birebir aynı devam ediyor...
 app.post('/api/user/checkin', async (req, res) => {
     const { telegramId } = req.body;
     try {
@@ -186,7 +198,7 @@ app.post('/api/user/checkin', async (req, res) => {
         const reward = rewards[user.streak];
         user.points += reward;
         user.lastCheckin = now;
-        user.level = calculateLevel(user.points); // Seviye kontrolü eklendi
+        user.level = calculateLevel(user.points);
         await user.save();
         res.json({ success: true, points: user.points, streak: user.streak, message: `${reward} GEP kazandın!` });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -208,7 +220,7 @@ app.post('/api/mine', async (req, res) => {
             const finalReward = baseReward * (settings.miningMultiplier || 1);
             user.points += finalReward;
             user.lastMining = now;
-            user.level = calculateLevel(user.points); // Seviye kontrolü eklendi
+            user.level = calculateLevel(user.points);
             await user.save();
             return res.json({ success: true, points: user.points, reward: finalReward });
         }
@@ -216,7 +228,6 @@ app.post('/api/mine', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Leaderboard, Task ve Admin kısımları orijinal kodunla aynı...
 app.get('/api/leaderboard', async (req, res) => {
     try {
         const topUsers = await User.find().sort({ points: -1 }).limit(10).select('telegramId points level username firstName');
@@ -242,7 +253,7 @@ app.post('/api/tasks/complete', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// --- ADMIN KOMUTA MERKEZİ ---
+// --- ADMIN KOMUTLARI ---
 app.post('/api/admin/all-users', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     try {
