@@ -119,6 +119,24 @@ function sendWelcomeMessage(chatId) {
     });
 }
 
+// --- ADSGRAM REWARD ROUTE (S2S) ---
+app.get('/adsgram-reward', async (req, res) => {
+    const { teleId, status } = req.query;
+    if (status !== 'done') return res.send('Reward not ready');
+
+    try {
+        const user = await User.findOne({ telegramId: teleId });
+        if (user) {
+            user.points += 500;
+            await user.save();
+            return res.send('OK');
+        }
+        res.status(404).send('User not found');
+    } catch (e) {
+        res.status(500).send('Error');
+    }
+});
+
 // --- API ROTLARI ---
 app.post('/api/user/auth', async (req, res) => {
     const { telegramId, username, firstName } = req.body;
@@ -171,10 +189,8 @@ app.post('/api/mine', async (req, res) => {
         const user = await User.findOne({ telegramId });
         const settings = await Settings.findOne();
         const now = new Date();
-        // Madencilik döngüsü 4 saat (4 * 60 * 60 * 1000 ms) olarak güncellendi.
         const cooldown = 4 * 60 * 60 * 1000;
         if (user && (now - new Date(user.lastMining)) > cooldown) {
-            // Temel ödül 1000 GEP olarak güncellendi.
             let baseReward = 1000;
             if (user.level === 'Gümüş') baseReward += 100;
             if (user.level === 'Altın') baseReward += 250;
@@ -215,8 +231,6 @@ app.post('/api/tasks/complete', async (req, res) => {
 });
 
 // --- ADMIN KOMUTA MERKEZİ ---
-
-// KULLANICI LİSTESİ (YENİ)
 app.post('/api/admin/all-users', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     try {
