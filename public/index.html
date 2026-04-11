@@ -8,54 +8,81 @@
     <script src="https://sad.adsgram.ai/js/adsgram-adbox.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
+        /* Senin o sevdiğin eski karanlık ve gold tema */
         :root { 
             --bg-deep: #020617; --gold: #ffcc00; --gold-glow: rgba(255, 204, 0, 0.4);
             --card-glass: rgba(15, 23, 42, 0.6); --border-glass: rgba(255, 255, 255, 0.08);
-            --text-main: #f8fafc; --text-dim: #94a3b8;
+            --text-main: #f8fafc; --text-dim: #94a3b8; --ads-blue: #00d4ff;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Urbanist', sans-serif; background-color: var(--bg-deep); color: var(--text-main); margin: 0; padding-bottom: 100px; min-height: 100vh; }
+        body { font-family: 'Urbanist', sans-serif; background-color: var(--bg-deep); color: var(--text-main); margin: 0; padding-bottom: 100px; overflow-x: hidden; }
+        
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-deep); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-        .loader-logo { font-size: 28px; font-weight: 900; color: var(--gold); animation: pulse 2s infinite; }
+        .loader-logo { font-size: 28px; font-weight: 900; color: var(--gold); letter-spacing: 5px; animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
-        .header { text-align: center; padding: 30px 20px; border-bottom: 1px solid var(--border-glass); }
-        .points { font-size: 48px; font-weight: 900; color: var(--gold); }
-        .page { display: none; padding: 24px 16px; }
+
+        .header { text-align: center; padding: 30px 20  0px; border-bottom: 1px solid var(--border-glass); backdrop-filter: blur(10px); }
+        .points { font-size: 48px; font-weight: 900; color: var(--gold); text-shadow: 0 0 15px var(--gold-glow); }
+        
+        .page { display: none; padding: 20px; animation: fadeIn 0.4s ease; }
         .page.active { display: block; }
-        .card { background: var(--card-glass); padding: 20px; border-radius: 24px; border: 1px solid var(--border-glass); margin-bottom: 16px; }
-        .btn-full { width: 100%; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%); border: none; font-weight: 900; cursor: pointer; }
-        .btn-ads { background: linear-gradient(135deg, #00d4ff 0%, #0072ff 100%); color: white; margin-top: 15px; }
-        .nav-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: rgba(15, 23, 42, 0.9); display: flex; justify-content: space-around; padding: 10px; border-radius: 22px; }
-        .nav-item { color: var(--text-dim); text-decoration: none; font-size: 9px; text-align: center; flex: 1; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background: var(--card-glass); padding: 20px; border-radius: 24px; border: 1px solid var(--border-glass); margin-bottom: 15px; }
+        .btn-full { width: 100%; padding: 16px; border-radius: 16px; background: linear-gradient(135deg, var(--gold), #ffaa00); border: none; font-weight: 900; font-size: 15px; cursor: pointer; transition: 0.2s; }
+        .btn-ads { background: linear-gradient(135deg, #00d4ff, #0072ff); color: white; margin-top: 12px; }
+        
+        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(15, 23, 42, 0.95); display: flex; justify-content: space-around; padding: 12px; border-radius: 20px; border: 1px solid var(--border-glass); }
+        .nav-item { color: var(--text-dim); text-decoration: none; font-size: 10px; text-align: center; flex: 1; font-weight: 800; }
         .nav-item.active { color: var(--gold); }
+        
+        .task-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid var(--border-glass); }
     </style>
 </head>
 <body>
     <div id="loader"><div class="loader-logo">GELİR EVRENİ</div></div>
 
     <div class="header">
-        <div id="user-level" style="background: #cd7f32; padding: 5px 10px; border-radius: 10px; display: inline-block; font-size: 10px; margin-bottom: 10px;">YÜKLENİYOR</div>
+        <div id="user-level" style="background:#cd7f32; padding:4px 12px; border-radius:12px; font-size:11px; margin-bottom:8px; display:inline-block;">BRONZ</div>
         <div class="points" id="balance">0</div>
-        <div style="font-size: 12px; color: var(--text-dim);">GEP BAKİYE</div>
+        <div style="font-size: 12px; letter-spacing: 2px; color: var(--text-dim);">TOPLAM GEP</div>
     </div>
 
-    <div id="page-tasks" class="page active"><h3>🚀 Görevler</h3><div id="task-list"></div></div>
+    <div id="page-tasks" class="page active">
+        <h3 style="margin-top:0;">🚀 Aktif Görevler</h3>
+        <div id="task-list"></div>
+    </div>
+
     <div id="page-mine" class="page">
-        <div class="card" style="text-align: center;">
-            <div style="font-size: 50px;">⛏️</div>
-            <h3>Madencilik Merkezi</h3>
-            <button class="btn-full" onclick="startMining()">MADENİ BAŞLAT</button>
-            <button class="btn-full btn-ads" onclick="showAd()">📺 REKLAM İZLE (+1000 GEP)</button>
+        <div class="card" style="text-align: center; padding: 40px 20px;">
+            <div style="font-size: 60px; margin-bottom: 10px;">⛏️</div>
+            <h3 id="mine-status">Maden Toplanmaya Hazır</h3>
+            <button class="btn-full" onclick="startMining()">HASADI TOPLA</button>
+            <button class="btn-full btn-ads" id="ad-btn" onclick="showAd()">📺 REKLAM İZLE (+1000 GEP)</button>
+            <p style="font-size: 11px; color: var(--text-dim); margin-top: 15px;">Reklamlar kazancını katlar!</p>
         </div>
     </div>
-    <div id="page-leaderboard" class="page"><h3>🏆 Sıralama</h3><div id="leader-list"></div></div>
-    <div id="page-profile" class="page"><h3>👤 Profil</h3><div id="profile-info"></div></div>
+
+    <div id="page-leaderboard" class="page">
+        <h3>🏆 En Zenginler</h3>
+        <div id="leader-list"></div>
+    </div>
+
+    <div id="page-profile" class="page">
+        <div class="card">
+            <h3 id="user-name">Kullanıcı</h3>
+            <div id="ref-link-box">
+                <p style="font-size: 12px; color: var(--text-dim);">Referans Linkin:</p>
+                <input type="text" id="ref-url" readonly style="width:100%; background:rgba(0,0,0,0.3); border:1px solid var(--border-glass); color:var(--gold); padding:10px; border-radius:10px; font-size:12px;">
+            </div>
+        </div>
+    </div>
 
     <nav class="nav-bar">
-        <a href="#" class="nav-item active" onclick="showPage('tasks', this)">📋<br>GÖREV</a>
-        <a href="#" class="nav-item" onclick="showPage('mine', this)">⛏️<br>MADEN</a>
-        <a href="#" class="nav-item" onclick="showPage('leaderboard', this)">🏆<br>LİDER</a>
-        <a href="#" class="nav-item" onclick="showPage('profile', this)">👤<br>PROFİL</a>
+        <a href="javascript:void(0)" class="nav-item active" onclick="showPage('tasks', this)">📋<br>GÖREV</a>
+        <a href="javascript:void(0)" class="nav-item" onclick="showPage('mine', this)">⛏️<br>MADEN</a>
+        <a href="javascript:void(0)" class="nav-item" onclick="showPage('leaderboard', this)">🏆<br>LİDER</a>
+        <a href="javascript:void(0)" class="nav-item" onclick="showPage('profile', this)">👤<br>PROFİL</a>
     </nav>
 
     <script>
@@ -63,11 +90,16 @@
         tg.expand();
 
         let user = null;
-        // SENİN BLOCK ID NUMARAN BURADA: 27433
-        const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "27433" }) : null;
+        // ADSGRAM BLOCK ID: 27433
+        let AdController = null;
 
         async function init() {
-            const userData = tg.initDataUnsafe.user || { id: "1469411131", first_name: "Admin" };
+            // Adsgram'ı yükle
+            if (window.Adsgram) {
+                AdController = window.Adsgram.init({ blockId: "27433" });
+            }
+
+            const userData = tg.initDataUnsafe.user || { id: "1469411131", first_name: "Mehmet" };
             try {
                 const res = await fetch('/api/user/auth', {
                     method: 'POST',
@@ -75,22 +107,28 @@
                     body: JSON.stringify({ 
                         telegramId: userData.id.toString(), 
                         firstName: userData.first_name,
-                        username: userData.username || ""
+                        username: userData.username || "" 
                     })
                 });
                 const data = await res.json();
                 user = data.user;
+                
+                // Görevleri ve Liderliği Yükle
+                loadTasks();
+                loadLeaderboard();
+                
                 updateUI();
                 document.getElementById('loader').style.display = 'none';
             } catch (e) {
-                console.error("Hata:", e);
-                alert("Bağlantı Hatası! Lütfen botu tekrar başlatın.");
+                alert("Veriler yüklenemedi, lütfen tekrar açın.");
             }
         }
 
         function updateUI() {
             document.getElementById('balance').innerText = Math.floor(user.points).toLocaleString();
-            document.getElementById('user-level').innerText = user.level || 'Bronz';
+            document.getElementById('user-level').innerText = user.level || 'BRONZ';
+            document.getElementById('user-name').innerText = user.firstName;
+            document.getElementById('ref-url').value = "https://t.me/gelirevrenibot?start=" + user.telegramId;
         }
 
         function showPage(pageId, el) {
@@ -100,36 +138,60 @@
             el.classList.add('active');
         }
 
+        async function loadTasks() {
+            const res = await fetch('/api/tasks');
+            const data = await res.json();
+            const container = document.getElementById('task-list');
+            container.innerHTML = data.tasks.map(t => `
+                <div class="task-item">
+                    <div>
+                        <div style="font-weight:800; font-size:14px;">${t.title}</div>
+                        <div style="color:var(--gold); font-size:12px;">+${t.reward} GEP</div>
+                    </div>
+                    <button class="btn-full" style="width:auto; padding:8px 15px;" onclick="window.open('${t.target}')">GİT</button>
+                </div>
+            `).join('');
+        }
+
+        async function loadLeaderboard() {
+            const res = await fetch('/api/leaderboard');
+            const data = await res.json();
+            const container = document.getElementById('leader-list');
+            container.innerHTML = data.leaderboard.map((u, i) => `
+                <div class="task-item">
+                    <span>${i+1}. ${u.firstName}</span>
+                    <span style="color:var(--gold);">${u.points.toLocaleString()}</span>
+                </div>
+            `).join('');
+        }
+
         async function startMining() {
-            try {
-                const res = await fetch('/api/mine', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ telegramId: user.telegramId })
-                });
-                const data = await res.json();
-                if(data.success) {
-                    user.points = data.points;
-                    updateUI();
-                    alert("Kazım Başarılı: +" + data.reward + " GEP");
-                } else {
-                    alert(data.message);
-                }
-            } catch (e) { alert("Maden şu an meşgul."); }
+            const res = await fetch('/api/mine', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegramId: user.telegramId })
+            });
+            const data = await res.json();
+            if(data.success) {
+                user.points = data.points;
+                updateUI();
+                alert("Harika! Ödül toplandı.");
+            } else {
+                alert(data.message);
+            }
         }
 
         async function showAd() {
-            if (!AdController) return alert("Reklam modülü yüklenemedi.");
+            if (!AdController) return alert("Reklam modülü henüz hazır değil, lütfen 2-3 saniye bekleyip tekrar deneyin.");
             
             AdController.show().then((result) => {
-                // Reklam başarılı, backend ödül rotanı tetikle
                 fetch(`/adsgram-reward?userid=${user.telegramId}&status=reward`)
                 .then(() => {
-                    alert("Harika! 1000 GEP bakiyene eklendi.");
-                    init(); // Bakiyeyi güncelle
+                    alert("Tebrikler! 1000 GEP kazandın.");
+                    init(); // Verileri tazele
                 });
             }).catch((err) => {
-                alert("Reklam şu an müsait değil, lütfen az sonra tekrar dene.");
+                alert("Reklam şu an bulunamadı. Lütfen biraz sonra tekrar deneyin.");
             });
         }
 
