@@ -1,120 +1,40 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gelir Evreni | Komuta Merkezi</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://sad.adsgram.ai/js/adsgram-adbox.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;800;900&display=swap" rel="stylesheet">
-    <style>
-        :root { --bg-deep: #020617; --gold: #ffcc00; --gold-glow: rgba(255, 204, 0, 0.4); --card-glass: rgba(15, 23, 42, 0.6); --border-glass: rgba(255, 255, 255, 0.08); --text-main: #f8fafc; --text-dim: #94a3b8; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Urbanist', sans-serif; background-color: var(--bg-deep); color: var(--text-main); margin: 0; padding-bottom: 100px; }
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-deep); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-        .loader-logo { font-size: 28px; font-weight: 900; color: var(--gold); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
-        .header { text-align: center; padding: 30px 20px; border-bottom: 1px solid var(--border-glass); }
-        .points { font-size: 48px; font-weight: 900; color: var(--gold); }
-        .page { display: none; padding: 20px; }
-        .page.active { display: block; }
-        .card { background: var(--card-glass); padding: 20px; border-radius: 24px; border: 1px solid var(--border-glass); margin-bottom: 16px; text-align: center; }
-        .btn-full { width: 100%; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%); border: none; font-weight: 900; cursor: pointer; }
-        .btn-ads { background: linear-gradient(135deg, #00d4ff 0%, #0072ff 100%); color: white; margin-top: 15px; }
-        .nav-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: rgba(15, 23, 42, 0.9); display: flex; justify-content: space-around; padding: 12px; border-radius: 22px; }
-        .nav-item { color: var(--text-dim); text-decoration: none; font-size: 10px; text-align: center; flex: 1; }
-        .nav-item.active { color: var(--gold); }
-    </style>
-</head>
-<body>
-    <div id="loader"><div class="loader-logo">GELİR EVRENİ</div></div>
-
-    <div class="header">
-        <div id="user-level" style="background: #cd7f32; padding: 5px 10px; border-radius: 10px; display: inline-block; font-size: 10px; margin-bottom: 10px;">YÜKLENİYOR</div>
-        <div class="points" id="balance">0</div>
-        <div style="font-size: 12px; color: var(--text-dim);">GEP BAKİYE</div>
+<div id="page-mine" class="page">
+    <div id="mine-card" class="card" style="flex-direction: column; text-align: center; padding: 40px 20px;">
+        <div style="font-size: 60px; margin-bottom: 15px;" id="mine-icon">⛏️</div>
+        <h3 id="mine-status-text">1000 GEP İçin Maden Hazır</h3>
+        <div id="mining-timer" style="font-family: monospace; font-size: 32px; font-weight: 900; color: var(--gold); margin: 15px 0; display: none;">00:00:00</div>
+        <button id="btn-mine" class="btn-full" onclick="startMining()">MADENİ BAŞLAT</button>
     </div>
+</div>
 
-    <div id="page-tasks" class="page active"><h3>📋 Görevler</h3><div id="task-list"></div></div>
-    <div id="page-mine" class="page">
-        <div class="card">
-            <div style="font-size: 50px;">⛏️</div>
-            <h3>Madencilik & Reklam</h3>
-            <button class="btn-full" onclick="startMining()">MADENİ BAŞLAT</button>
-            <button class="btn-full btn-ads" onclick="showAd()">📺 REKLAM İZLE (+1000 GEP)</button>
-        </div>
-    </div>
-    <div id="page-leaderboard" class="page"><h3>🏆 Sıralama</h3><div id="leader-list"></div></div>
+<script>
+// ... (Önceki kodlar aynı)
 
-    <nav class="nav-bar">
-        <a href="#" class="nav-item active" onclick="showPage('tasks', this)">📋 GÖREV</a>
-        <a href="#" class="nav-item" onclick="showPage('mine', this)">⛏️ MADEN</a>
-        <a href="#" class="nav-item" onclick="showPage('leaderboard', this)">🏆 LİDER</a>
-    </nav>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        let user = null;
-        let AdController = null;
-
-        function setupAds() {
-            if (window.Adsgram) {
-                AdController = window.Adsgram.init({ blockId: "27433" });
-            } else { setTimeout(setupAds, 1000); }
+function runTimer(timeLeft) {
+    const btn = document.getElementById('btn-mine');
+    const timerDiv = document.getElementById('mining-timer');
+    const statusText = document.getElementById('mine-status-text'); // Yeni eklenen referans
+    
+    btn.disabled = true;
+    timerDiv.style.display = "block";
+    statusText.innerText = "1000 GEP İçin Kalan Süre"; // Yazı burada değişiyor
+    
+    clearInterval(miningInterval);
+    miningInterval = setInterval(() => {
+        timeLeft -= 1000;
+        if (timeLeft <= 0) {
+            clearInterval(miningInterval);
+            btn.disabled = false;
+            timerDiv.style.display = "none";
+            statusText.innerText = "1000 GEP İçin Maden Hazır"; // Süre bitince eski haline döner
+            return;
         }
+        const h = Math.floor(timeLeft / 3600000);
+        const m = Math.floor((timeLeft % 3600000) / 60000);
+        const s = Math.floor((timeLeft % 60000) / 1000);
+        timerDiv.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    }, 1000);
+}
 
-        async function init() {
-            setupAds();
-            const userData = tg.initDataUnsafe.user || { id: "1469411131", first_name: "Admin" };
-            try {
-                const res = await fetch('/api/user/auth', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ telegramId: userData.id.toString(), firstName: userData.first_name, username: userData.username || "" })
-                });
-                const data = await res.json();
-                user = data.user;
-                updateUI();
-                document.getElementById('loader').style.display = 'none';
-            } catch (e) { console.error(e); }
-        }
-
-        function updateUI() {
-            document.getElementById('balance').innerText = Math.floor(user.points).toLocaleString();
-            document.getElementById('user-level').innerText = user.level || 'Bronz';
-        }
-
-        function showPage(pageId, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('page-' + pageId).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        async function showAd() {
-            if (!AdController) return alert("Reklam modülü yükleniyor, lütfen bekleyin...");
-            AdController.show().then(() => {
-                // S2S tetiklemek için backend'e git (Paneldeki [userId] formatına uygun)
-                fetch(`/adsgram-reward?userid=${user.telegramId}&status=reward`).then(() => {
-                    alert("Tebrikler! 1000 GEP kazandın.");
-                    location.reload();
-                });
-            }).catch(() => alert("Şu an uygun reklam yok."));
-        }
-
-        async function startMining() {
-            const res = await fetch('/api/mine', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegramId: user.telegramId })
-            });
-            const data = await res.json();
-            if(data.success) { user.points = data.points; updateUI(); alert("Maden toplandı!"); }
-            else { alert(data.message); }
-        }
-
-        window.onload = init;
-    </script>
-</body>
-</html>
+// ... (Geri kalan kodlar aynı)
+</script>
