@@ -189,11 +189,6 @@
                 <button class="btn-full" onclick="manageUser('unban')" style="margin-top:0; font-size:12px; background:#475569; color:white;">BAN KALDIR</button>
             </div>
         </div>
-
-        <div class="card" style="flex-direction: column;">
-            <h3>📜 Son İşlemler (Logs)</h3>
-            <div id="adm-logs" class="log-container">Kayıt bulunamadı.</div>
-        </div>
     </div>
 
     <nav class="nav-bar">
@@ -251,10 +246,9 @@
                     checkMiningTimer();
                     renderStreak();
                     
-                    if (data.announcements?.length > 0) {
-                        const annScroll = document.getElementById('ann-scroll');
-                        annScroll.innerText = data.announcements.map(a => a.text).join(" 📢 ") + " 📢 ";
-                        document.getElementById('ann-container').style.display = 'flex';
+                    // Duyuruları Başlat
+                    if (data.announcements && data.announcements.length > 0) {
+                        renderAnnouncements(data.announcements);
                     }
                 }
             } catch (e) { 
@@ -265,6 +259,20 @@
                     loader.style.opacity = '0';
                     setTimeout(() => loader.style.display = 'none', 600);
                 }, 800);
+            }
+        }
+
+        // DUYURU RENDER SİSTEMİ (DÜZELTİLDİ)
+        function renderAnnouncements(annList) {
+            const annContainer = document.getElementById('ann-container');
+            const annScroll = document.getElementById('ann-scroll');
+            
+            if (annList && annList.length > 0) {
+                // Backend'den gelen veri string array olduğu için direkt joinliyoruz
+                annScroll.innerText = annList.join(" 📢 ") + " 📢 ";
+                annContainer.style.display = 'flex';
+            } else {
+                annContainer.style.display = 'none';
             }
         }
 
@@ -407,22 +415,17 @@
                 </div>
             `).join('') || "Görev yok.";
 
-            // Duyuru Listesi
+            // Duyuru Listesi (DÜZELTİLDİ: Index üzerinden silme)
             const admAnnList = document.getElementById('adm-ann-list');
-            admAnnList.innerHTML = data.announcements.map(a => `
+            admAnnList.innerHTML = data.announcements.map((a, index) => `
                 <div class="admin-list-item">
-                    <span style="font-size:11px;">${a.text.substring(0,25)}...</span>
-                    <button class="btn-small btn-danger" onclick="deleteAnnouncement('${a.id}')">SİL</button>
+                    <span style="font-size:11px;">${a.substring(0,35)}...</span>
+                    <button class="btn-small btn-danger" onclick="deleteAnnouncement(${index})">SİL</button>
                 </div>
             `).join('') || "Duyuru yok.";
-
-            // İşlem Geçmişi (Logs)
-            const logBox = document.getElementById('adm-logs');
-            logBox.innerHTML = data.logs.map(l => `
-                <div style="margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.02)">
-                    <span style="color:var(--gold)">[${new Date(l.date).toLocaleTimeString()}]</span> ${l.message}
-                </div>
-            `).join('') || "Henüz işlem kaydı yok.";
+            
+            // Üstteki kayan yazıyı da güncelle
+            renderAnnouncements(data.announcements);
         }
 
         async function addTask() {
@@ -456,24 +459,32 @@
         async function addAnnouncement() {
             const text = document.getElementById('adm-ann-text').value;
             if(!text) return;
-            await fetch(`${API}/api/admin/add-announcement`, {
+            const res = await fetch(`${API}/api/admin/add-announcement`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ adminId: user.telegramId, text })
             });
-            document.getElementById('adm-ann-text').value = "";
-            tg.showAlert("Duyuru yayınlandı.");
-            loadAdminStats();
+            const data = await res.json();
+            if(data.success) {
+                document.getElementById('adm-ann-text').value = "";
+                tg.showAlert("Duyuru yayınlandı.");
+                // Sayfayı yenilemeden listeleri güncelle
+                loadAdminStats();
+            }
         }
 
-        async function deleteAnnouncement(annId) {
+        async function deleteAnnouncement(index) {
             if(!confirm("Bu duyuru silinsin mi?")) return;
-            await fetch(`${API}/api/admin/delete-announcement`, {
+            const res = await fetch(`${API}/api/admin/delete-announcement`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId, annId })
+                body: JSON.stringify({ adminId: user.telegramId, index: index })
             });
-            loadAdminStats();
+            const data = await res.json();
+            if(data.success) {
+                tg.showAlert("Duyuru silindi.");
+                loadAdminStats();
+            }
         }
 
         async function manageUser(action) {
@@ -523,7 +534,7 @@
             const rewards = [0, 100, 200, 300, 400, 500, 600, 1000];
             for (let i = 1; i <= 7; i++) {
                 const dayDiv = document.createElement('div');
-                dayDiv.className = `streak-day ${i <= user.streak ? 'completed' : ''}`;
+                dayDiv.className = `streak-day ${i <= (user.streak || 0) ? 'completed' : ''}`;
                 dayDiv.innerHTML = `<div>GÜN ${i}</div><div style="font-weight:900">${rewards[i]}</div>`;
                 streakBox.appendChild(dayDiv);
             }
