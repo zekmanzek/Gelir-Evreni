@@ -69,6 +69,13 @@
         .user-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
         
         .ad-card { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1px solid rgba(34, 197, 94, 0.3); }
+
+        /* Yeni Eklenen Stiller */
+        .admin-list-item { display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:10px; margin-bottom:8px; border-radius:12px; border: 1px solid var(--border-glass); }
+        .btn-small { padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; border: none; cursor: pointer; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .log-container { font-size: 10px; color: var(--text-dim); width: 100%; max-height: 150px; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -156,35 +163,39 @@
 
         <div class="card" style="flex-direction: column;">
             <h3>📢 Duyuru Yönetimi</h3>
-            <input type="text" id="adm-ann-text" class="ref-box" placeholder="Yeni Duyuru Metni">
-            <div style="display:flex; gap:10px; width:100%;">
-                <button class="btn-full" onclick="addAnnouncement()" style="margin-top:0; font-size:12px;">YAYINLA</button>
-                <button class="btn-full" onclick="clearAnnouncements()" style="margin-top:0; font-size:12px; background:var(--danger); color:white;">TEMİZLE</button>
-            </div>
+            <input type="text" id="adm-ann-text" class="ref-box" placeholder="Duyuru metni yazın...">
+            <button class="btn-full" onclick="addAnnouncement()">YAYINLA</button>
+            <div id="adm-ann-list" style="width:100%; margin-top:15px; max-height:150px; overflow-y:auto;"></div>
         </div>
 
         <div class="card" style="flex-direction: column;">
             <h3>🛠️ Yeni Görev Ekle</h3>
-            <input type="text" id="adm-task-id" class="ref-box" placeholder="task_id (Örn: task_youtube)">
             <input type="text" id="adm-task-title" class="ref-box" placeholder="Görev Başlığı">
-            <input type="number" id="adm-task-reward" class="ref-box" placeholder="Ödül (Örn: 500)">
+            <input type="number" id="adm-task-reward" class="ref-box" placeholder="Ödül (GEP)">
             <input type="text" id="adm-task-target" class="ref-box" placeholder="Link (https://...)">
             <button class="btn-full" onclick="addTask()">GÖREVİ EKLE</button>
         </div>
 
         <div class="card" style="flex-direction: column;">
             <h3>📋 Mevcut Görevler</h3>
-            <div id="adm-task-list" style="width:100%; max-height: 200px; overflow-y: auto;"></div>
+            <div id="adm-task-list" style="width:100%; max-height: 150px; overflow-y: auto;"></div>
         </div>
         
         <div class="card" style="flex-direction: column;">
-            <h3>🛠️ Kullanıcı Yönetimi</h3>
-            <input type="text" id="adm-target-id" class="ref-box" placeholder="Kullanıcı ID">
+            <h3>👤 Kullanıcı Yönetimi</h3>
+            <input type="text" id="adm-target-id" class="ref-box" placeholder="Kullanıcı Telegram ID">
             <input type="number" id="adm-amount" class="ref-box" placeholder="Miktar">
-            <div style="display:flex; gap:10px; width:100%;">
-                <button class="btn-full" onclick="manageUser('add')" style="margin-top:0; font-size:12px;">EKLE</button>
-                <button class="btn-full" onclick="manageUser('set')" style="margin-top:0; font-size:12px; background:white;">EŞİTLE</button>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; width:100%;">
+                <button class="btn-full" onclick="manageUser('add')" style="margin-top:0; font-size:12px; background:var(--success); color:white;">PUAN EKLE</button>
+                <button class="btn-full" onclick="manageUser('set')" style="margin-top:0; font-size:12px; background:white;">PUAN EŞİTLE</button>
+                <button class="btn-full" onclick="manageUser('ban')" style="margin-top:0; font-size:12px; background:var(--danger); color:white;">BANLA</button>
+                <button class="btn-full" onclick="manageUser('unban')" style="margin-top:0; font-size:12px; background:#475569; color:white;">BAN KALDIR</button>
             </div>
+        </div>
+
+        <div class="card" style="flex-direction: column;">
+            <h3>📜 Son İşlemler (Logs)</h3>
+            <div id="adm-logs" class="log-container">Kayıt bulunamadı.</div>
         </div>
     </div>
 
@@ -226,6 +237,13 @@
                 if (data.success) {
                     user = data.user;
                     user.isAdmin = data.isAdmin;
+                    
+                    // Ban Kontrolü
+                    if(user.isBanned) {
+                        document.body.innerHTML = "<h1 style='color:white; text-align:center; margin-top:50px;'>Hesabınız Yasaklandı!</h1>";
+                        return;
+                    }
+
                     document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
                     
                     if(user.isAdmin) {
@@ -239,7 +257,7 @@
                     
                     if (data.announcements?.length > 0) {
                         const annScroll = document.getElementById('ann-scroll');
-                        annScroll.innerText = data.announcements.join(" 📢 ") + " 📢 ";
+                        annScroll.innerText = data.announcements.map(a => a.text).join(" 📢 ") + " 📢 ";
                         document.getElementById('ann-container').style.display = 'flex';
                     }
                 }
@@ -384,20 +402,40 @@
             document.getElementById('adm-stat-users').innerText = data.totalUsers;
             document.getElementById('adm-stat-points').innerText = data.totalPoints.toLocaleString();
             
+            // Görev Listesi
             const admTaskList = document.getElementById('adm-task-list');
             admTaskList.innerHTML = data.tasks.map(t => `
-                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:8px; margin-bottom:5px; border-radius:10px; font-size:12px;">
+                <div class="admin-list-item">
                     <span>${t.title}</span>
-                    <button onclick="deleteTask('${t.taskId}')" style="background:var(--danger); color:white; border:none; padding:4px 8px; border-radius:5px;">SİL</button>
+                    <button class="btn-small btn-danger" onclick="deleteTask('${t.taskId}')">SİL</button>
                 </div>
-            `).join('');
+            `).join('') || "Görev yok.";
+
+            // Duyuru Listesi
+            const admAnnList = document.getElementById('adm-ann-list');
+            admAnnList.innerHTML = data.announcements.map(a => `
+                <div class="admin-list-item">
+                    <span style="font-size:11px;">${a.text.substring(0,25)}...</span>
+                    <button class="btn-small btn-danger" onclick="deleteAnnouncement('${a.id}')">SİL</button>
+                </div>
+            `).join('') || "Duyuru yok.";
+
+            // İşlem Geçmişi (Logs)
+            const logBox = document.getElementById('adm-logs');
+            logBox.innerHTML = data.logs.map(l => `
+                <div style="margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.02)">
+                    <span style="color:var(--gold)">[${new Date(l.date).toLocaleDateString()}]</span> ${l.message}
+                </div>
+            `).join('') || "Henüz işlem kaydı yok.";
         }
 
         async function addTask() {
-            const taskId = document.getElementById('adm-task-id').value;
             const title = document.getElementById('adm-task-title').value;
             const reward = document.getElementById('adm-task-reward').value;
             const target = document.getElementById('adm-task-target').value;
+            const taskId = "task_" + Date.now(); // Otomatik ID
+
+            if(!title || !reward || !target) return tg.showAlert("Eksik bilgi!");
 
             await fetch(`${API}/api/admin/add-task`, {
                 method: 'POST',
@@ -410,7 +448,7 @@
         }
 
         async function deleteTask(taskId) {
-            if(!confirm("Silinsin mi?")) return;
+            if(!confirm("Bu görev silinsin mi?")) return;
             await fetch(`${API}/api/admin/delete-task`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -422,25 +460,43 @@
 
         async function addAnnouncement() {
             const text = document.getElementById('adm-ann-text').value;
+            if(!text) return;
             await fetch(`${API}/api/admin/add-announcement`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ adminId: user.telegramId, text })
             });
+            document.getElementById('adm-ann-text').value = "";
             tg.showAlert("Duyuru yayınlandı.");
-            location.reload();
+            loadAdminStats();
+        }
+
+        async function deleteAnnouncement(annId) {
+            await fetch(`${API}/api/admin/delete-announcement`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminId: user.telegramId, annId })
+            });
+            loadAdminStats();
         }
 
         async function manageUser(action) {
             const targetId = document.getElementById('adm-target-id').value;
             const amount = document.getElementById('adm-amount').value;
+            if(!targetId) return tg.showAlert("Lütfen Kullanıcı ID girin.");
+
             const res = await fetch(`${API}/api/admin/user-manage`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ adminId: user.telegramId, targetId, action, amount })
             });
             const data = await res.json();
-            if(data.success) tg.showAlert("İşlem başarılı.");
+            if(data.success) {
+                tg.showAlert("İşlem Başarılı!");
+                loadAdminStats();
+            } else {
+                tg.showAlert("Hata: " + data.message);
+            }
         }
 
         function showPage(p, el) {
