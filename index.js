@@ -1,3 +1,4 @@
+require('dotenv').config(); 
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -10,14 +11,18 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Render panelindeki Env Vars ile tam uyum
 const token = process.env.BOT_TOKEN;
 const mongoURI = process.env.MONGODB_URI;
-const ADMIN_ID = "1469411131"; 
+const ADMIN_ID = process.env.ADMIN_ID || "1469411131"; 
 
 const bot = new TelegramBot(token, { polling: true });
 bot.on('error', (error) => console.log("Bot Hatası:", error.message));
 
-mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v3.0 - Admin & Dynamic Systems Active"));
+// Veritabanı bağlantısı (Hata yakalama eklendi)
+mongoose.connect(mongoURI)
+    .then(() => console.log("✅ Gelir Evreni v3.0 - Admin & Dynamic Systems Active"))
+    .catch((err) => console.error("❌ MongoDB Bağlantı Hatası:", err));
 
 // --- MODELLER ---
 const UserSchema = new mongoose.Schema({
@@ -164,7 +169,6 @@ app.post('/api/mine', checkBan, async (req, res) => {
 });
 
 // --- ADMIN KOMUTLARI ---
-
 app.post('/api/admin/user-manage', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     const { targetId, action, amount } = req.body;
@@ -182,12 +186,9 @@ app.post('/api/admin/user-manage', async (req, res) => {
     res.json({ success: true, newPoints: targetUser.points, isBanned: targetUser.isBanned });
 });
 
-// DUYURU SİSTEMİ DÜZENLEMESİ (KÖKTEN ÇÖZÜM)
 app.post('/api/admin/add-announcement', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     if (!req.body.text || req.body.text.trim() === "") return res.json({ success: false, message: "Metin boş olamaz" });
-    
-    // Hem push yapıyoruz hem de en güncel listeyi dönüyoruz
     const updated = await Settings.findOneAndUpdate({}, { $push: { announcements: req.body.text } }, { new: true });
     res.json({ success: true, announcements: updated.announcements });
 });
