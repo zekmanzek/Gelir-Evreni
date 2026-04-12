@@ -55,7 +55,7 @@
         .nav-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 10px; border-radius: 22px; border: 1px solid var(--border-glass); z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .nav-item { color: var(--text-dim); text-decoration: none; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
         .nav-item.active { color: var(--gold); }
-        
+
         /* Çark Sistemi CSS */
         .wheel-wrapper { position: relative; width: 260px; height: 260px; margin: 0 auto 30px; }
         .wheel-container { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #1e293b; position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); box-shadow: 0 0 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.5); }
@@ -64,18 +64,6 @@
         .wheel-segment { position: absolute; width: 50%; height: 50%; transform-origin: 100% 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; padding-bottom: 50px; }
 
         .ref-box { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); padding: 14px; border-radius: 14px; color: var(--gold); text-align: center; margin: 8px 0; font-weight: 700; outline: none; }
-        .streak-container { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 15px 0; }
-        .streak-day { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 10px; padding: 8px 2px; text-align: center; font-size: 9px; }
-        .streak-day.completed { background: rgba(0, 255, 0, 0.1); border-color: #00ff00; color: #00ff00; }
-
-        .admin-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; width: 100%; }
-        .stat-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; text-align: center; border: 1px solid var(--border-glass); }
-        .ad-card { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1px solid rgba(34, 197, 94, 0.3); }
-
-        .admin-list-item { display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:10px; margin-bottom:8px; border-radius:12px; border: 1px solid var(--border-glass); }
-        .btn-small { padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; border: none; cursor: pointer; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-success { background: var(--success); color: white; }
     </style>
 </head>
 <body>
@@ -102,9 +90,7 @@
 
     <div id="page-leaderboard" class="page">
         <h3 style="margin-left: 10px;">🏆 Top 10 Madenci</h3>
-        <div class="card" style="flex-direction: column; padding: 0; overflow: hidden;">
-            <div id="leader-list" style="width: 100%;"></div>
-        </div>
+        <div id="leader-list"></div>
     </div>
 
     <div id="page-mine" class="page">
@@ -114,7 +100,7 @@
                 <div class="wheel-pointer"></div>
                 <div id="wheel" class="wheel-container"></div>
             </div>
-            <button id="btn-spin" class="btn-full" onclick="spinWheel()">ÇARKICI ÇEVİR</button>
+            <button id="btn-spin" class="btn-full" onclick="spinWheel()">ÇARKI ÇEVİR</button>
         </div>
 
         <div id="mine-card" class="card" style="flex-direction: column; text-align: center; padding: 40px 20px;">
@@ -127,72 +113,13 @@
 
     <div id="page-profile" class="page">
         <div class="card ad-card" style="flex-direction: column; text-align: center;">
-            <div style="font-size: 30px; margin-bottom: 10px;">📺</div>
-            <h3 style="margin: 0;">Reklam İzle Kazan</h3>
-            <p style="font-size: 12px; color: var(--text-dim); margin: 5px 0;">Her reklam için +500 GEP kazanırsın.</p>
+            <h3>📺 Reklam İzle Kazan</h3>
             <button class="btn-full" style="background: var(--success); color: white;" onclick="showAd()">REKLAMI BAŞLAT</button>
         </div>
-
-        <div class="card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center;">
-            <div style="border-right: 1px solid var(--border-glass);">
-                <div style="font-size: 10px; color: var(--text-dim);">DAVETLER</div>
-                <div id="stat-ref-count" style="font-size: 22px; font-weight: 900; color: var(--gold);">0</div>
-            </div>
-            <div>
-                <div style="font-size: 10px; color: var(--text-dim);">REF GELİRİ</div>
-                <div id="stat-ref-earn" style="font-size: 18px; font-weight: 900; color: #00d4ff;">0 GEP</div>
-            </div>
-        </div>
-        
-        <div class="card" style="flex-direction: column;">
-            <h3>📅 Günlük Giriş</h3>
-            <div class="streak-container" id="streak-box"></div>
-            <button id="btn-checkin" class="btn-full" onclick="claimDaily()">GÜNLÜK ÖDÜLÜ AL</button>
-        </div>
-
         <div class="card" style="flex-direction: column; text-align: center;">
-            <h3>👥 Arkadaş Davet Et</h3>
+            <h3>👥 Referans Linkin</h3>
             <input type="text" id="ref-link" class="ref-box" readonly onclick="this.select()">
-            <button class="btn-full" onclick="copyRef()">LİNKİ KOPYALA</button>
-        </div>
-    </div>
-
-    <div id="page-admin" class="page">
-        <h3 style="margin-left:10px;">📊 Sistem İstatistikleri</h3>
-        <div class="admin-card-grid">
-            <div class="stat-card">
-                <div style="font-size:10px; color:var(--text-dim)">TOPLAM ÜYE</div>
-                <div id="adm-stat-users" style="font-size:18px; font-weight:900; color:var(--gold)">0</div>
-            </div>
-            <div class="stat-card">
-                <div style="font-size:10px; color:var(--text-dim)">TOPLAM GEP</div>
-                <div id="adm-stat-points" style="font-size:18px; font-weight:900; color:#00d4ff;">0</div>
-            </div>
-        </div>
-
-        <div class="card" style="flex-direction: column;">
-            <h3>📢 Duyuru Yönetimi</h3>
-            <input type="text" id="adm-ann-text" class="ref-box" placeholder="Duyuru metni yazın...">
-            <button class="btn-full" onclick="addAnnouncement()">YAYINLA</button>
-            <div id="adm-ann-list" style="width:100%; margin-top:15px; max-height:150px; overflow-y:auto;"></div>
-        </div>
-
-        <div class="card" style="flex-direction: column;">
-            <h3>🛠️ Yeni Görev Ekle</h3>
-            <input type="text" id="adm-task-title" class="ref-box" placeholder="Görev Başlığı">
-            <input type="number" id="adm-task-reward" class="ref-box" placeholder="Ödül (GEP)">
-            <input type="text" id="adm-task-target" class="ref-box" placeholder="Link (https://...)">
-            <button class="btn-full" onclick="addTask()">GÖREVİ EKLE</button>
-        </div>
-
-        <div class="card" style="flex-direction: column;">
-            <h3>👤 Kullanıcı Yönetimi</h3>
-            <input type="text" id="adm-target-id" class="ref-box" placeholder="Kullanıcı ID veya @KullanıcıAdı">
-            <input type="number" id="adm-amount" class="ref-box" placeholder="Miktar">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; width:100%;">
-                <button class="btn-full" onclick="manageUser('add')" style="margin-top:0; font-size:12px; background:var(--success); color:white;">PUAN EKLE</button>
-                <button class="btn-full" onclick="manageUser('set')" style="margin-top:0; font-size:12px; background:white;">PUAN EŞİTLE</button>
-            </div>
+            <button class="btn-full" onclick="copyRef()">KOPYALA</button>
         </div>
     </div>
 
@@ -201,7 +128,6 @@
         <a href="javascript:void(0)" class="nav-item" onclick="showPage('leaderboard', this)"><div style="font-size:20px;">🏆</div><span>SIRALAMA</span></a>
         <a href="javascript:void(0)" class="nav-item" onclick="showPage('mine', this)"><div style="font-size:20px;">⛏️</div><span>MADEN</span></a>
         <a href="javascript:void(0)" class="nav-item" onclick="showPage('profile', this)"><div style="font-size:20px;">👤</div><span>PROFİL</span></a>
-        <a href="javascript:void(0)" id="nav-admin" class="nav-item" style="display:none" onclick="showPage('admin', this)"><div style="font-size:20px;">⚙️</div><span>ADMİN</span></a>
     </nav>
 
     <script>
@@ -211,7 +137,6 @@
         let user, tasks = [], miningInterval;
         let isSpinning = false;
         
-        // Ödül Listesi
         const WHEEL_REWARDS = [10, 50, 100, 250, 500, 750, 1000, 5000];
         const COLORS = ["#1e293b", "#334155", "#1e293b", "#334155", "#1e293b", "#334155", "#1e293b", "#334155"];
 
@@ -219,7 +144,6 @@
             try {
                 const tgUser = tg.initDataUnsafe?.user;
                 if (!tgUser) {
-                    alert("Telegram verisi bulunamadı.");
                     document.getElementById('loader').style.display = 'none';
                     return;
                 }
@@ -237,104 +161,89 @@
                 const data = await res.json();
                 if (data.success) {
                     user = data.user;
-                    user.isAdmin = data.isAdmin;
-                    
-                    if(user.isBanned) {
-                        document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; flex-direction:column;'><h1 style='color:white;'>🚫 Erişim Reddedildi</h1></div>";
-                        return;
-                    }
-
-                    document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
-                    if(user.isAdmin) document.getElementById('nav-admin').style.display = 'flex';
-
-                    setupWheel();
-                    checkSpinStatus();
-                    await refreshTasks();
                     updateUI();
+                    setupWheel(); // Veri geldikten sonra kur
+                    checkSpinStatus();
                     checkMiningTimer();
-                    renderStreak();
-                    if (data.announcements) renderAnnouncements(data.announcements);
+                    document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
                 }
             } catch (e) { 
-                console.error("Init Error:", e);
+                console.error("Hata:", e);
             } finally {
+                // Her durumda loader'ı kapat
                 setTimeout(() => {
-                    const loader = document.getElementById('loader');
-                    loader.style.opacity = '0';
-                    setTimeout(() => loader.style.display = 'none', 600);
-                }, 800);
+                    const ldr = document.getElementById('loader');
+                    if(ldr) {
+                        ldr.style.opacity = '0';
+                        setTimeout(() => ldr.style.display = 'none', 600);
+                    }
+                }, 1000);
             }
         }
 
-        // --- ÇARK SİSTEMİ FONKSİYONLARI ---
         function setupWheel() {
             const wheel = document.getElementById('wheel');
+            if(!wheel) return;
             wheel.innerHTML = '';
             const deg = 360 / WHEEL_REWARDS.length;
-            
             WHEEL_REWARDS.forEach((reward, i) => {
                 const seg = document.createElement('div');
                 seg.className = 'wheel-segment';
                 seg.style.transform = `rotate(${deg * i}deg) skewY(-45deg)`;
                 seg.style.backgroundColor = COLORS[i];
-                
                 const text = document.createElement('span');
                 text.innerText = reward;
                 text.style.transform = `skewY(45deg) rotate(${deg/2}deg)`;
-                text.style.position = 'absolute';
-                text.style.bottom = '20px';
-                
                 seg.appendChild(text);
                 wheel.appendChild(seg);
             });
         }
 
         function checkSpinStatus() {
+            if(!user) return;
             const lastSpin = localStorage.getItem(`lastSpin_${user.telegramId}`);
-            const today = new Date().toDateString();
-            if (lastSpin === today) {
-                document.getElementById('btn-spin').disabled = true;
-                document.getElementById('btn-spin').innerText = "YARIN TEKRAR GEL";
+            if (lastSpin === new Date().toDateString()) {
+                const btn = document.getElementById('btn-spin');
+                if(btn) { btn.disabled = true; btn.innerText = "YARIN TEKRAR GEL"; }
             }
         }
 
         async function spinWheel() {
-            if (isSpinning) return;
-            
-            const lastSpin = localStorage.getItem(`lastSpin_${user.telegramId}`);
-            const today = new Date().toDateString();
-            if (lastSpin === today) return tg.showAlert("Günde sadece 1 kez çevirebilirsin!");
-
+            if (isSpinning || !user) return;
             isSpinning = true;
             const wheel = document.getElementById('wheel');
             const randomIdx = Math.floor(Math.random() * WHEEL_REWARDS.length);
-            const extraDegs = 360 * 5; // 5 tam tur
-            const finalDeg = extraDegs + (360 - (randomIdx * (360 / WHEEL_REWARDS.length)));
-
+            const finalDeg = (360 * 5) + (360 - (randomIdx * (360 / WHEEL_REWARDS.length)));
             wheel.style.transform = `rotate(${finalDeg}deg)`;
 
             setTimeout(async () => {
                 const winAmount = WHEEL_REWARDS[randomIdx];
-                
-                // Backend'e puanı gönder
-                const res = await fetch(`${API}/api/admin/user-manage`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        adminId: "SYSTEM", // Özel yetki veya gizli bir anahtar kullanabilirsin
-                        targetId: user.telegramId, 
-                        action: 'add', 
-                        amount: winAmount 
-                    })
-                });
-
-                if (res.ok) {
-                    localStorage.setItem(`lastSpin_${user.telegramId}`, today);
-                    user.points += winAmount;
-                    updateUI();
-                    tg.showAlert(`🎉 Tebrikler! Çarktan ${winAmount} GEP kazandın!`);
-                    checkSpinStatus();
-                }
+                localStorage.setItem(`lastSpin_${user.telegramId}`, new Date().toDateString());
+                user.points += winAmount;
+                updateUI();
+                tg.showAlert(`🎉 ${winAmount} GEP Kazandın!`);
+                checkSpinStatus();
                 isSpinning = false;
             }, 4100);
         }
+
+        function updateUI() {
+            if (!user) return;
+            const bal = document.getElementById('balance');
+            if(bal) bal.innerText = user.points.toLocaleString();
+            const usd = document.getElementById('usd');
+            if(usd) usd.innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`;
+        }
+
+        function showPage(p, el) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            const target = document.getElementById(`page-${p}`);
+            if(target) target.classList.add('active');
+            if(el) el.classList.add('active');
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
