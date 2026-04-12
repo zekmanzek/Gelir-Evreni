@@ -17,7 +17,7 @@ const ADMIN_ID = "1469411131";
 const bot = new TelegramBot(token, { polling: true });
 bot.on('error', (error) => console.log("Bot Hatası:", error.message));
 
-mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v3.0 - Admin & Dynamic Systems Active"));
+mongoose.connect(mongoURI).then(() => console.log("✅ Gelir Evreni v3.0 - Lucky Wheel & Admin Systems Active"));
 
 // --- MODELLER ---
 const UserSchema = new mongoose.Schema({
@@ -63,6 +63,15 @@ const checkBan = async (req, res, next) => {
     next();
 };
 
+// --- YARDIMCI FONKSİYONLAR ---
+const calculateLevel = (points) => {
+    if (points >= 1000000) return 'Elmas';
+    if (points >= 500000) return 'Platin';
+    if (points >= 100000) return 'Altın';
+    if (points >= 25000) return 'Gümüş';
+    return 'Bronz';
+};
+
 async function initSettings() {
     let s = await Settings.findOne();
     if (!s) {
@@ -86,35 +95,8 @@ async function initSettings() {
 }
 initSettings();
 
-const calculateLevel = (points) => {
-    if (points >= 1000000) return 'Elmas';
-    if (points >= 500000) return 'Platin';
-    if (points >= 100000) return 'Altın';
-    if (points >= 25000) return 'Gümüş';
-    return 'Bronz';
-};
-
-async function updateOrCreateUser(msg) {
-    const telegramId = msg.from.id.toString();
-    const username = (msg.from.username || '').toLowerCase();
-    const firstName = msg.from.first_name || 'Kullanıcı';
-
-    let user = await User.findOne({ telegramId });
-    if (!user) {
-        user = new User({ telegramId, username, firstName });
-        await user.save();
-        return { user, isNew: true };
-    } else {
-        if (user.username !== username || user.firstName !== firstName) {
-            user.username = username;
-            user.firstName = firstName;
-            await user.save();
-        }
-        return { user, isNew: false };
-    }
-}
-
 // --- API ROTLARI ---
+
 app.post('/api/user/auth', checkBan, async (req, res) => {
     const { telegramId, username, firstName } = req.body;
     try {
@@ -128,13 +110,47 @@ app.post('/api/user/auth', checkBan, async (req, res) => {
         user.level = calculateLevel(user.points);
         await user.save();
 
-        const settings = await Settings.findOne();
+        const settings = await Settings.findOne() || { announcements: [], botUsername: 'gelirevreni_bot' };
         res.json({ 
             success: true, 
             user, 
             botUsername: settings.botUsername, 
             isAdmin: telegramId === ADMIN_ID,
-            announcements: settings ? settings.announcements : [] 
+            announcements: settings.announcements 
+        });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 🎰 ŞANS ÇARKI API (YENİ VE GÜVENLİ)
+app.post('/api/spin', checkBan, async (req, res) => {
+    const { telegramId } = req.body;
+    try {
+        const user = await User.findOne({ telegramId });
+        if (!user) return res.json({ success: false, message: "Kullanıcı bulunamadı." });
+
+        const now = new Date();
+        const lastSpin = new Date(user.lastSpin);
+        
+        // Günlük kontrol (Aynı gün içinde tekrar çeviremez)
+        if (lastSpin.toDateString() === now.toDateString()) {
+            return res.json({ success: false, message: "Bugün zaten çevirdiniz. Yarın tekrar deneyin!" });
+        }
+
+        // Ödül Havuzu ve Olasılık Belirleme
+        const rewards = [100, 500, 1000, 2500, 5000, 10000, 50, 250]; // Dilimlerdeki ödüller
+        const randomIndex = Math.floor(Math.random() * rewards.length);
+        const winAmount = rewards[randomIndex];
+
+        user.points += winAmount;
+        user.lastSpin = now;
+        user.level = calculateLevel(user.points);
+        await user.save();
+
+        res.json({ 
+            success: true, 
+            reward: winAmount, 
+            index: randomIndex, // Frontend çarkı bu indexe göre durduracak
+            newPoints: user.points 
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -143,7 +159,7 @@ app.post('/api/mine', checkBan, async (req, res) => {
     const { telegramId } = req.body;
     try {
         const user = await User.findOne({ telegramId });
-        const settings = await Settings.findOne();
+        const settings = await Settings.findOne() || { miningMultiplier: 1 };
         const now = new Date();
         const cooldown = 4 * 60 * 60 * 1000;
         if (user && (now - new Date(user.lastMining)) > cooldown) {
@@ -164,7 +180,6 @@ app.post('/api/mine', checkBan, async (req, res) => {
 });
 
 // --- ADMIN KOMUTLARI ---
-
 app.post('/api/admin/user-manage', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     const { targetId, action, amount } = req.body;
@@ -182,12 +197,9 @@ app.post('/api/admin/user-manage', async (req, res) => {
     res.json({ success: true, newPoints: targetUser.points, isBanned: targetUser.isBanned });
 });
 
-// DUYURU SİSTEMİ DÜZENLEMESİ (KÖKTEN ÇÖZÜM)
 app.post('/api/admin/add-announcement', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     if (!req.body.text || req.body.text.trim() === "") return res.json({ success: false, message: "Metin boş olamaz" });
-    
-    // Hem push yapıyoruz hem de en güncel listeyi dönüyoruz
     const updated = await Settings.findOneAndUpdate({}, { $push: { announcements: req.body.text } }, { new: true });
     res.json({ success: true, announcements: updated.announcements });
 });
@@ -209,7 +221,7 @@ app.post('/api/admin/stats', async (req, res) => {
     try {
         const totalUsers = await User.countDocuments();
         const totalPointsResult = await User.aggregate([{ $group: { _id: null, total: { $sum: "$points" } } }]);
-        const settings = await Settings.findOne();
+        const settings = await Settings.findOne() || { miningMultiplier: 1, adsgramReward: 500, announcements: [] };
         const tasks = await Task.find();
         res.json({ 
             totalUsers, 
@@ -220,33 +232,6 @@ app.post('/api/admin/stats', async (req, res) => {
             tasks: tasks
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/admin/add-task', async (req, res) => {
-    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-    const { title, reward, target } = req.body;
-    const taskId = 'task_' + Date.now();
-    await Task.create({ taskId, title, reward, target, isActive: true });
-    res.json({ success: true });
-});
-
-app.post('/api/admin/delete-task', async (req, res) => {
-    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-    await Task.deleteOne({ taskId: req.body.taskId });
-    res.json({ success: true });
-});
-
-app.post('/api/admin/all-users', async (req, res) => {
-    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-    const users = await User.find().sort({ points: -1 });
-    res.json({ success: true, users });
-});
-
-app.post('/api/admin/update-settings', async (req, res) => {
-    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-    const { multiplier, adsgramReward } = req.body;
-    await Settings.updateOne({}, { $set: { miningMultiplier: multiplier, adsgramReward: adsgramReward } });
-    res.json({ success: true });
 });
 
 app.get('/api/tasks', async (req, res) => {
@@ -260,7 +245,16 @@ app.get('/api/leaderboard', async (req, res) => {
 });
 
 bot.onText(/\/start$/, async (msg) => {
-    await updateOrCreateUser(msg);
+    const telegramId = msg.from.id.toString();
+    const username = (msg.from.username || '').toLowerCase();
+    const firstName = msg.from.first_name || 'Kullanıcı';
+    
+    let user = await User.findOne({ telegramId });
+    if (!user) {
+        user = new User({ telegramId, username, firstName });
+        await user.save();
+    }
+    
     bot.sendMessage(msg.chat.id, `🚀 *Gelir Evreni'ne Hoş Geldin!*`, {
         parse_mode: 'Markdown',
         reply_markup: { inline_keyboard: [[{ text: "Uygulamayı Aç 📱", web_app: { url: `https://gelir-evreni.onrender.com` } }]] }
