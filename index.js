@@ -47,7 +47,7 @@ const Task = mongoose.model('Task', TaskSchema);
 const SettingsSchema = new mongoose.Schema({
     announcements: { type: [String], default: [] },
     miningMultiplier: { type: Number, default: 1 },
-    adsgramReward: { type: Number, default: 500 }, // Panelden değiştirilebilir
+    adsgramReward: { type: Number, default: 500 }, 
     botUsername: { type: String, default: 'gelirevreni_bot' }
 });
 const Settings = mongoose.model('Settings', SettingsSchema);
@@ -261,7 +261,6 @@ app.post('/api/tasks/complete', async (req, res) => {
 
 // --- 🔥 GÜÇLENDİRİLMİŞ ADMIN PANELİ KOMUTLARI 🔥 ---
 
-// Tüm istatistikleri ve ayarları getir
 app.post('/api/admin/stats', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     try {
@@ -280,7 +279,6 @@ app.post('/api/admin/stats', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Genel Ayarları Güncelle (Maden Çarpanı ve Reklam Ödülü)
 app.post('/api/admin/update-settings', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     const { multiplier, adsgramReward } = req.body;
@@ -288,7 +286,6 @@ app.post('/api/admin/update-settings', async (req, res) => {
     res.json({ success: true });
 });
 
-// Duyuru Ekle
 app.post('/api/admin/add-announcement', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     const { text } = req.body;
@@ -298,14 +295,12 @@ app.post('/api/admin/add-announcement', async (req, res) => {
     res.json({ success: true, announcements: s.announcements });
 });
 
-// Duyuruları Temizle
 app.post('/api/admin/clear-announcements', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     await Settings.updateOne({}, { $set: { announcements: [] } });
     res.json({ success: true });
 });
 
-// Görev Ekle / Güncelle
 app.post('/api/admin/add-task', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     const { taskId, title, reward, target } = req.body;
@@ -317,21 +312,19 @@ app.post('/api/admin/add-task', async (req, res) => {
     res.json({ success: true });
 });
 
-// Görev Sil
 app.post('/api/admin/delete-task', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     await Task.deleteOne({ taskId: req.body.taskId });
     res.json({ success: true });
 });
 
-// Tüm Kullanıcıları Listele (Detaylı)
 app.post('/api/admin/all-users', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     const users = await User.find().sort({ points: -1 });
     res.json({ success: true, users });
 });
 
-// Kullanıcı Puan Müdahalesi
+// Kullanıcı Puan Müdahalesi (Otomatik Bildirim Kaldırıldı)
 app.post('/api/admin/user-manage', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     const { targetId, action, amount } = req.body;
@@ -346,15 +339,11 @@ app.post('/api/admin/user-manage', async (req, res) => {
     targetUser.level = calculateLevel(targetUser.points);
     await targetUser.save();
     
-    // Kullanıcıya bilgi mesajı gönder (isteğe bağlı)
-    try {
-        bot.sendMessage(targetId, `🛠 Admin müdahalesi: Mevcut puanınız ${targetUser.points} olarak güncellendi.`);
-    } catch(e) {}
+    // bot.sendMessage kısmı tamamen kaldırıldı.
 
     res.json({ success: true, newPoints: targetUser.points });
 });
 
-// Tekil Kullanıcı Sil (Hileciler için)
 app.post('/api/admin/delete-user', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     await User.deleteOne({ telegramId: req.body.targetId });
