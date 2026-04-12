@@ -64,13 +64,9 @@
 
         .admin-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; width: 100%; }
         .stat-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; text-align: center; border: 1px solid var(--border-glass); }
-        .user-table { width: 100%; border-collapse: collapse; color: #fff; font-size: 11px; }
-        .user-table th { text-align: left; padding: 8px; border-bottom: 1px solid var(--border-glass); color: var(--text-dim); }
-        .user-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
         
         .ad-card { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1px solid rgba(34, 197, 94, 0.3); }
 
-        /* Yeni Eklenen Stiller */
         .admin-list-item { display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:10px; margin-bottom:8px; border-radius:12px; border: 1px solid var(--border-glass); }
         .btn-small { padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; border: none; cursor: pointer; }
         .btn-danger { background: var(--danger); color: white; }
@@ -183,8 +179,9 @@
         
         <div class="card" style="flex-direction: column;">
             <h3>👤 Kullanıcı Yönetimi</h3>
-            <input type="text" id="adm-target-id" class="ref-box" placeholder="Kullanıcı Telegram ID">
-            <input type="number" id="adm-amount" class="ref-box" placeholder="Miktar">
+            <p style="font-size: 10px; color: var(--text-dim); margin-bottom: 5px;">ID veya @username yazın</p>
+            <input type="text" id="adm-target-id" class="ref-box" placeholder="Kullanıcı ID veya @KullanıcıAdı">
+            <input type="number" id="adm-amount" class="ref-box" placeholder="Miktar (Puan İşlemleri İçin)">
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; width:100%;">
                 <button class="btn-full" onclick="manageUser('add')" style="margin-top:0; font-size:12px; background:var(--success); color:white;">PUAN EKLE</button>
                 <button class="btn-full" onclick="manageUser('set')" style="margin-top:0; font-size:12px; background:white;">PUAN EŞİTLE</button>
@@ -238,9 +235,8 @@
                     user = data.user;
                     user.isAdmin = data.isAdmin;
                     
-                    // Ban Kontrolü
                     if(user.isBanned) {
-                        document.body.innerHTML = "<h1 style='color:white; text-align:center; margin-top:50px;'>Hesabınız Yasaklandı!</h1>";
+                        document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; flex-direction:column;'><h1 style='color:white;'>🚫 Erişim Reddedildi</h1><p style='color:red;'>Hesabınız sistemden yasaklanmıştır.</p></div>";
                         return;
                     }
 
@@ -424,7 +420,7 @@
             const logBox = document.getElementById('adm-logs');
             logBox.innerHTML = data.logs.map(l => `
                 <div style="margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.02)">
-                    <span style="color:var(--gold)">[${new Date(l.date).toLocaleDateString()}]</span> ${l.message}
+                    <span style="color:var(--gold)">[${new Date(l.date).toLocaleTimeString()}]</span> ${l.message}
                 </div>
             `).join('') || "Henüz işlem kaydı yok.";
         }
@@ -433,14 +429,13 @@
             const title = document.getElementById('adm-task-title').value;
             const reward = document.getElementById('adm-task-reward').value;
             const target = document.getElementById('adm-task-target').value;
-            const taskId = "task_" + Date.now(); // Otomatik ID
-
+            
             if(!title || !reward || !target) return tg.showAlert("Eksik bilgi!");
 
             await fetch(`${API}/api/admin/add-task`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId, taskId, title, reward, target })
+                body: JSON.stringify({ adminId: user.telegramId, title, reward, target })
             });
             tg.showAlert("Görev eklendi.");
             loadAdminStats();
@@ -472,6 +467,7 @@
         }
 
         async function deleteAnnouncement(annId) {
+            if(!confirm("Bu duyuru silinsin mi?")) return;
             await fetch(`${API}/api/admin/delete-announcement`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -483,7 +479,7 @@
         async function manageUser(action) {
             const targetId = document.getElementById('adm-target-id').value;
             const amount = document.getElementById('adm-amount').value;
-            if(!targetId) return tg.showAlert("Lütfen Kullanıcı ID girin.");
+            if(!targetId) return tg.showAlert("Lütfen ID veya @Username girin.");
 
             const res = await fetch(`${API}/api/admin/user-manage`, {
                 method: 'POST',
