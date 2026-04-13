@@ -1,4 +1,55 @@
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    const API = window.location.origin;
+    let user, tasks = [], miningInterval;
+    
+    const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "27433" }) : null;
 
+    async function init() {
+        try {
+            const tgUser = tg.initDataUnsafe?.user;
+            if (!tgUser) {
+                alert("Lütfen uygulamayı Telegram üzerinden açın.");
+                return;
+            }
+
+            const res = await fetch(`${API}/api/user/auth`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    telegramId: tgUser.id.toString(), 
+                    username: tgUser.username || "", 
+                    firstName: tgUser.first_name || "Kullanıcı" 
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                user = data.user;
+                user.isAdmin = data.isAdmin;
+                
+                if(user.isBanned) {
+                    document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; flex-direction:column; text-align:center;'><h1 style='color:white;'>🚫 Erişim Reddedildi</h1><p style='color:red;'>Hesabınız yasaklanmıştır.</p></div>";
+                    return;
+                }
+
+                document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
+                if(user.isAdmin) document.getElementById('nav-admin').style.display = 'flex';
+
+                await refreshTasks();
+                updateUI();
+                checkMiningTimer();
+                renderStreak();
+                if (data.announcements) renderAnnouncements(data.announcements);
+            }
+        } catch (e) { 
+            console.error("Init Error:", e);
+        } finally {
+            setTimeout(() => {
+                const loader = document.getElementById('loader');
+                if(loader) {
+                    loader.style.opacity = '0';
                     setTimeout(() => loader.style.display = 'none', 600);
                 }
             }, 800);
