@@ -1,4 +1,33 @@
+require('dotenv').config(); 
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const path = require('path');
+const TelegramBot = require('node-telegram-bot-api');
 
+// --- AYARLAR ---
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Render panelindeki Env Vars ile tam uyum
+const token = process.env.BOT_TOKEN;
+const mongoURI = process.env.MONGODB_URI;
+const ADMIN_ID = process.env.ADMIN_ID || "1469411131"; 
+
+const bot = new TelegramBot(token, { polling: true });
+bot.on('error', (error) => console.log("Bot Hatası:", error.message));
+
+// Veritabanı bağlantısı
+mongoose.connect(mongoURI)
+    .then(() => console.log("✅ Gelir Evreni v3.0 - Admin & Dynamic Systems Active"))
+    .catch((err) => console.error("❌ MongoDB Bağlantı Hatası:", err));
+
+// --- MODELLER ---
+const UserSchema = new mongoose.Schema({
+    telegramId: { type: String, unique: true, index: true },
+    username: { type: String, default: '', index: true }, 
     firstName: { type: String, default: 'Kullanıcı' }, 
     points: { type: Number, default: 1000 },
     completedTasks: { type: [String], default: [] },
