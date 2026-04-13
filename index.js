@@ -1,33 +1,4 @@
-require('dotenv').config(); 
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const path = require('path');
-const TelegramBot = require('node-telegram-bot-api');
 
-// --- AYARLAR ---
-const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Render panelindeki Env Vars ile tam uyum
-const token = process.env.BOT_TOKEN;
-const mongoURI = process.env.MONGODB_URI;
-const ADMIN_ID = process.env.ADMIN_ID || "1469411131"; 
-
-const bot = new TelegramBot(token, { polling: true });
-bot.on('error', (error) => console.log("Bot Hatası:", error.message));
-
-// Veritabanı bağlantısı (Hata yakalama eklendi)
-mongoose.connect(mongoURI)
-    .then(() => console.log("✅ Gelir Evreni v3.0 - Admin & Dynamic Systems Active"))
-    .catch((err) => console.error("❌ MongoDB Bağlantı Hatası:", err));
-
-// --- MODELLER ---
-const UserSchema = new mongoose.Schema({
-    telegramId: { type: String, unique: true, index: true },
-    username: { type: String, default: '', index: true }, 
     firstName: { type: String, default: 'Kullanıcı' }, 
     points: { type: Number, default: 1000 },
     completedTasks: { type: [String], default: [] },
@@ -166,6 +137,48 @@ app.post('/api/mine', checkBan, async (req, res) => {
         }
         res.json({ success: false, message: "Maden henüz hazır değil." });
     } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- YENİ EKLENEN ROTLAR (REKLAM & GÖREV) ---
+
+// Reklam İzleme Ödülü (Adsgram)
+app.post('/api/adsgram-reward', checkBan, async (req, res) => {
+    const { telegramId } = req.body;
+    try {
+        const user = await User.findOne({ telegramId });
+        const settings = await Settings.findOne();
+        if (!user) return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı" });
+
+        const reward = settings.adsgramReward || 500; // Ayarlardan çek, yoksa 500 ver
+        user.points += reward;
+        user.level = calculateLevel(user.points);
+        await user.save();
+
+        res.json({ success: true, points: user.points, reward: reward });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Sunucu hatası" });
+    }
+});
+
+// Görev Tamamlama Kontrolü
+app.post('/api/tasks/complete', checkBan, async (req, res) => {
+    const { telegramId, taskId } = req.body;
+    try {
+        const user = await User.findOne({ telegramId });
+        const task = await Task.findOne({ taskId });
+
+        if (!user || !task) return res.status(404).json({ success: false, message: "Geçersiz veri" });
+        if (user.completedTasks.includes(taskId)) return res.json({ success: false, message: "Zaten yapıldı" });
+
+        user.points += task.reward;
+        user.completedTasks.push(taskId);
+        user.level = calculateLevel(user.points);
+        await user.save();
+
+        res.json({ success: true, points: user.points, message: "Görev tamamlandı!" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "İşlem başarısız" });
+    }
 });
 
 // --- ADMIN KOMUTLARI ---
