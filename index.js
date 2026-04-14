@@ -6,24 +6,33 @@ const path = require('path');
 const TelegramBot = require('node-telegram-bot-api');
 
 const app = express();
+const PORT = process.env.PORT || 10000;
+
+// --- ARA YAZILIMLAR (MIDDLEWARE) ---
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- AYARLAR ---
+// --- AYARLAR VE BAĞLANTILAR ---
 const token = process.env.BOT_TOKEN;
 const mongoURI = process.env.MONGODB_URI;
-const ADMIN_ID = process.env.ADMIN_ID || "1469411131"; 
+const ADMIN_ID = process.env.ADMIN_ID || "1469411131";
 
-// Render üzerinde botun çökmemesi için polling ayarı
-const bot = new TelegramBot(token, { polling: true });
+// Bot Çakışmasını (409) önlemek için polling ayarlarını optimize ediyoruz
+const bot = new TelegramBot(token, { 
+    polling: {
+        autoStart: true,
+        params: {
+            timeout: 10
+        }
+    } 
+});
 
-// Veritabanı bağlantısı
 mongoose.connect(mongoURI)
     .then(() => console.log("✅ Gelir Evreni v3.0 - Sistem Aktif"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
-// --- MODELLER ---
+// --- VERİTABANI MODELLERİ ---
 const UserSchema = new mongoose.Schema({
     telegramId: { type: String, unique: true, index: true },
     username: { type: String, default: '', index: true }, 
@@ -66,12 +75,16 @@ const calculateLevel = (points) => {
 };
 
 const checkBan = async (req, res, next) => {
-    const teleId = req.body.telegramId;
-    if (teleId) {
-        const user = await User.findOne({ telegramId: teleId });
-        if (user && user.isBanned) return res.status(403).json({ success: false, message: "Hesabınız yasaklanmıştır." });
+    try {
+        const teleId = req.body.telegramId;
+        if (teleId) {
+            const user = await User.findOne({ telegramId: teleId });
+            if (user && user.isBanned) return res.status(403).json({ success: false, message: "Hesabınız yasaklanmıştır." });
+        }
+        next();
+    } catch (err) {
+        next();
     }
-    next();
 };
 
 // --- API ROTALARI ---
@@ -160,12 +173,32 @@ app.post('/api/admin/stats', async (req, res) => {
     res.json({ totalUsers, totalPoints: totalPointsRes[0]?.total || 0, announcements: settings.announcements, tasks });
 });
 
-// --- ANA DOSYA VE PORT ---
+// --- BOT KOMUTLARI ---
+bot.onText(/\/start/, (msg) => {
+    const chatId = msg.chat.id;
+    bot.sendMessage(chatId, "🌟 **Gelir Evreni'ne Hoş Geldiniz!**\n\nAlttaki butona tıklayarak uygulamayı başlatabilirsiniz.", {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            inline_keyboard: [[
+                { text: "🚀 Uygulamayı Aç", web_app: { url: "https://gelir-evreni.onrender.com" } }
+            ]]
+        }
+    });
+});
+
+// --- ANA DOSYA VE PORT SUNUMU ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Sistem port ${PORT} üzerinde aktif.`));
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Sunucu ${PORT} üzerinde aktif.`);
+});
 
-// Bot hata vermesin diye boş bir callback ekledim
-bot.on('polling_error', (error) => console.log("Bot Polling Hatası:", error));
+// Bot hata yönetimi
+bot.on('polling_error', (error) => {
+    if (error.code === 'EFATAL' || error.message.includes('409')) {
+        console.log("⚠️ Bot Çakışması Algılandı: Diğer aktif botun kapanması bekleniyor.");
+    } else {
+        console.log("Bot Polling Hatası:", error.message);
+    }
+});
