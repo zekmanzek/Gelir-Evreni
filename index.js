@@ -15,6 +15,7 @@ const token = process.env.BOT_TOKEN;
 const mongoURI = process.env.MONGODB_URI;
 const ADMIN_ID = process.env.ADMIN_ID || "1469411131"; 
 
+// Render üzerinde botun çökmemesi için polling ayarı
 const bot = new TelegramBot(token, { polling: true });
 
 // Veritabanı bağlantısı
@@ -88,12 +89,14 @@ app.post('/api/user/auth', checkBan, async (req, res) => {
         user.level = calculateLevel(user.points);
         await user.save();
 
-        const settings = await Settings.findOne() || await Settings.create({});
+        let settings = await Settings.findOne();
+        if(!settings) settings = await Settings.create({});
+
         res.json({ 
             success: true, 
             user, 
             botUsername: settings.botUsername, 
-            isAdmin: telegramId === ADMIN_ID,
+            isAdmin: String(telegramId) === String(ADMIN_ID),
             announcements: settings.announcements 
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -123,19 +126,6 @@ app.post('/api/mine', checkBan, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/adsgram-reward', checkBan, async (req, res) => {
-    const { telegramId } = req.body;
-    try {
-        const user = await User.findOne({ telegramId });
-        const settings = await Settings.findOne();
-        const reward = settings ? settings.adsgramReward : 500;
-        user.points += reward;
-        user.level = calculateLevel(user.points);
-        await user.save();
-        res.json({ success: true, points: user.points, reward: reward });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
 app.post('/api/tasks/complete', checkBan, async (req, res) => {
     const { telegramId, taskId } = req.body;
     try {
@@ -162,7 +152,7 @@ app.get('/api/leaderboard', async (req, res) => {
 
 // --- ADMIN KOMUTLARI ---
 app.post('/api/admin/stats', async (req, res) => {
-    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    if (String(req.body.adminId) !== String(ADMIN_ID)) return res.status(403).send("Yetkisiz");
     const totalUsers = await User.countDocuments();
     const totalPointsRes = await User.aggregate([{ $group: { _id: null, total: { $sum: "$points" } } }]);
     const settings = await Settings.findOne() || { announcements: [] };
@@ -170,34 +160,12 @@ app.post('/api/admin/stats', async (req, res) => {
     res.json({ totalUsers, totalPoints: totalPointsRes[0]?.total || 0, announcements: settings.announcements, tasks });
 });
 
-app.post('/api/admin/add-task', async (req, res) => {
-    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-    const { title, reward, target } = req.body;
-    await Task.create({ taskId: 'task_' + Date.now(), title, reward, target });
-    res.json({ success: true });
-});
-
-app.post('/api/admin/delete-task', async (req, res) => {
-    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-    await Task.deleteOne({ taskId: req.body.taskId });
-    res.json({ success: true });
-});
-
-app.post('/api/admin/user-manage', async (req, res) => {
-    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-    const { targetId, action, amount } = req.body;
-    let query = targetId.startsWith('@') ? { username: targetId.replace('@', '').toLowerCase() } : { telegramId: targetId };
-    const targetUser = await User.findOne(query);
-    if (!targetUser) return res.json({ success: false });
-    const val = parseInt(amount) || 0;
-    if (action === 'add') targetUser.points += val;
-    else if (action === 'set') targetUser.points = val;
-    else if (action === 'ban') targetUser.isBanned = true;
-    else if (action === 'unban') targetUser.isBanned = false;
-    targetUser.level = calculateLevel(targetUser.points);
-    await targetUser.save();
-    res.json({ success: true });
-});
-
 // --- ANA DOSYA VE PORT ---
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', '
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 Sistem port ${PORT} üzerinde aktif.`));
+
+// Bot hata vermesin diye boş bir callback ekledim
+bot.on('polling_error', (error) => console.log("Bot Polling Hatası:", error));
