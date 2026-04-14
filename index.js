@@ -1,16 +1,16 @@
-require('dotenv').config(); 
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const TelegramBot = require('node-telegram-bot-api');
 
-// --- AYARLAR ---
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// --- AYARLAR ---
 const token = process.env.BOT_TOKEN;
 const mongoURI = process.env.MONGODB_URI;
 const ADMIN_ID = process.env.ADMIN_ID || "1469411131"; 
@@ -73,7 +73,7 @@ const checkBan = async (req, res, next) => {
     next();
 };
 
-// --- API ROTLARI ---
+// --- API ROTALARI ---
 
 app.post('/api/user/auth', checkBan, async (req, res) => {
     const { telegramId, username, firstName } = req.body;
@@ -99,39 +99,11 @@ app.post('/api/user/auth', checkBan, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// GÜNLÜK ÖDÜL (CHECK-IN) ROTASI
-app.post('/api/daily-checkin', checkBan, async (req, res) => {
-    const { telegramId } = req.body;
-    try {
-        const user = await User.findOne({ telegramId });
-        if (!user) return res.status(404).json({ success: false });
-
-        const now = new Date();
-        const last = new Date(user.lastCheckin);
-        const diffInHours = (now - last) / (1000 * 60 * 60);
-
-        if (diffInHours < 24) {
-            return res.json({ success: false, message: "Bugün ödülünü zaten aldın!" });
-        }
-
-        if (diffInHours > 48) user.streak = 1;
-        else user.streak = (user.streak % 7) + 1;
-
-        const reward = user.streak * 500;
-        user.points += reward;
-        user.lastCheckin = now;
-        user.level = calculateLevel(user.points);
-        await user.save();
-
-        res.json({ success: true, points: user.points, streak: user.streak, reward });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
 app.post('/api/mine', checkBan, async (req, res) => {
     const { telegramId } = req.body;
     try {
         const user = await User.findOne({ telegramId });
-        const settings = await Settings.findOne();
+        const settings = await Settings.findOne() || { miningMultiplier: 1 };
         const now = new Date();
         const cooldown = 4 * 60 * 60 * 1000;
         if (user && (now - new Date(user.lastMining)) > cooldown) {
@@ -156,7 +128,7 @@ app.post('/api/adsgram-reward', checkBan, async (req, res) => {
     try {
         const user = await User.findOne({ telegramId });
         const settings = await Settings.findOne();
-        const reward = settings.adsgramReward || 500;
+        const reward = settings ? settings.adsgramReward : 500;
         user.points += reward;
         user.level = calculateLevel(user.points);
         await user.save();
@@ -178,49 +150,36 @@ app.post('/api/tasks/complete', checkBan, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/api/tasks', async (req, res) => {
+    const tasks = await Task.find({ isActive: true });
+    res.json({ tasks });
+});
+
+app.get('/api/leaderboard', async (req, res) => {
+    const topUsers = await User.find().sort({ points: -1 }).limit(10);
+    res.json({ success: true, leaderboard: topUsers });
+});
+
 // --- ADMIN KOMUTLARI ---
-app.post('/api/admin/add-announcement', async (req, res) => {
-    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-    const updated = await Settings.findOneAndUpdate({}, { $push: { announcements: req.body.text } }, { new: true });
-    res.json({ success: true, announcements: updated.announcements });
-});
-
-app.post('/api/admin/delete-announcement', async (req, res) => {
-    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-    const { index } = req.body;
-    const s = await Settings.findOne();
-    if (s && s.announcements[index] !== undefined) {
-        s.announcements.splice(index, 1);
-        await s.save();
-        return res.json({ success: true, announcements: s.announcements });
-    }
-    res.json({ success: false });
-});
-
-app.post('/api/admin/delete-task', async (req, res) => {
-    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
-    await Task.deleteOne({ taskId: req.body.taskId });
-    res.json({ success: true });
-});
-
 app.post('/api/admin/stats', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     const totalUsers = await User.countDocuments();
-    const totalPointsResult = await User.aggregate([{ $group: { _id: null, total: { $sum: "$points" } } }]);
-    const settings = await Settings.findOne();
+    const totalPointsRes = await User.aggregate([{ $group: { _id: null, total: { $sum: "$points" } } }]);
+    const settings = await Settings.findOne() || { announcements: [] };
     const tasks = await Task.find();
-    res.json({ 
-        totalUsers, 
-        totalPoints: totalPointsResult[0]?.total || 0, 
-        announcements: settings.announcements,
-        tasks: tasks
-    });
+    res.json({ totalUsers, totalPoints: totalPointsRes[0]?.total || 0, announcements: settings.announcements, tasks });
 });
 
 app.post('/api/admin/add-task', async (req, res) => {
     if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
     const { title, reward, target } = req.body;
     await Task.create({ taskId: 'task_' + Date.now(), title, reward, target });
+    res.json({ success: true });
+});
+
+app.post('/api/admin/delete-task', async (req, res) => {
+    if (req.body.adminId !== ADMIN_ID) return res.status(403).send("Yetkisiz");
+    await Task.deleteOne({ taskId: req.body.taskId });
     res.json({ success: true });
 });
 
@@ -240,17 +199,5 @@ app.post('/api/admin/user-manage', async (req, res) => {
     res.json({ success: true });
 });
 
-app.get('/api/tasks', async (req, res) => {
-    const tasks = await Task.find({ isActive: true });
-    res.json({ tasks });
-});
-
-app.get('/api/leaderboard', async (req, res) => {
-    const topUsers = await User.find().sort({ points: -1 }).limit(10);
-    res.json({ success: true, leaderboard: topUsers });
-});
-
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Gelir Evreni v3.0 port ${PORT}`));
+// --- ANA DOSYA VE PORT ---
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', '
