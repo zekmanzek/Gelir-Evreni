@@ -203,10 +203,18 @@
                 const tgUser = tg.initDataUnsafe?.user;
                 if (!tgUser) return;
 
+                // Davet (Referans) Linkiyle geldiyse ID'yi yakala
+                const refId = tg.initDataUnsafe?.start_param || "";
+
                 const res = await fetch(`${API}/api/user/auth`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ telegramId: tgUser.id.toString(), username: tgUser.username || "", firstName: tgUser.first_name || "Kullanıcı" })
+                    body: JSON.stringify({ 
+                        telegramId: tgUser.id.toString(), 
+                        username: tgUser.username || "", 
+                        firstName: tgUser.first_name || "Kullanıcı",
+                        referrerId: refId // Sunucuya davet edeni bildiriyoruz
+                    })
                 });
 
                 const data = await res.json();
