@@ -7,20 +7,30 @@ const TelegramBot = require('node-telegram-bot-api');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
+const TOKEN = process.env.BOT_TOKEN;
+const MONGODB_URI = process.env.MONGODB_URI;
+const ADMIN_ID = process.env.ADMIN_ID || "1469411131";
+// Render üzerindeki projenin adresi (https://proje-adi.onrender.com)
+const WEBHOOK_URL = "https://gelir-evreni.onrender.com"; 
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const token = process.env.BOT_TOKEN;
-const mongoURI = process.env.MONGODB_URI;
-const ADMIN_ID = process.env.ADMIN_ID || "1469411131";
+// Webhook yapısına geçiş: polling kaldırıldı
+const bot = new TelegramBot(TOKEN);
+bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
-const bot = new TelegramBot(token, { polling: { autoStart: true, params: { timeout: 10 } } });
-
-mongoose.connect(mongoURI)
-    .then(() => console.log("✅ Gelir Evreni v3.0 - Sistem Aktif"))
+mongoose.connect(MONGODB_URI)
+    .then(() => console.log("✅ Gelir Evreni v3.0 - Sistem Aktif (Webhook Mode)"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
+
+// --- WEBHOOK ROTA ---
+// Telegram'dan gelen güncellemeleri karşılayan kısım
+app.post('/webhook', (req, res) => {
+    bot.processUpdate(req.body);
+    res.sendStatus(200);
+});
 
 // SCHEMAS
 const User = mongoose.model('User', new mongoose.Schema({
@@ -49,15 +59,6 @@ const Settings = mongoose.model('Settings', new mongoose.Schema({
     botUsername: { type: String, default: 'gelirevreni_bot' }
 }));
 
-const checkBan = async (req, res, next) => {
-    const teleId = req.body.telegramId || req.body.adminId;
-    if (teleId) {
-        const user = await User.findOne({ telegramId: teleId });
-        if (user && user.isBanned) return res.status(403).json({ success: false, message: "Yasaklısınız." });
-    }
-    next();
-};
-
 // API ROTALARI
 app.post('/api/user/auth', async (req, res) => {
     const { telegramId, username, firstName } = req.body;
@@ -69,7 +70,6 @@ app.post('/api/user/auth', async (req, res) => {
     res.json({ success: true, user, botUsername: settings.botUsername, isAdmin: String(telegramId) === String(ADMIN_ID), announcements: settings.announcements });
 });
 
-// Günlük Ödül
 app.post('/api/daily-reward', async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
@@ -85,7 +85,6 @@ app.post('/api/daily-reward', async (req, res) => {
     }
 });
 
-// Reklam Bonusu
 app.post('/api/adsgram-reward', async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
@@ -161,8 +160,9 @@ app.post('/api/admin/user-manage', async (req, res) => {
 });
 
 bot.onText(/\/start/, (msg) => {
-    bot.sendMessage(msg.chat.id, "🌟 Gelir Evreni Başlat!", { reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: "https://gelir-evreni.onrender.com" } }]] } });
+    bot.sendMessage(msg.chat.id, "🌟 Gelir Evreni Başlat!", { reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: WEBHOOK_URL } }]] } });
 });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Sunucu ${PORT} üzerinde aktif.`));
