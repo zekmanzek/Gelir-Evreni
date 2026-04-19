@@ -100,11 +100,28 @@
     </div>
 
     <div id="page-mine" class="page">
-        <div id="mine-card" class="card" style="flex-direction: column; text-align: center; padding: 40px 20px;">
+        <div class="card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center; margin-bottom: 10px; background: rgba(255, 204, 0, 0.05); border-color: rgba(255, 204, 0, 0.2);">
+            <div style="border-right: 1px solid var(--border-glass);">
+                <div style="font-size: 10px; color: var(--text-dim);">MEVCUT SEVİYE</div>
+                <div id="ui-mine-level" style="font-size: 22px; font-weight: 900; color: var(--gold);">1</div>
+            </div>
+            <div>
+                <div style="font-size: 10px; color: var(--text-dim);">4 SAATLİK GETİRİ</div>
+                <div id="ui-mine-reward" style="font-size: 18px; font-weight: 900; color: #00d4ff; margin-top:3px;">1000 GEP</div>
+            </div>
+        </div>
+
+        <div id="mine-card" class="card" style="flex-direction: column; text-align: center; padding: 30px 20px;">
             <div style="font-size: 60px; margin-bottom: 15px;" id="mine-icon">⛏️</div>
-            <h3 id="mine-status-text">Maden Hazır</h3>
-            <div id="mining-timer" style="font-family: monospace; font-size: 32px; font-weight: 900; color: var(--gold); margin: 15px 0; display: none;">00:00:00</div>
+            <h3 id="mine-status-text" style="margin-bottom: 5px;">Maden Hazır</h3>
+            <div id="mining-timer" style="font-family: monospace; font-size: 32px; font-weight: 900; color: var(--gold); margin: 10px 0; display: none;">00:00:00</div>
+            
             <button id="btn-mine" class="btn-full" onclick="startMining()">MADENİ BAŞLAT</button>
+            
+            <button id="btn-upgrade" class="btn-full" style="background: transparent; border: 1px solid var(--gold); color: var(--gold); margin-top: 15px;" onclick="upgradeMine()">
+                <span style="font-size: 12px; display: block; color: var(--text-dim);">SEVİYEYİ YÜKSELT</span>
+                <span id="ui-upgrade-cost">Gereken: 10,000 GEP</span>
+            </button>
         </div>
     </div>
 
@@ -203,7 +220,6 @@
                 const tgUser = tg.initDataUnsafe?.user;
                 if (!tgUser) return;
 
-                // Davet (Referans) Linkiyle geldiyse ID'yi yakala
                 const refId = tg.initDataUnsafe?.start_param || "";
 
                 const res = await fetch(`${API}/api/user/auth`, {
@@ -213,7 +229,7 @@
                         telegramId: tgUser.id.toString(), 
                         username: tgUser.username || "", 
                         firstName: tgUser.first_name || "Kullanıcı",
-                        referrerId: refId // Sunucuya davet edeni bildiriyoruz
+                        referrerId: refId 
                     })
                 });
 
@@ -254,13 +270,24 @@
 
         function updateUI() {
             if (!user) return;
+            // Genel Puanlar
             document.getElementById('balance').innerText = Math.floor(user.points).toLocaleString();
             document.getElementById('usd').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`;
+            
             const lvl = document.getElementById('user-level');
             lvl.innerText = `${user.level} ÜYE`;
             lvl.className = `level-badge level-${user.level}`;
             if (document.getElementById('stat-ref-count')) document.getElementById('stat-ref-count').innerText = user.referralCount || 0;
-            renderStreak(); // Bakiyeyle birlikte günleri de tazele
+            
+            // Maden Seviye Arayüzü Güncelleme
+            document.getElementById('ui-mine-level').innerText = user.miningLevel || 1;
+            const currentReward = 1000 + (((user.miningLevel || 1) - 1) * 500);
+            document.getElementById('ui-mine-reward').innerText = `${currentReward.toLocaleString()} GEP`;
+            
+            const upgradeCost = (user.miningLevel || 1) * 10000;
+            document.getElementById('ui-upgrade-cost').innerText = `Gereken: ${upgradeCost.toLocaleString()} GEP`;
+
+            renderStreak();
         }
 
         // --- AKTİF ÖZELLİKLER ---
@@ -308,6 +335,36 @@
                 tg.showAlert(`🚀 Maden kazıldı! +${data.reward} GEP.`);
                 runTimer(4 * 60 * 60 * 1000); // 4 saat geri sayım başlat
             } else { tg.showAlert(data.message); btn.disabled = false; }
+        }
+
+        // YENİ: Maden Yükseltme Fonksiyonu
+        async function upgradeMine() {
+            const upgradeCost = (user.miningLevel || 1) * 10000;
+            
+            // Kullanıcıya sor
+            tg.showConfirm(`Madeninizi Seviye ${(user.miningLevel || 1) + 1} yapmak istiyor musunuz?\n\nÜcret: ${upgradeCost.toLocaleString()} GEP`, async (confirmed) => {
+                if (!confirmed) return;
+                
+                const btn = document.getElementById('btn-upgrade');
+                btn.disabled = true;
+                
+                const res = await fetch(`${API}/api/upgrade-mine`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ telegramId: user.telegramId })
+                });
+                
+                const data = await res.json();
+                if(data.success) {
+                    user.points = data.points;
+                    user.miningLevel = data.newLevel;
+                    updateUI();
+                    tg.showAlert(`🎉 Maden Seviye ${data.newLevel} oldu!\nArtık 4 saatte ${data.newReward.toLocaleString()} GEP kazanacaksınız.`);
+                } else {
+                    tg.showAlert(data.message);
+                }
+                btn.disabled = false;
+            });
         }
 
         function checkMiningTimer() {
