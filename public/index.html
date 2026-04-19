@@ -12,8 +12,9 @@
         body { font-family: 'Urbanist', sans-serif; background-color: var(--bg-deep); color: var(--text-main); margin: 0; padding-bottom: 110px; min-height: 100vh; }
         .page { display: none; padding: 24px 16px; } .page.active { display: block; }
         .card { background: var(--card-glass); padding: 20px; border-radius: 24px; margin-bottom: 16px; border: 1px solid var(--border-glass); }
-        .btn-full { width: 100%; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%); border: none; font-weight: 900; cursor: pointer; }
+        .btn-full { width: 100%; padding: 18px; border-radius: 18px; background: linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%); border: none; font-weight: 900; cursor: pointer; color: black; }
         .nav-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: rgba(15, 23, 42, 0.9); display: flex; justify-content: space-around; padding: 10px; border-radius: 22px; border: 1px solid var(--border-glass); z-index: 1000; }
+        .nav-item { cursor: pointer; color: var(--text-dim); }
         .nav-item.active { color: var(--gold); }
     </style>
 </head>
@@ -27,20 +28,19 @@
 
     <div id="page-tasks" class="page active"><h3>🚀 Aktif Görevler</h3><div id="task-list"></div></div>
     <div id="page-leaderboard" class="page"><h3>🏆 Top 10</h3><div id="leader-list"></div></div>
-    <div id="page-mine" class="page"><div class="card" style="text-align:center;"><h3>MADEN</h3><button class="btn-full" onclick="startMining()">BAŞLAT</button></div></div>
+    <div id="page-mine" class="page"><div class="card" style="text-align:center;"><h3>MADEN</h3><button class="btn-full" onclick="startMining()">MADENİ ÇALIŞTIR</button></div></div>
     <div id="page-profile" class="page">
-        <div class="card"><button class="btn-full" onclick="showAd()">REKLAM İZLE</button></div>
+        <div class="card"><button class="btn-full" onclick="showAd()">REKLAM İZLE (+500 Puan)</button></div>
         <div class="card"><button class="btn-full" onclick="claimDaily()">GÜNLÜK ÖDÜLÜ AL</button></div>
-        <input type="text" id="ref-link" style="width:100%; padding:10px;" readonly>
     </div>
-    <div id="page-admin" class="page"><h3>⚙️ ADMIN</h3><button onclick="loadAdminStats()">YENİLE</button><div id="admin-content"></div></div>
+    <div id="page-admin" class="page"><h3>⚙️ ADMIN</h3><button onclick="loadAdminStats()">İSTATİSTİKLERİ YÜKLE</button><div id="admin-content"></div></div>
 
     <nav class="nav-bar">
-        <a class="nav-item active" onclick="showPage('tasks', this)">GÖREV</a>
-        <a class="nav-item" onclick="showPage('leaderboard', this)">LİSTE</a>
-        <a class="nav-item" onclick="showPage('mine', this)">MADEN</a>
-        <a class="nav-item" onclick="showPage('profile', this)">PROFİL</a>
-        <a class="nav-item" id="nav-admin" style="display:none" onclick="showPage('admin', this)">ADMIN</a>
+        <div class="nav-item active" onclick="showPage('tasks', this)">GÖREV</div>
+        <div class="nav-item" onclick="showPage('leaderboard', this)">LİSTE</div>
+        <div class="nav-item" onclick="showPage('mine', this)">MADEN</div>
+        <div class="nav-item" onclick="showPage('profile', this)">PROFİL</div>
+        <div class="nav-item" id="nav-admin" style="display:none" onclick="showPage('admin', this)">ADMIN</div>
     </nav>
 
     <script>
@@ -50,17 +50,52 @@
         const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "27433" }) : null;
 
         async function init() {
-            const tgUser = tg.initDataUnsafe?.user;
+            const tgUser = tg.initDataUnsafe?.user || { id: "12345", username: "test", first_name: "Test" }; // Test için
             const res = await fetch(`${API}/api/user/auth`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ telegramId:tgUser.id.toString(), username:tgUser.username, firstName:tgUser.first_name }) });
             const data = await res.json();
             user = data.user;
             document.getElementById('balance').innerText = user.points;
             if(data.isAdmin) document.getElementById('nav-admin').style.display = 'block';
             document.getElementById('loader').style.display = 'none';
+            loadTasks();
+            loadLeaderboard();
+        }
+
+        async function loadTasks() {
+            const res = await fetch(`${API}/api/tasks`);
+            const data = await res.json();
+            const list = document.getElementById('task-list');
+            list.innerHTML = data.tasks.map(t => `
+                <div class='card'>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>${t.title} (+${t.reward})</span>
+                        <button onclick="completeTask('${t.taskId}')">YAP</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function completeTask(taskId) {
+            const res = await fetch(`${API}/api/tasks/complete`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ telegramId:user.telegramId, taskId }) });
+            if((await res.json()).success) { alert("Görev tamamlandı!"); init(); }
+        }
+
+        async function loadLeaderboard() {
+            const res = await fetch(`${API}/api/leaderboard`);
+            const data = await res.json();
+            const list = document.getElementById('leader-list');
+            list.innerHTML = data.leaderboard.map((u, i) => `<div class='card'>${i+1}. ${u.username || u.firstName} - ${u.points} Puan</div>`).join('');
+        }
+
+        async function startMining() {
+            const res = await fetch(`${API}/api/mine`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ telegramId:user.telegramId }) });
+            const data = await res.json();
+            if(data.success) { alert(`Maden toplandı! +${data.reward} Puan`); init(); }
+            else alert(data.message);
         }
 
         async function showAd() {
-            if(!AdController) return alert("Reklam hazır değil.");
+            if(!AdController) return alert("Reklam şu an müsait değil.");
             AdController.show().then(async (result) => {
                 if (result.done) {
                     const res = await fetch(`${API}/api/adsgram-reward`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ telegramId:user.telegramId }) });
@@ -72,7 +107,7 @@
         async function claimDaily() {
             const res = await fetch(`${API}/api/daily-reward`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ telegramId:user.telegramId }) });
             const data = await res.json();
-            if(data.success) { alert("Ödül alındı!"); init(); }
+            if(data.success) { alert("Günlük ödül alındı!"); init(); }
             else alert(data.message);
         }
 
@@ -83,11 +118,10 @@
             el.classList.add('active');
         }
 
-        // Admin Yardımcıları
         async function loadAdminStats() {
             const res = await fetch(`${API}/api/admin/stats`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ adminId: user.telegramId }) });
             const data = await res.json();
-            document.getElementById('admin-content').innerText = "Toplam Üye: " + data.totalUsers;
+            document.getElementById('admin-content').innerText = `Toplam Üye: ${data.totalUsers} | Toplam Puan: ${data.totalPoints}`;
         }
 
         window.onload = init;
