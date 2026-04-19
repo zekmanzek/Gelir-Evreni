@@ -10,14 +10,12 @@ const PORT = process.env.PORT || 10000;
 const TOKEN = process.env.BOT_TOKEN;
 const MONGODB_URI = process.env.MONGODB_URI;
 const ADMIN_ID = process.env.ADMIN_ID || "1469411131";
-// Render üzerindeki projenin adresi (https://proje-adi.onrender.com)
 const WEBHOOK_URL = "https://gelir-evreni.onrender.com"; 
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Webhook yapısına geçiş: polling kaldırıldı
 const bot = new TelegramBot(TOKEN);
 bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
@@ -25,14 +23,12 @@ mongoose.connect(MONGODB_URI)
     .then(() => console.log("✅ Gelir Evreni v3.0 - Sistem Aktif (Webhook Mode)"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
-// --- WEBHOOK ROTA ---
-// Telegram'dan gelen güncellemeleri karşılayan kısım
 app.post('/webhook', (req, res) => {
     bot.processUpdate(req.body);
     res.sendStatus(200);
 });
 
-// SCHEMAS
+// --- SCHEMAS ---
 const User = mongoose.model('User', new mongoose.Schema({
     telegramId: { type: String, unique: true, index: true },
     username: { type: String, default: '', index: true }, 
@@ -59,7 +55,7 @@ const Settings = mongoose.model('Settings', new mongoose.Schema({
     botUsername: { type: String, default: 'gelirevreni_bot' }
 }));
 
-// API ROTALARI
+// --- API ROTALARI ---
 app.post('/api/user/auth', async (req, res) => {
     const { telegramId, username, firstName } = req.body;
     let user = await User.findOne({ telegramId });
@@ -70,19 +66,35 @@ app.post('/api/user/auth', async (req, res) => {
     res.json({ success: true, user, botUsername: settings.botUsername, isAdmin: String(telegramId) === String(ADMIN_ID), announcements: settings.announcements });
 });
 
+// Günlük Ödül (100'den başlayıp 2'ye katlanan streak sistemi)
 app.post('/api/daily-reward', async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
     if (!user) return res.json({ success: false });
+    
     const now = new Date();
-    if (now - new Date(user.lastCheckin) >= 24 * 60 * 60 * 1000) {
-        user.points += 500;
-        user.lastCheckin = now;
-        await user.save();
-        res.json({ success: true, points: user.points });
-    } else {
-        res.json({ success: false, message: "Ödülünüzü zaten aldınız, 24 saat bekleyin." });
+    const lastCheckin = new Date(user.lastCheckin);
+    const diffHours = (now - lastCheckin) / (1000 * 60 * 60);
+
+    if (diffHours < 24) {
+        return res.json({ success: false, message: "Ödülünüzü zaten aldınız, 24 saat bekleyin." });
     }
+
+    // Eğer 48 saatten fazla süre geçmişse seriyi sıfırla, aksi halde artır. (Maks 7 gün)
+    if (diffHours >= 48) {
+        user.streak = 1;
+    } else {
+        user.streak = user.streak >= 7 ? 1 : user.streak + 1;
+    }
+
+    // Ödül hesaplama: 1. Gün: 100, 2. Gün: 200, 3. Gün: 400 ...
+    const reward = 100 * Math.pow(2, user.streak - 1);
+    
+    user.points += reward;
+    user.lastCheckin = now;
+    await user.save();
+    
+    res.json({ success: true, points: user.points, streak: user.streak, reward });
 });
 
 app.post('/api/adsgram-reward', async (req, res) => {
@@ -120,9 +132,11 @@ app.post('/api/tasks/complete', async (req, res) => {
 });
 
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
-app.get('/api/leaderboard', async (req, res) => { res.json({ success: true, leaderboard: await User.find().sort({ points: -1 }).limit(10) }); });
 
-// ADMIN API
+// Sıralama ilk 100 olarak güncellendi
+app.get('/api/leaderboard', async (req, res) => { res.json({ success: true, leaderboard: await User.find().sort({ points: -1 }).limit(100) }); });
+
+// --- ADMIN API ---
 app.post('/api/admin/stats', async (req, res) => {
     if (String(req.body.adminId) !== String(ADMIN_ID)) return res.status(403).send("Yetkisiz");
     const settings = await Settings.findOne() || { announcements: [] };
