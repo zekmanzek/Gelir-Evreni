@@ -93,7 +93,7 @@
     </div>
 
     <div id="page-leaderboard" class="page">
-        <h3 style="margin-left: 10px;">🏆 Top 10 Madenci</h3>
+        <h3 style="margin-left: 10px;">🏆 Top 100 Madenci</h3>
         <div class="card" style="flex-direction: column; padding: 0; overflow: hidden;">
             <div id="leader-list" style="width: 100%;"></div>
         </div>
@@ -233,6 +233,17 @@
             }
         }
 
+        function renderAnnouncements(annList) {
+            const annContainer = document.getElementById('ann-container');
+            const annScroll = document.getElementById('ann-scroll');
+            if (annList && annList.length > 0) {
+                annScroll.innerText = annList.join(" 📢 ") + " 📢 ";
+                annContainer.style.display = 'flex';
+            } else {
+                annContainer.style.display = 'none';
+            }
+        }
+
         function updateUI() {
             if (!user) return;
             document.getElementById('balance').innerText = Math.floor(user.points).toLocaleString();
@@ -241,6 +252,7 @@
             lvl.innerText = `${user.level} ÜYE`;
             lvl.className = `level-badge level-${user.level}`;
             if (document.getElementById('stat-ref-count')) document.getElementById('stat-ref-count').innerText = user.referralCount || 0;
+            renderStreak(); // Bakiyeyle birlikte günleri de tazele
         }
 
         // --- AKTİF ÖZELLİKLER ---
@@ -266,11 +278,11 @@
                 body: JSON.stringify({ telegramId: user.telegramId })
             });
             const data = await res.json();
-            if(data.success) { tg.showAlert("🎉 Ödül başarıyla alındı!"); init(); }
+            if(data.success) { tg.showAlert(`🎉 Ödül alındı! Yeni Serin: ${data.streak}. Gün (+${data.reward} GEP)`); init(); }
             else tg.showAlert(data.message);
         }
 
-        // --- DİĞER FONKSİYONLAR ---
+        // --- MADEN SİSTEMİ VE ZAMANLAYICI ---
 
         async function startMining() {
             const btn = document.getElementById('btn-mine');
@@ -283,21 +295,49 @@
             const data = await res.json();
             if(data.success) { 
                 user.points = data.points; 
+                user.lastMining = new Date().toISOString();
                 updateUI(); 
                 tg.showAlert(`🚀 Maden kazıldı! +${data.reward} GEP.`);
-                init();
+                runTimer(4 * 60 * 60 * 1000); // 4 saat geri sayım başlat
             } else { tg.showAlert(data.message); btn.disabled = false; }
         }
 
         function checkMiningTimer() {
             if (!user.lastMining || new Date(user.lastMining).getTime() === 0) return;
-            const cooldown = 4 * 60 * 60 * 1000;
+            const cooldown = 4 * 60 * 60 * 1000; // 4 saat
             const diff = new Date().getTime() - new Date(user.lastMining).getTime();
             if (diff < cooldown) {
-                document.getElementById('btn-mine').disabled = true;
-                document.getElementById('mine-status-text').innerText = "YENİ MADEN İÇİN BEKLEYİN";
+                runTimer(cooldown - diff);
             }
         }
+
+        function runTimer(timeLeft) {
+            const btn = document.getElementById('btn-mine');
+            const timerDiv = document.getElementById('mining-timer');
+            const statusText = document.getElementById('mine-status-text');
+            
+            btn.disabled = true;
+            timerDiv.style.display = "block";
+            statusText.innerText = "YENİ MADEN İÇİN BEKLEYİN:";
+            
+            clearInterval(miningInterval);
+            miningInterval = setInterval(() => {
+                timeLeft -= 1000;
+                if (timeLeft <= 0) {
+                    clearInterval(miningInterval);
+                    btn.disabled = false;
+                    timerDiv.style.display = "none";
+                    statusText.innerText = "Maden Hazır";
+                    return;
+                }
+                const h = Math.floor(timeLeft / 3600000);
+                const m = Math.floor((timeLeft % 3600000) / 60000);
+                const s = Math.floor((timeLeft % 60000) / 1000);
+                timerDiv.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            }, 1000);
+        }
+
+        // --- GÖREVLER ---
 
         async function refreshTasks() {
             const tRes = await fetch(`${API}/api/tasks`);
@@ -309,12 +349,17 @@
         function renderTasks() {
             const cont = document.getElementById('task-list');
             if(!cont) return;
-            cont.innerHTML = tasks.map(t => `
+            cont.innerHTML = tasks.map(t => {
+                const isDone = user.completedTasks.includes(t.taskId);
+                return `
                 <div class='card'>
                     <div><h4 style="margin:0; font-size:15px;">${t.title}</h4><p style="margin:5px 0 0; color:var(--gold);">+${t.reward} GEP</p></div>
-                    <button style="background:var(--gold); border:none; padding:10px 20px; border-radius:12px; font-weight:900;" onclick="completeTask('${t.taskId}','${t.target}')">GİT</button>
-                </div>
-            `).join('');
+                    <button style="background:${isDone ? '#1e293b' : 'var(--gold)'}; color:${isDone ? '#475569' : '#000'}; border:none; padding:10px 20px; border-radius:12px; font-weight:900;" 
+                        ${isDone ? 'disabled' : ''} onclick="completeTask('${t.taskId}','${t.target}')">
+                        ${isDone ? 'BİTTİ' : 'GİT'}
+                    </button>
+                </div>`;
+            }).join('');
         }
 
         async function completeTask(tid, link) {
@@ -329,11 +374,139 @@
             }, 3000);
         }
 
+        // --- LİDERLİK TABLOSU VE STREAK ---
+
+        async function loadLeaderboard() {
+            const list = document.getElementById('leader-list');
+            list.innerHTML = "<p style='text-align:center;'>Yükleniyor...</p>";
+            const res = await fetch(`${API}/api/leaderboard`);
+            const data = await res.json();
+            if(data.success) {
+                list.innerHTML = data.leaderboard.map((u, i) => `
+                    <div class="card" style="margin:0; border-radius:0; border-bottom:1px solid var(--border-glass)">
+                        <span>${i+1}. ${u.username || u.firstName}</span>
+                        <span style="color:var(--gold)">${u.points.toLocaleString()} GEP</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderStreak() {
+            const streakBox = document.getElementById('streak-box');
+            if(!streakBox) return;
+            streakBox.innerHTML = '';
+            const currentStreak = user.streak || 0;
+            for (let i = 1; i <= 7; i++) {
+                const rewardVal = 100 * Math.pow(2, i - 1); // 100, 200, 400...
+                const dayDiv = document.createElement('div');
+                dayDiv.className = `streak-day ${i <= currentStreak ? 'completed' : ''}`;
+                dayDiv.innerHTML = `<div>GÜN ${i}</div><div style="font-weight:900; margin-top:3px; font-size:10px;">${rewardVal}</div>`;
+                streakBox.appendChild(dayDiv);
+            }
+        }
+
+        // --- ADMIN İŞLEMLERİ ---
+
+        async function loadAdminStats() {
+            const res = await fetch(`${API}/api/admin/stats`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminId: user.telegramId })
+            });
+            const data = await res.json();
+            document.getElementById('adm-stat-users').innerText = data.totalUsers;
+            document.getElementById('adm-stat-points').innerText = data.totalPoints.toLocaleString();
+            
+            document.getElementById('adm-task-list').innerHTML = data.tasks.map(t => `
+                <div class="admin-list-item">
+                    <span>${t.title}</span>
+                    <button class="btn-small btn-danger" onclick="deleteTask('${t.taskId}')">SİL</button>
+                </div>
+            `).join('') || "Görev yok.";
+
+            document.getElementById('adm-ann-list').innerHTML = data.announcements.map((a, i) => `
+                <div class="admin-list-item">
+                    <span style="font-size:11px;">${a.substring(0,30)}...</span>
+                    <button class="btn-small btn-danger" onclick="deleteAnnouncement(${i})">SİL</button>
+                </div>
+            `).join('') || "Duyuru yok.";
+        }
+
+        async function addTask() {
+            const title = document.getElementById('adm-task-title').value;
+            const reward = document.getElementById('adm-task-reward').value;
+            const target = document.getElementById('adm-task-target').value;
+            if(!title || !reward || !target) return tg.showAlert("Lütfen tüm alanları doldurun.");
+            
+            await fetch(`${API}/api/admin/add-task`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminId: user.telegramId, title, reward, target })
+            });
+            tg.showAlert("Görev eklendi.");
+            document.getElementById('adm-task-title').value = '';
+            document.getElementById('adm-task-reward').value = '';
+            document.getElementById('adm-task-target').value = '';
+            loadAdminStats();
+            refreshTasks();
+        }
+
+        async function deleteTask(taskId) {
+            await fetch(`${API}/api/admin/delete-task`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminId: user.telegramId, taskId })
+            });
+            loadAdminStats();
+            refreshTasks();
+        }
+
+        async function addAnnouncement() {
+            const text = document.getElementById('adm-ann-text').value;
+            if(!text) return;
+            await fetch(`${API}/api/admin/announcement`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminId: user.telegramId, action: 'add', text })
+            });
+            document.getElementById('adm-ann-text').value = '';
+            tg.showAlert("Duyuru yayınlandı.");
+            loadAdminStats();
+        }
+
+        async function deleteAnnouncement(index) {
+            await fetch(`${API}/api/admin/announcement`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminId: user.telegramId, action: 'delete', index })
+            });
+            loadAdminStats();
+        }
+
+        async function manageUser(action) {
+            const targetId = document.getElementById('adm-target-id').value;
+            const amount = document.getElementById('adm-amount').value;
+            if(!targetId) return tg.showAlert("Kullanıcı ID gereklidir.");
+            const res = await fetch(`${API}/api/admin/user-manage`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminId: user.telegramId, targetId, action, amount })
+            });
+            const data = await res.json();
+            tg.showAlert(data.success ? "İşlem Tamamlandı" : "Kullanıcı bulunamadı veya Hata!");
+        }
+
+        // --- YARDIMCI FONKSİYONLAR ---
+
         function showPage(p, el) {
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             document.getElementById(`page-${p}`).classList.add('active');
             el.classList.add('active');
+            
+            // Sayfa yüklendiğinde gerekli fonksiyonları tetikle
+            if(p === 'leaderboard') loadLeaderboard();
+            if(p === 'admin') loadAdminStats();
         }
 
         function copyRef() {
