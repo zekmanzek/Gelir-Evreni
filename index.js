@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto'); // Anti-Cheat ve şifreleme işlemleri için eklendi
 const TelegramBot = require('node-telegram-bot-api');
 
 const app = express();
@@ -56,14 +57,55 @@ const Settings = mongoose.model('Settings', new mongoose.Schema({
 }));
 
 // --- API ROTALARI ---
+
+// GÜNCELLENDİ: Auth rotası artık Referans Sistemini ve Anti-Cheat verilerini işliyor
 app.post('/api/user/auth', async (req, res) => {
-    const { telegramId, username, firstName } = req.body;
-    let user = await User.findOne({ telegramId });
-    if (!user) user = new User({ telegramId, username: (username || '').toLowerCase(), firstName });
-    else { if (username) user.username = username.toLowerCase(); }
-    await user.save();
-    let settings = await Settings.findOne() || await Settings.create({});
-    res.json({ success: true, user, botUsername: settings.botUsername, isAdmin: String(telegramId) === String(ADMIN_ID), announcements: settings.announcements });
+    const { telegramId, username, firstName, referrerId } = req.body;
+    
+    try {
+        let user = await User.findOne({ telegramId });
+        
+        // Yeni Kullanıcı Kaydı ve Referans İşlemleri
+        if (!user) {
+            user = new User({ 
+                telegramId, 
+                username: (username || '').toLowerCase(), 
+                firstName,
+                points: 1000 // Başlangıç Puanı
+            });
+
+            // Eğer bir referans linkiyle geldiyse ve kendi kendini davet etmeye çalışmıyorsa
+            if (referrerId && String(referrerId) !== String(telegramId)) {
+                const referrer = await User.findOne({ telegramId: referrerId });
+                if (referrer) {
+                    // Davet edene +2500 Puan ve referans sayısını 1 artır
+                    referrer.points += 2500;
+                    referrer.referralCount += 1;
+                    await referrer.save();
+
+                    // Davet edilene (yeni kullanıcıya) ekstra +1000 Hoş Geldin Bonusu
+                    user.points += 1000; 
+                }
+            }
+        } else {
+            // Eski kullanıcıysa sadece isimleri güncelle
+            if (username) user.username = username.toLowerCase();
+            if (firstName) user.firstName = firstName;
+        }
+        
+        await user.save();
+        let settings = await Settings.findOne() || await Settings.create({});
+        
+        res.json({ 
+            success: true, 
+            user, 
+            botUsername: settings.botUsername, 
+            isAdmin: String(telegramId) === String(ADMIN_ID), 
+            announcements: settings.announcements 
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
 });
 
 // Günlük Ödül (100'den başlayıp 2'ye katlanan streak sistemi)
@@ -80,14 +122,12 @@ app.post('/api/daily-reward', async (req, res) => {
         return res.json({ success: false, message: "Ödülünüzü zaten aldınız, 24 saat bekleyin." });
     }
 
-    // Eğer 48 saatten fazla süre geçmişse seriyi sıfırla, aksi halde artır. (Maks 7 gün)
     if (diffHours >= 48) {
         user.streak = 1;
     } else {
         user.streak = user.streak >= 7 ? 1 : user.streak + 1;
     }
 
-    // Ödül hesaplama: 1. Gün: 100, 2. Gün: 200, 3. Gün: 400 ...
     const reward = 100 * Math.pow(2, user.streak - 1);
     
     user.points += reward;
@@ -132,8 +172,6 @@ app.post('/api/tasks/complete', async (req, res) => {
 });
 
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
-
-// Sıralama ilk 100 olarak güncellendi
 app.get('/api/leaderboard', async (req, res) => { res.json({ success: true, leaderboard: await User.find().sort({ points: -1 }).limit(100) }); });
 
 // --- ADMIN API ---
@@ -173,8 +211,18 @@ app.post('/api/admin/user-manage', async (req, res) => {
     res.json({ success: true });
 });
 
-bot.onText(/\/start/, (msg) => {
-    bot.sendMessage(msg.chat.id, "🌟 Gelir Evreni Başlat!", { reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: WEBHOOK_URL } }]] } });
+// GÜNCELLENDİ: Davet sistemi için start parametresini yakalama
+bot.onText(/\/start(?:\s+(.*))?/, (msg, match) => {
+    const refId = match[1] ? match[1].trim() : '';
+    // Telegram Web App'e start_param olarak referans kodunu paslıyoruz
+    const appUrl = refId ? `${WEBHOOK_URL}?tgWebAppStartParam=${refId}` : WEBHOOK_URL;
+    
+    bot.sendMessage(msg.chat.id, "🌟 **Gelir Evreni'ne Hoş Geldin!**\n\nHemen maden kazmaya ve görevleri tamamlamaya başla.", {
+        parse_mode: 'Markdown',
+        reply_markup: { 
+            inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: appUrl } }]] 
+        } 
+    });
 });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
