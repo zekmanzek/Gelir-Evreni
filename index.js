@@ -3,7 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const crypto = require('crypto'); // Anti-Cheat ve şifreleme işlemleri için eklendi
+const crypto = require('crypto');
 const TelegramBot = require('node-telegram-bot-api');
 
 const app = express();
@@ -35,6 +35,8 @@ const User = mongoose.model('User', new mongoose.Schema({
     username: { type: String, default: '', index: true }, 
     firstName: { type: String, default: 'Kullanıcı' }, 
     points: { type: Number, default: 1000 },
+    dailyPoints: { type: Number, default: 0 }, // YENİ: Günlük kazanılan puan
+    lastPointDate: { type: Date, default: Date.now }, // YENİ: Son puan kazanma tarihi (sıfırlama için)
     completedTasks: { type: [String], default: [] },
     lastMining: { type: Date, default: new Date(0) },
     lastCheckin: { type: Date, default: new Date(0) },
@@ -42,7 +44,7 @@ const User = mongoose.model('User', new mongoose.Schema({
     streak: { type: Number, default: 0 },
     level: { type: String, default: 'Bronz' },
     isBanned: { type: Boolean, default: false },
-    miningLevel: { type: Number, default: 1 } // YENİ: Maden Seviyesi eklendi
+    miningLevel: { type: Number, default: 1 } 
 }));
 
 const Task = mongoose.model('Task', new mongoose.Schema({
@@ -57,6 +59,18 @@ const Settings = mongoose.model('Settings', new mongoose.Schema({
     botUsername: { type: String, default: 'gelirevreni_bot' }
 }));
 
+// YENİ HELPER FONKSİYON: Puan eklerken günlük puanı da sıfırlar veya üstüne ekler
+function addPoints(user, amount) {
+    const now = new Date();
+    // Eğer kullanıcının son puan kazandığı tarih bugün değilse, günlük puanı sıfırla
+    if (user.lastPointDate.toDateString() !== now.toDateString()) {
+        user.dailyPoints = 0;
+    }
+    user.points += amount;
+    user.dailyPoints += amount;
+    user.lastPointDate = now;
+}
+
 // --- API ROTALARI ---
 
 app.post('/api/user/auth', async (req, res) => {
@@ -70,16 +84,18 @@ app.post('/api/user/auth', async (req, res) => {
                 telegramId, 
                 username: (username || '').toLowerCase(), 
                 firstName,
-                points: 1000
+                points: 0, // Aşağıda 1000 eklenecek
+                dailyPoints: 0
             });
+            addPoints(user, 1000); // Başlangıç puanı günlük puana da işler
 
             if (referrerId && String(referrerId) !== String(telegramId)) {
                 const referrer = await User.findOne({ telegramId: referrerId });
                 if (referrer) {
-                    referrer.points += 2500;
+                    addPoints(referrer, 2500); // Davet edene ekle
                     referrer.referralCount += 1;
                     await referrer.save();
-                    user.points += 1000; 
+                    addPoints(user, 1000); // Davet edilene ekle
                 }
             }
         } else {
@@ -122,8 +138,7 @@ app.post('/api/daily-reward', async (req, res) => {
     }
 
     const reward = 100 * Math.pow(2, user.streak - 1);
-    
-    user.points += reward;
+    addPoints(user, reward);
     user.lastCheckin = now;
     await user.save();
     
@@ -135,20 +150,18 @@ app.post('/api/adsgram-reward', async (req, res) => {
     const user = await User.findOne({ telegramId });
     if (!user) return res.json({ success: false });
     const settings = await Settings.findOne() || { adsgramReward: 500 };
-    user.points += settings.adsgramReward;
+    addPoints(user, settings.adsgramReward);
     await user.save();
     res.json({ success: true, points: user.points });
 });
 
-// GÜNCELLENDİ: Maden kazancı artık kullanıcının seviyesine göre hesaplanıyor
 app.post('/api/mine', async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
     const now = new Date();
     if (user && (now - new Date(user.lastMining)) > 4 * 60 * 60 * 1000) {
-        // Her ekstra seviye +500 GEP kazandırır
         const reward = 1000 + ((user.miningLevel - 1) * 500);
-        user.points += reward;
+        addPoints(user, reward);
         user.lastMining = now;
         await user.save();
         return res.json({ success: true, points: user.points, reward: reward });
@@ -156,17 +169,15 @@ app.post('/api/mine', async (req, res) => {
     res.json({ success: false, message: "Maden hazır değil." });
 });
 
-// YENİ: Maden Seviyesini Yükseltme Rotası
 app.post('/api/upgrade-mine', async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
     if (!user) return res.json({ success: false });
 
-    // Geliştirme Ücreti: (Mevcut Seviye) * 10.000 (Örn: Lvl 1 için 10.000, Lvl 2 için 20.000)
     const upgradeCost = user.miningLevel * 10000;
 
     if (user.points >= upgradeCost) {
-        user.points -= upgradeCost;
+        user.points -= upgradeCost; // Harcama günlük kazanılanı (dailyPoints) düşürmez, genelden düşer
         user.miningLevel += 1;
         await user.save();
         res.json({ success: true, points: user.points, newLevel: user.miningLevel, newReward: 1000 + ((user.miningLevel - 1) * 500) });
@@ -180,14 +191,26 @@ app.post('/api/tasks/complete', async (req, res) => {
     const user = await User.findOne({ telegramId });
     const task = await Task.findOne({ taskId });
     if (!user || !task || user.completedTasks.includes(taskId)) return res.json({ success: false });
-    user.points += task.reward;
+    addPoints(user, task.reward);
     user.completedTasks.push(taskId);
     await user.save();
     res.json({ success: true, points: user.points });
 });
 
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
-app.get('/api/leaderboard', async (req, res) => { res.json({ success: true, leaderboard: await User.find().sort({ points: -1 }).limit(100) }); });
+
+// GÜNCELLENDİ: Hem genel hem günlük liderlik tablosunu yollar
+app.get('/api/leaderboard', async (req, res) => { 
+    // Genel Top 100
+    const allTime = await User.find().sort({ points: -1 }).limit(100); 
+    
+    // Günlük Top 100 (Sadece bugün puan kazanmış olanlar)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const daily = await User.find({ lastPointDate: { $gte: today } }).sort({ dailyPoints: -1 }).limit(100);
+
+    res.json({ success: true, leaderboard: allTime, dailyLeaderboard: daily }); 
+});
 
 // --- ADMIN API ---
 app.post('/api/admin/stats', async (req, res) => {
@@ -218,7 +241,7 @@ app.post('/api/admin/user-manage', async (req, res) => {
     const { targetId, action, amount } = req.body;
     const user = await User.findOne({ $or: [{ telegramId: targetId }, { username: targetId }] });
     if (!user) return res.json({ success: false });
-    if (action === 'add') user.points += Number(amount);
+    if (action === 'add') addPoints(user, Number(amount));
     if (action === 'set') user.points = Number(amount);
     if (action === 'ban') user.isBanned = true;
     if (action === 'unban') user.isBanned = false;
