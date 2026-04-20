@@ -215,12 +215,19 @@
         
         const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "27433" }) : null;
 
+        // YENİ: URL'den referans kodunu zorla yakalayan yardımcı fonksiyon
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
         async function init() {
             try {
                 const tgUser = tg.initDataUnsafe?.user;
                 if (!tgUser) return;
 
-                const refId = tg.initDataUnsafe?.start_param || "";
+                // YENİ YAKALAMA MANTIĞI: Önce Telegram'ın start_param'ına bak, yoksa doğrudan URL'e (tgWebAppStartParam) bak.
+                let refId = tg.initDataUnsafe?.start_param || getQueryParam('tgWebAppStartParam') || "";
 
                 const res = await fetch(`${API}/api/user/auth`, {
                     method: 'POST',
@@ -337,7 +344,6 @@
             } else { tg.showAlert(data.message); btn.disabled = false; }
         }
 
-        // YENİ: Maden Yükseltme Fonksiyonu
         async function upgradeMine() {
             const upgradeCost = (user.miningLevel || 1) * 10000;
             
