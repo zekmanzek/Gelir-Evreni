@@ -93,7 +93,11 @@
     </div>
 
     <div id="page-leaderboard" class="page">
-        <h3 style="margin-left: 10px;">🏆 Top 100 Madenci</h3>
+        <h3 style="margin-left: 10px;">🏆 Sıralama Tablosu</h3>
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <button id="tab-lb-all" class="btn-full" style="margin-top:0; padding:12px;" onclick="switchLB('all')">GENEL</button>
+            <button id="tab-lb-daily" class="btn-full" style="margin-top:0; padding:12px; background: transparent; border: 1px solid var(--gold); color: var(--gold);" onclick="switchLB('daily')">GÜNLÜK</button>
+        </div>
         <div class="card" style="flex-direction: column; padding: 0; overflow: hidden;">
             <div id="leader-list" style="width: 100%;"></div>
         </div>
@@ -129,7 +133,7 @@
         <div class="card" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1px solid rgba(34, 197, 94, 0.3); flex-direction: column; text-align: center;">
             <div style="font-size: 30px; margin-bottom: 10px;">📺</div>
             <h3 style="margin: 0;">Reklam İzle Kazan</h3>
-            <p style="font-size: 12px; color: var(--text-dim); margin: 5px 0;">Her reklam için ödül kazanırsın.</p>
+            <p style="font-size: 12px; color: var(--success); margin: 5px 0; font-weight: bold;">Her reklam izlediğinde anında 500 GEP kazanırsın.</p>
             <button class="btn-full" style="background: var(--success); color: white;" onclick="showAd()">REKLAMI BAŞLAT</button>
         </div>
 
@@ -212,10 +216,11 @@
         tg.expand();
         const API = window.location.origin;
         let user, tasks = [], miningInterval;
+        let lbAllTime = [], lbDaily = []; // Liderlik tabloları verileri
+        let currentLbTab = 'all'; // Seçili liderlik tablosu sekmesi
         
         const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "27433" }) : null;
 
-        // YENİ: URL'den referans kodunu zorla yakalayan yardımcı fonksiyon
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(param);
@@ -226,7 +231,6 @@
                 const tgUser = tg.initDataUnsafe?.user;
                 if (!tgUser) return;
 
-                // YENİ YAKALAMA MANTIĞI: Önce Telegram'ın start_param'ına bak, yoksa doğrudan URL'e (tgWebAppStartParam) bak.
                 let refId = tg.initDataUnsafe?.start_param || getQueryParam('tgWebAppStartParam') || "";
 
                 const res = await fetch(`${API}/api/user/auth`, {
@@ -277,7 +281,6 @@
 
         function updateUI() {
             if (!user) return;
-            // Genel Puanlar
             document.getElementById('balance').innerText = Math.floor(user.points).toLocaleString();
             document.getElementById('usd').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`;
             
@@ -286,7 +289,6 @@
             lvl.className = `level-badge level-${user.level}`;
             if (document.getElementById('stat-ref-count')) document.getElementById('stat-ref-count').innerText = user.referralCount || 0;
             
-            // Maden Seviye Arayüzü Güncelleme
             document.getElementById('ui-mine-level').innerText = user.miningLevel || 1;
             const currentReward = 1000 + (((user.miningLevel || 1) - 1) * 500);
             document.getElementById('ui-mine-reward').innerText = `${currentReward.toLocaleString()} GEP`;
@@ -297,8 +299,6 @@
             renderStreak();
         }
 
-        // --- AKTİF ÖZELLİKLER ---
-
         async function showAd() {
             if(!AdController) return tg.showAlert("Reklam hazır değil.");
             AdController.show().then(async (result) => {
@@ -308,7 +308,11 @@
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ telegramId: user.telegramId })
                     });
-                    if (res.ok) { tg.showAlert("🎉 Ödül başarıyla eklendi!"); init(); }
+                    if (res.ok) { 
+                        const data = await res.json();
+                        if(data.success) { user.points = data.points; updateUI(); }
+                        tg.showAlert("🎉 500 GEP başarıyla eklendi!"); 
+                    }
                 }
             });
         }
@@ -324,8 +328,6 @@
             else tg.showAlert(data.message);
         }
 
-        // --- MADEN SİSTEMİ VE ZAMANLAYICI ---
-
         async function startMining() {
             const btn = document.getElementById('btn-mine');
             btn.disabled = true;
@@ -340,14 +342,12 @@
                 user.lastMining = new Date().toISOString();
                 updateUI(); 
                 tg.showAlert(`🚀 Maden kazıldı! +${data.reward} GEP.`);
-                runTimer(4 * 60 * 60 * 1000); // 4 saat geri sayım başlat
+                runTimer(4 * 60 * 60 * 1000);
             } else { tg.showAlert(data.message); btn.disabled = false; }
         }
 
         async function upgradeMine() {
             const upgradeCost = (user.miningLevel || 1) * 10000;
-            
-            // Kullanıcıya sor
             tg.showConfirm(`Madeninizi Seviye ${(user.miningLevel || 1) + 1} yapmak istiyor musunuz?\n\nÜcret: ${upgradeCost.toLocaleString()} GEP`, async (confirmed) => {
                 if (!confirmed) return;
                 
@@ -375,7 +375,7 @@
 
         function checkMiningTimer() {
             if (!user.lastMining || new Date(user.lastMining).getTime() === 0) return;
-            const cooldown = 4 * 60 * 60 * 1000; // 4 saat
+            const cooldown = 4 * 60 * 60 * 1000;
             const diff = new Date().getTime() - new Date(user.lastMining).getTime();
             if (diff < cooldown) {
                 runTimer(cooldown - diff);
@@ -407,8 +407,6 @@
                 timerDiv.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
             }, 1000);
         }
-
-        // --- GÖREVLER ---
 
         async function refreshTasks() {
             const tRes = await fetch(`${API}/api/tasks`);
@@ -445,21 +443,49 @@
             }, 3000);
         }
 
-        // --- LİDERLİK TABLOSU VE STREAK ---
-
+        // GÜNCELLENDİ: Hem Günlük hem Genel Sıralama Getirme
         async function loadLeaderboard() {
             const list = document.getElementById('leader-list');
-            list.innerHTML = "<p style='text-align:center;'>Yükleniyor...</p>";
+            list.innerHTML = "<p style='text-align:center; padding: 20px;'>Yükleniyor...</p>";
             const res = await fetch(`${API}/api/leaderboard`);
             const data = await res.json();
             if(data.success) {
-                list.innerHTML = data.leaderboard.map((u, i) => `
-                    <div class="card" style="margin:0; border-radius:0; border-bottom:1px solid var(--border-glass)">
-                        <span>${i+1}. ${u.username || u.firstName}</span>
-                        <span style="color:var(--gold)">${u.points.toLocaleString()} GEP</span>
-                    </div>
-                `).join('');
+                lbAllTime = data.leaderboard || [];
+                lbDaily = data.dailyLeaderboard || [];
+                renderLB();
             }
+        }
+
+        // YENİ: Sıralama Sekmeleri Arasında Geçiş Yapma
+        function switchLB(tab) {
+            currentLbTab = tab;
+            document.getElementById('tab-lb-all').style.background = tab === 'all' ? 'linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%)' : 'transparent';
+            document.getElementById('tab-lb-all').style.color = tab === 'all' ? '#000' : 'var(--gold)';
+            document.getElementById('tab-lb-all').style.border = tab === 'all' ? 'none' : '1px solid var(--gold)';
+
+            document.getElementById('tab-lb-daily').style.background = tab === 'daily' ? 'linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%)' : 'transparent';
+            document.getElementById('tab-lb-daily').style.color = tab === 'daily' ? '#000' : 'var(--gold)';
+            document.getElementById('tab-lb-daily').style.border = tab === 'daily' ? 'none' : '1px solid var(--gold)';
+            
+            renderLB();
+        }
+
+        // YENİ: Seçili Sekmeye Göre Sıralamayı Ekrana Basma
+        function renderLB() {
+            const list = document.getElementById('leader-list');
+            const dataToRender = currentLbTab === 'all' ? lbAllTime : lbDaily;
+            
+            if(dataToRender.length === 0) {
+                list.innerHTML = `<p style='text-align:center; padding: 20px; color: var(--text-dim);'>Bugün henüz kimse puan kazanmadı.</p>`;
+                return;
+            }
+
+            list.innerHTML = dataToRender.map((u, i) => `
+                <div class="card" style="margin:0; border-radius:0; border-bottom:1px solid var(--border-glass)">
+                    <span>${i+1}. ${u.username || u.firstName}</span>
+                    <span style="color:var(--gold)">${(currentLbTab === 'all' ? u.points : (u.dailyPoints || 0)).toLocaleString()} GEP</span>
+                </div>
+            `).join('');
         }
 
         function renderStreak() {
@@ -468,15 +494,13 @@
             streakBox.innerHTML = '';
             const currentStreak = user.streak || 0;
             for (let i = 1; i <= 7; i++) {
-                const rewardVal = 100 * Math.pow(2, i - 1); // 100, 200, 400...
+                const rewardVal = 100 * Math.pow(2, i - 1);
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `streak-day ${i <= currentStreak ? 'completed' : ''}`;
                 dayDiv.innerHTML = `<div>GÜN ${i}</div><div style="font-weight:900; margin-top:3px; font-size:10px;">${rewardVal}</div>`;
                 streakBox.appendChild(dayDiv);
             }
         }
-
-        // --- ADMIN İŞLEMLERİ ---
 
         async function loadAdminStats() {
             const res = await fetch(`${API}/api/admin/stats`, {
@@ -567,15 +591,12 @@
             tg.showAlert(data.success ? "İşlem Tamamlandı" : "Kullanıcı bulunamadı veya Hata!");
         }
 
-        // --- YARDIMCI FONKSİYONLAR ---
-
         function showPage(p, el) {
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             document.getElementById(`page-${p}`).classList.add('active');
             el.classList.add('active');
             
-            // Sayfa yüklendiğinde gerekli fonksiyonları tetikle
             if(p === 'leaderboard') loadLeaderboard();
             if(p === 'admin') loadAdminStats();
         }
