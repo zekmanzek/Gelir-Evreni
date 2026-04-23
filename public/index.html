@@ -94,9 +94,10 @@
 
     <div id="page-leaderboard" class="page">
         <h3 style="margin-left: 10px;">🏆 Sıralama Tablosu</h3>
-        <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <button id="tab-lb-all" class="btn-full" style="margin-top:0; padding:12px;" onclick="switchLB('all')">GENEL</button>
-            <button id="tab-lb-daily" class="btn-full" style="margin-top:0; padding:12px; background: transparent; border: 1px solid var(--gold); color: var(--gold);" onclick="switchLB('daily')">GÜNLÜK</button>
+        <div style="display:flex; gap:5px; margin-bottom:15px;">
+            <button id="tab-lb-all" class="btn-full" style="margin-top:0; padding:10px; font-size:12px;" onclick="switchLB('all')">GENEL</button>
+            <button id="tab-lb-daily" class="btn-full" style="margin-top:0; padding:10px; font-size:12px; background: transparent; border: 1px solid var(--gold); color: var(--gold);" onclick="switchLB('daily')">GÜNLÜK</button>
+            <button id="tab-lb-yesterday" class="btn-full" style="margin-top:0; padding:10px; font-size:12px; background: transparent; border: 1px solid var(--gold); color: var(--gold);" onclick="switchLB('yesterday')">DÜN</button>
         </div>
         <div class="card" style="flex-direction: column; padding: 0; overflow: hidden;">
             <div id="leader-list" style="width: 100%;"></div>
@@ -216,8 +217,8 @@
         tg.expand();
         const API = window.location.origin;
         let user, tasks = [], miningInterval;
-        let lbAllTime = [], lbDaily = []; // Liderlik tabloları verileri
-        let currentLbTab = 'all'; // Seçili liderlik tablosu sekmesi
+        let lbAllTime = [], lbDaily = [], lbYesterday = []; // YENİ: lbYesterday eklendi
+        let currentLbTab = 'all'; 
         
         const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "27433" }) : null;
 
@@ -443,7 +444,6 @@
             }, 3000);
         }
 
-        // GÜNCELLENDİ: Hem Günlük hem Genel Sıralama Getirme
         async function loadLeaderboard() {
             const list = document.getElementById('leader-list');
             list.innerHTML = "<p style='text-align:center; padding: 20px;'>Yükleniyor...</p>";
@@ -452,40 +452,60 @@
             if(data.success) {
                 lbAllTime = data.leaderboard || [];
                 lbDaily = data.dailyLeaderboard || [];
+                lbYesterday = data.yesterdayLeaderboard || []; // YENİ
                 renderLB();
             }
         }
 
-        // YENİ: Sıralama Sekmeleri Arasında Geçiş Yapma
         function switchLB(tab) {
             currentLbTab = tab;
-            document.getElementById('tab-lb-all').style.background = tab === 'all' ? 'linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%)' : 'transparent';
-            document.getElementById('tab-lb-all').style.color = tab === 'all' ? '#000' : 'var(--gold)';
-            document.getElementById('tab-lb-all').style.border = tab === 'all' ? 'none' : '1px solid var(--gold)';
-
-            document.getElementById('tab-lb-daily').style.background = tab === 'daily' ? 'linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%)' : 'transparent';
-            document.getElementById('tab-lb-daily').style.color = tab === 'daily' ? '#000' : 'var(--gold)';
-            document.getElementById('tab-lb-daily').style.border = tab === 'daily' ? 'none' : '1px solid var(--gold)';
+            
+            // Butonların hepsini önce pasif duruma getir
+            const tabs = ['all', 'daily', 'yesterday'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-lb-${t}`);
+                if (t === tab) {
+                    btn.style.background = 'linear-gradient(135deg, var(--gold) 0%, #ffaa00 100%)';
+                    btn.style.color = '#000';
+                    btn.style.border = 'none';
+                } else {
+                    btn.style.background = 'transparent';
+                    btn.style.color = 'var(--gold)';
+                    btn.style.border = '1px solid var(--gold)';
+                }
+            });
             
             renderLB();
         }
 
-        // YENİ: Seçili Sekmeye Göre Sıralamayı Ekrana Basma
         function renderLB() {
             const list = document.getElementById('leader-list');
-            const dataToRender = currentLbTab === 'all' ? lbAllTime : lbDaily;
+            
+            // Hangi verinin gösterileceğini seç
+            let dataToRender = [];
+            if(currentLbTab === 'all') dataToRender = lbAllTime;
+            else if(currentLbTab === 'daily') dataToRender = lbDaily;
+            else dataToRender = lbYesterday;
             
             if(dataToRender.length === 0) {
-                list.innerHTML = `<p style='text-align:center; padding: 20px; color: var(--text-dim);'>Bugün henüz kimse puan kazanmadı.</p>`;
+                list.innerHTML = `<p style='text-align:center; padding: 20px; color: var(--text-dim);'>${currentLbTab === 'yesterday' ? 'Henüz dün için kayıt yok.' : 'Henüz kimse puan kazanmadı.'}</p>`;
                 return;
             }
 
-            list.innerHTML = dataToRender.map((u, i) => `
+            list.innerHTML = dataToRender.map((u, i) => {
+                // Eğer "Dün" sekmesindeysek veritabanından gelen rank'ı (sıralamayı) kullan
+                const rank = currentLbTab === 'yesterday' && u.rank ? u.rank : (i + 1);
+                // "Genel" sekmesi u.points kullanır, "Günlük" ve "Dün" sekmeleri u.dailyPoints veya u.points (yesterday modeli direkt points olarak tutar)
+                let displayPoints = u.points;
+                if(currentLbTab === 'daily') displayPoints = u.dailyPoints || 0;
+                
+                return `
                 <div class="card" style="margin:0; border-radius:0; border-bottom:1px solid var(--border-glass)">
-                    <span>${i+1}. ${u.username || u.firstName}</span>
-                    <span style="color:var(--gold)">${(currentLbTab === 'all' ? u.points : (u.dailyPoints || 0)).toLocaleString()} GEP</span>
+                    <span>${rank}. ${u.username || u.firstName}</span>
+                    <span style="color:var(--gold)">${displayPoints.toLocaleString()} GEP</span>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function renderStreak() {
