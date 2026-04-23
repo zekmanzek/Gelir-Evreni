@@ -243,7 +243,8 @@
                         telegramId: tgUser.id.toString(), 
                         username: tgUser.username || "", 
                         firstName: tgUser.first_name || "Kullanıcı",
-                        referrerId: refId 
+                        referrerId: refId,
+                        initData: tg.initData // GÜVENLİK KİLİDİ EKLENDİ
                     })
                 });
 
@@ -265,6 +266,8 @@
                     checkMiningTimer();
                     renderStreak();
                     if (data.announcements) renderAnnouncements(data.announcements);
+                } else if (data.message) {
+                    tg.showAlert(data.message); // Hata varsa göster
                 }
             } catch (e) { console.error("Init Error:", e); } finally {
                 setTimeout(() => { const loader = document.getElementById('loader'); if(loader) loader.style.display = 'none'; }, 800);
@@ -309,7 +312,7 @@
                     const res = await fetch(`${API}/api/adsgram-reward`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ telegramId: user.telegramId })
+                        body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) // GÜVENLİK KİLİDİ EKLENDİ
                     });
                     if (res.ok) { 
                         const data = await res.json();
@@ -324,7 +327,7 @@
             const res = await fetch(`${API}/api/daily-reward`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ telegramId: user.telegramId })
+                body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) // GÜVENLİK KİLİDİ EKLENDİ
             });
             const data = await res.json();
             if(data.success) { tg.showAlert(`🎉 Ödül alındı! Yeni Serin: ${data.streak}. Gün (+${data.reward} GEP)`); init(); }
@@ -337,7 +340,7 @@
             const res = await fetch(`${API}/api/mine`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ telegramId: user.telegramId })
+                body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) // GÜVENLİK KİLİDİ EKLENDİ
             });
             const data = await res.json();
             if(data.success) { 
@@ -360,7 +363,7 @@
                 const res = await fetch(`${API}/api/upgrade-mine`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ telegramId: user.telegramId })
+                    body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) // GÜVENLİK KİLİDİ EKLENDİ
                 });
                 
                 const data = await res.json();
@@ -440,7 +443,7 @@
                 const res = await fetch(`${API}/api/tasks/complete`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ telegramId: user.telegramId, taskId: tid })
+                    body: JSON.stringify({ telegramId: user.telegramId, taskId: tid, initData: tg.initData }) // GÜVENLİK KİLİDİ EKLENDİ
                 });
                 if((await res.json()).success) { tg.showAlert("Ödül eklendi!"); init(); }
             }, 3000);
@@ -524,7 +527,7 @@
             const res = await fetch(`${API}/api/admin/stats`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId })
+                body: JSON.stringify({ adminId: user.telegramId, initData: tg.initData }) // GÜVENLİK KİLİDİ EKLENDİ
             });
             const data = await res.json();
             document.getElementById('adm-stat-users').innerText = data.totalUsers;
@@ -554,7 +557,7 @@
             await fetch(`${API}/api/admin/add-task`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId, title, reward, target })
+                body: JSON.stringify({ adminId: user.telegramId, title, reward, target, initData: tg.initData }) // GÜVENLİK KİLİDİ EKLENDİ
             });
             tg.showAlert("Görev eklendi.");
             document.getElementById('adm-task-title').value = '';
@@ -568,7 +571,7 @@
             await fetch(`${API}/api/admin/delete-task`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId, taskId })
+                body: JSON.stringify({ adminId: user.telegramId, taskId, initData: tg.initData }) // GÜVENLİK KİLİDİ EKLENDİ
             });
             loadAdminStats();
             refreshTasks();
@@ -580,7 +583,7 @@
             await fetch(`${API}/api/admin/announcement`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId, action: 'add', text })
+                body: JSON.stringify({ adminId: user.telegramId, action: 'add', text, initData: tg.initData }) // GÜVENLİK KİLİDİ EKLENDİ
             });
             document.getElementById('adm-ann-text').value = '';
             tg.showAlert("Duyuru yayınlandı.");
@@ -591,7 +594,7 @@
             await fetch(`${API}/api/admin/announcement`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId, action: 'delete', index })
+                body: JSON.stringify({ adminId: user.telegramId, action: 'delete', index, initData: tg.initData }) // GÜVENLİK KİLİDİ EKLENDİ
             });
             loadAdminStats();
         }
@@ -603,7 +606,7 @@
             const res = await fetch(`${API}/api/admin/user-manage`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ adminId: user.telegramId, targetId, action, amount })
+                body: JSON.stringify({ adminId: user.telegramId, targetId, action, amount, initData: tg.initData }) // GÜVENLİK KİLİDİ EKLENDİ
             });
             const data = await res.json();
             tg.showAlert(data.success ? "İşlem Tamamlandı" : "Kullanıcı bulunamadı veya Hata!");
