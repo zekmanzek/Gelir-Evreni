@@ -3,84 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gelir Evreni | Komuta Merkezi v3.5</title>
+    <title>Gelir Evreni | Cyber Node</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg-base: #10101a; 
-            --bg-card: #1a1a2e; 
-            --accent-lime: #32ff7e; 
-            --accent-blue: #0984e3;
-            --border: #2e2e42;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --danger: #ff4757;
-            --success: #2ecc71;
-            --shadow: 0 8px 30px rgba(0,0,0,0.5);
+            --bg-deep: #05050a;
+            --panel-bg: rgba(15, 15, 25, 0.7);
+            --cyan: #00f3ff;
+            --magenta: #bc13fe;
+            --alert: #ff003c;
+            --success: #00ff66;
+            --text-main: #e2e8f0;
+            --text-dim: #64748b;
+            --border-glow: rgba(0, 243, 255, 0.3);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Urbanist', sans-serif; background-color: var(--bg-base); color: var(--text-main); margin: 0; padding-bottom: 110px; min-height: 100vh; overflow-x: hidden; }
         
-        /* 🚀 Yeni Loader: Daha Futüristik */
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-base); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: 0.6s; }
-        .loader-logo { font-size: 28px; font-weight: 900; color: var(--accent-lime); letter-spacing: 4px; border: 2px solid var(--accent-lime); padding: 10px 20px; animation: glitch 1.5s infinite; }
-        @keyframes glitch { 0% { text-shadow: 2px 0 var(--danger), -2px 0 var(--accent-blue); } 50% { text-shadow: -2px 0 var(--danger), 2px 0 var(--accent-blue); transform: scale(1.05); } 100% { text-shadow: 2px 0 var(--danger), -2px 0 var(--accent-blue); } }
+        body { 
+            font-family: 'Space Grotesk', sans-serif; 
+            background-color: var(--bg-deep); 
+            /* Holografik Izgara Arka Plan */
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--text-main); 
+            margin: 0; 
+            padding-bottom: 120px; 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+        }
+        
+        h1, h2, h3, h4 { font-family: 'Rajdhani', sans-serif; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 15px 0;}
 
-        /* 📢 Duyuru Çubuğu: Neon Yeşil/Koyu Lacivert Uyumu */
-        .announcement-container { background: var(--bg-card); color: var(--accent-lime); border-bottom: 1px solid var(--border); overflow: hidden; white-space: nowrap; position: sticky; top: 0; z-index: 2000; height: 35px; display: none; align-items: center; }
-        .announcement-scroll { display: inline-block; padding-left: 100%; animation: marquee 25s linear infinite; font-size: 13px; font-weight: 800; text-transform: uppercase; }
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-deep); display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s; }
+        .cyber-spinner { width: 60px; height: 60px; border: 3px solid transparent; border-top-color: var(--cyan); border-right-color: var(--magenta); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .announcement-container { background: var(--alert); color: #fff; font-family: 'Rajdhani', sans-serif; overflow: hidden; white-space: nowrap; position: sticky; top: 0; z-index: 2000; height: 30px; display: none; align-items: center; border-bottom: 1px solid #fff; }
+        .announcement-scroll { display: inline-block; padding-left: 100%; animation: marquee 20s linear infinite; font-size: 14px; font-weight: 700; letter-spacing: 2px;}
         @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-        /* 🏷️ Rozetler: Sert Hatlı Elektrik Mavisi */
-        .level-badge { padding: 6px 14px; font-size: 11px; font-weight: 900; text-transform: uppercase; margin-bottom: 12px; display: inline-block; letter-spacing: 1px; border: 1px solid var(--accent-blue); color: var(--accent-blue); }
-        .level-Bronz { background: rgba(184, 115, 51, 0.1); border-color: #cd7f32; color: #cd7f32; }
-        .level-Gümüş { background: rgba(192, 192, 192, 0.1); border-color: #c0c0c0; color: #c0c0c0; }
-        .level-Altın { background: rgba(255, 215, 0, 0.1); border-color: #ffd700; color: #ffd700; }
-        .level-Platin { background: rgba(229, 228, 226, 0.1); border-color: #e5e4e2; color: #e5e4e2; }
-        .level-Elmas { background: rgba(185, 242, 255, 0.1); border-color: #b9f2ff; color: #b9f2ff; text-shadow: 0 0 10px #b9f2ff;}
-
-        /* 📊 Header: Yüksek Kontrastlı Puanlar */
-        .header { text-align: center; padding: 40px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border); box-shadow: var(--shadow); }
-        .balance-label { font-size: 11px; letter-spacing: 4px; color: var(--text-dim); font-weight: 800; margin-bottom: 4px; text-transform: uppercase; }
-        .points-container { display: flex; align-items: baseline; justify-content: center; color: var(--accent-lime); filter: drop-shadow(0 0 10px var(--accent-lime)); }
-        .points { font-size: 56px; font-weight: 900; margin: 0; }
-        .currency { font-size: 20px; font-weight: 800; margin-left: 8px; opacity: 0.8; }
+        /* Kokpit Header */
+        .header-panel { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: linear-gradient(180deg, rgba(0, 243, 255, 0.1) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border-glow);
+            padding: 25px 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .header-left { display: flex; flex-direction: column; align-items: flex-start; }
+        .header-right { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
         
-        .page { display: none; padding: 24px 16px; animation: slideUp 0.4s; }
+        .level-badge { 
+            font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 2px;
+            padding: 4px 10px; border-left: 3px solid var(--cyan); background: rgba(0,243,255,0.1); 
+        }
+        
+        .balance-label { font-size: 10px; color: var(--text-dim); font-weight: 700; letter-spacing: 2px; margin-bottom: 5px; }
+        .points { font-family: 'Rajdhani', sans-serif; font-size: 42px; font-weight: 700; color: #fff; text-shadow: 0 0 15px var(--cyan); line-height: 1; }
+        .usd-val { font-size: 12px; color: var(--cyan); margin-top: 5px; font-weight: 700; }
+
+        .page { display: none; padding: 20px; animation: glitch-in 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
         .page.active { display: block; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes glitch-in { 0% { transform: translateY(20px); opacity: 0; filter: contrast(200%); } 100% { transform: translateY(0); opacity: 1; filter: contrast(100%); } }
 
-        /* 🪟 Kartlar: Katı Katmanlar (Solid Layers) */
-        .card { background: var(--bg-card); padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: center; }
-        .card-stat { background: rgba(255,204,0,0.05); border: 1px solid rgba(255,204,0,0.2); } 
-        .card-ad { background: rgba(46, 204, 113, 0.05); border: 1px solid rgba(46, 204, 113, 0.2); } 
+        /* Kesik Köşeli Cyber Modüller */
+        .cyber-module {
+            position: relative;
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            padding: 25px 20px;
+            margin-bottom: 20px;
+            /* Bilim Kurgu Kesik Köşe Efekti */
+            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .cyber-module::before {
+            content: ''; position: absolute; top: 0; left: 15px; width: 40px; height: 2px; background: var(--cyan);
+            box-shadow: 0 0 10px var(--cyan);
+        }
 
-        /* 🔘 Butonlar: Sert Köşeli, Güçlü Renkler */
-        .btn-full { width: 100%; padding: 18px; background: var(--accent-lime); border: none; color: #000; font-weight: 900; font-size: 15px; text-transform: uppercase; letter-spacing: 2px; margin-top: 10px; cursor: pointer; transition: 0.2s active; }
-        .btn-full:active { transform: translateY(2px); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .btn-full:disabled { background: var(--border) !important; color: var(--text-dim) !important; cursor: not-allowed; border: none; }
+        /* Yüzen Kapsül Navigasyon */
+        .dock-container {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px;
+            background: rgba(5, 5, 10, 0.85); backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glow);
+            border-radius: 30px; /* Kapsül Görünümü */
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 15px; box-shadow: 0 15px 35px rgba(0,243,255,0.15);
+            z-index: 1000;
+        }
+        .dock-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--text-dim); text-decoration: none; transition: all 0.3s ease;
+            height: 50px; border-radius: 20px;
+        }
+        .dock-icon { font-size: 20px; margin-bottom: 2px; transition: transform 0.3s; }
+        .dock-text { font-family: 'Rajdhani', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
         
-        .btn-secondary { background: transparent; border: 2px solid var(--accent-lime); color: var(--accent-lime); } 
+        .dock-item.active { color: var(--cyan); background: rgba(0, 243, 255, 0.1); }
+        .dock-item.active .dock-icon { transform: translateY(-3px); text-shadow: 0 0 10px var(--cyan); filter: drop-shadow(0 0 5px var(--cyan)); }
 
-        /* 🗺️ Navigasyon: Futüristik Sekmeler */
-        .nav-bar { position: fixed; bottom: 20px; left: 15px; right: 15px; background: var(--bg-card); display: flex; justify-content: space-around; padding: 10px; border: 1px solid var(--border); z-index: 1000; box-shadow: var(--shadow); }
-        .nav-item { color: var(--text-dim); text-decoration: none; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; transition: 0.3s; }
-        .nav-item.active { color: var(--accent-blue); text-shadow: 0 0 10px var(--accent-blue); }
-        
-        .ref-box { width: 100%; background: var(--bg-base); border: 1px solid var(--border); padding: 14px; color: var(--accent-lime); text-align: center; margin: 8px 0; font-weight: 800; outline: none; font-size: 12px; }
-        
-        .streak-container { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 15px 0; }
-        .streak-day { background: var(--bg-base); border: 1px solid var(--border); padding: 8px 2px; text-align: center; font-size: 9px; }
-        .streak-day.completed { background: rgba(46, 204, 113, 0.1); border-color: var(--success); color: var(--success); text-shadow: 0 0 5px var(--success); }
+        /* Form ve Inputlar */
+        .cyber-input {
+            width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border-glow);
+            padding: 15px; color: var(--cyan); font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px; text-align: center; margin-bottom: 15px; outline: none;
+            transition: 0.3s;
+        }
+        .cyber-input:focus { background: rgba(0,243,255,0.05); box-shadow: inset 0 0 10px rgba(0,243,255,0.2); }
 
-        .admin-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; width: 100%; }
-        .stat-card { background: rgba(255,255,255,0.03); padding: 15px; text-align: center; border: 1px solid var(--border); }
-        .admin-list-item { display:flex; justify-content:space-between; align-items:center; background:var(--bg-base); padding:12px; margin-bottom:8px; border: 1px solid var(--border); }
-        .btn-small { padding: 6px 12px; font-size: 10px; font-weight: 800; border: none; cursor: pointer; text-transform: uppercase; }
-        .btn-danger { background: var(--danger); color: white; }
+        /* Butonlar */
+        .btn-prime {
+            width: 100%; padding: 18px; font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+            letter-spacing: 3px; text-transform: uppercase; cursor: pointer; transition: 0.2s;
+            background: var(--cyan); color: #000; border: none;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+        .btn-prime:active { transform: scale(0.98); background: #fff; }
+        .btn-prime:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+        .btn-outline { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); }
+        .btn-outline:active { background: var(--cyan); color: #000; }
+        
+        .btn-alert { background: transparent; color: var(--alert); border: 1px solid var(--alert); }
+        .btn-alert:active { background: var(--alert); color: #000; }
+
+        /* Sıralama Sekmeleri */
+        .tab-container { display: flex; gap: 5px; margin-bottom: 20px; }
+        .tab-btn {
+            flex: 1; padding: 12px 0; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700;
+            background: transparent; border: 1px solid var(--border-glow); color: var(--text-dim);
+            cursor: pointer; transition: 0.3s; text-transform: uppercase;
+        }
+        .tab-btn.active { background: var(--cyan); color: #000; border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,243,255,0.3); }
+
+        /* Sıralama Listesi */
+        .leader-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-family: 'Space Grotesk', sans-serif; font-size: 14px;
+        }
+        .leader-row:first-child { background: linear-gradient(90deg, rgba(0,243,255,0.1), transparent); border-left: 2px solid var(--cyan); }
+
+        /* Görev Listesi */
+        .task-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.3); border: 1px solid var(--border-glow);
+            padding: 15px; margin-bottom: 10px; border-left: 3px solid var(--magenta);
+        }
+
+        /* Maden Alanı Özelleştirme */
+        .mine-circle {
+            width: 150px; height: 150px; margin: 0 auto 30px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,243,255,0.2) 0%, transparent 70%);
+            border: 2px dashed var(--cyan); display: flex; justify-content: center; align-items: center;
+            font-size: 50px; animation: pulse-ring 2s infinite; filter: drop-shadow(0 0 10px var(--cyan));
+        }
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(0,243,255,0.4); } 70% { box-shadow: 0 0 0 20px rgba(0,243,255,0); } 100% { box-shadow: 0 0 0 0 rgba(0,243,255,0); } }
+        
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-box { background: rgba(0,0,0,0.4); padding: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-val { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; color: var(--magenta); }
+
+        /* Streak (Seri) Kutuları */
+        .streak-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin: 20px 0; }
+        .streak-day { background: rgba(0,0,0,0.5); border: 1px solid var(--border-glow); padding: 10px 0; text-align: center; }
+        .streak-day.completed { background: rgba(0,255,102,0.1); border-color: var(--success); color: var(--success); }
     </style>
 </head>
 <body>
@@ -88,148 +182,163 @@
         <div id="ann-scroll" class="announcement-scroll"></div>
     </div>
     
-    <div id="loader"><div class="loader-logo">GELİR EVRENİ</div></div>
+    <div id="loader"><div class="cyber-spinner"></div></div>
 
-    <div class="header">
-        <div id="user-level" class="level-badge">YÜKLENİYOR...</div>
-        <div class="balance-label">COMMANDER BALANCE</div>
-        <div class="points-container">
-            <div class="points" id="balance">0</div>
-            <div class="currency">GEP</div>
+    <div class="header-panel">
+        <div class="header-left">
+            <div id="user-level" class="level-badge">SYNCING...</div>
+            <div style="font-size: 12px; margin-top: 5px; color: var(--text-dim);" id="header-name">GUEST</div>
         </div>
-        <div id="usd" style="color: var(--accent-blue); font-weight: 700; font-size: 14px; margin-top: 5px;">≈ 0.00 USDT</div>
+        <div class="header-right">
+            <div class="balance-label">NODE BALANCE</div>
+            <div class="points" id="balance">0</div>
+            <div class="usd-val" id="usd">≈ 0.00 USDT</div>
+        </div>
     </div>
 
     <div id="page-tasks" class="page active">
-        <h3 style="margin-left: 10px; border-left: 3px solid var(--accent-lime); padding-left: 10px;">🚀 AKTİF GÖREVLER</h3>
+        <h3 style="color: var(--cyan);">// PROTOKOL GÖREVLERİ</h3>
+        <p style="font-size: 12px; color: var(--text-dim); margin-top: -10px; margin-bottom: 20px;">Sistemi besle, ekstra GEP kazan.</p>
         <div id="task-list"></div>
     </div>
 
     <div id="page-leaderboard" class="page">
-        <h3 style="margin-left: 10px; border-left: 3px solid var(--accent-lime); padding-left: 10px;">🏆 SIRALAMA TABLOSU</h3>
-        <div style="display:flex; gap:5px; margin-bottom:15px;">
-            <button id="tab-lb-all" class="btn-full" style="margin-top:0; padding:10px; font-size:12px;" onclick="switchLB('all')">TOP 100</button>
-            <button id="tab-lb-daily" class="btn-full" style="margin-top:0; padding:10px; font-size:12px; background: transparent; border: 1px solid var(--accent-lime); color: var(--accent-lime);" onclick="switchLB('daily')">GÜNLÜK</button>
-            <button id="tab-lb-yesterday" class="btn-full" style="margin-top:0; padding:10px; font-size:12px; background: transparent; border: 1px solid var(--accent-lime); color: var(--accent-lime);" onclick="switchLB('yesterday')">DÜN</button>
+        <h3 style="color: var(--magenta);">// AĞ LİDERLERİ</h3>
+        <div class="tab-container">
+            <button id="tab-lb-all" class="tab-btn active" onclick="switchLB('all')">TOP 100</button>
+            <button id="tab-lb-daily" class="tab-btn" onclick="switchLB('daily')">GÜNLÜK</button>
+            <button id="tab-lb-yesterday" class="tab-btn" onclick="switchLB('yesterday')">DÜN</button>
         </div>
-        <div class="card" style="flex-direction: column; padding: 0; overflow: hidden; border:none; box-shadow:none; background:transparent;">
+        <div class="cyber-module" style="padding: 0;">
             <div id="leader-list" style="width: 100%;"></div>
         </div>
     </div>
 
     <div id="page-mine" class="page">
-        <div class="card card-stat" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center; margin-bottom: 10px;">
-            <div style="border-right: 1px solid rgba(255,204,0,0.2);">
-                <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 800;">MEVCUT SEVİYE</div>
-                <div id="ui-mine-level" style="font-size: 26px; font-weight: 900; color: #ffd700;">1</div>
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div class="balance-label">MOTOR SEVİYESİ</div>
+                <div id="ui-mine-level" class="stat-val" style="color: var(--cyan);">1</div>
             </div>
-            <div>
-                <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 800;">4 SAATLİK GETİRİ</div>
-                <div id="ui-mine-reward" style="font-size: 20px; font-weight: 900; color: var(--accent-lime); margin-top:3px;">1,000 GEP</div>
+            <div class="stat-box">
+                <div class="balance-label">GÜÇ (4 SAAT)</div>
+                <div id="ui-mine-reward" class="stat-val">1,000</div>
             </div>
         </div>
 
-        <div id="mine-card" class="card" style="flex-direction: column; text-align: center; padding: 40px 20px;">
-            <div style="font-size: 60px; margin-bottom: 15px; filter: drop-shadow(0 0 10px var(--accent-lime));" id="mine-icon">⛏️</div>
-            <h3 id="mine-status-text" style="margin-bottom: 5px; text-transform: uppercase; font-weight: 800;">Maden Hazır</h3>
-            <div id="mining-timer" style="font-family: monospace; font-size: 36px; font-weight: 900; color: var(--accent-lime); margin: 10px 0; display: none;">00:00:00</div>
+        <div class="cyber-module" style="text-align: center; padding: 40px 20px;">
+            <div class="mine-circle" id="mine-icon">⚡</div>
+            <h3 id="mine-status-text" style="color: #fff;">SİSTEM HAZIR</h3>
+            <div id="mining-timer" style="font-family: 'Rajdhani', sans-serif; font-size: 48px; font-weight: 700; color: var(--cyan); margin: 10px 0; display: none;">00:00:00</div>
             
-            <button id="btn-mine" class="btn-full" onclick="startMining()">MADENİ BAŞLAT</button>
+            <button id="btn-mine" class="btn-prime" style="margin-top: 20px;" onclick="startMining()">ÜRETİMİ BAŞLAT</button>
             
-            <button id="btn-upgrade" class="btn-full btn-secondary" style="margin-top: 15px;" onclick="upgradeMine()">
-                <span style="font-size: 11px; display: block; color: var(--text-dim); font-weight: 800;">SEVİYEYİ YÜKSELT</span>
-                <span id="ui-upgrade-cost">Gereken: 10,000 GEP</span>
+            <button id="btn-upgrade" class="btn-prime btn-outline" style="margin-top: 15px;" onclick="upgradeMine()">
+                <span style="font-size: 12px; display: block; color: var(--text-dim); line-height: 1;">SEVİYE YÜKSELT</span>
+                <span id="ui-upgrade-cost" style="font-size: 14px;">GEREKEN: 10,000 GEP</span>
             </button>
         </div>
     </div>
 
     <div id="page-profile" class="page">
-        <div class="card card-ad" style="flex-direction: column; text-align: center;">
-            <div style="font-size: 30px; margin-bottom: 10px; filter: drop-shadow(0 0 5px var(--success));">📺</div>
-            <h3 style="margin: 0; text-transform: uppercase; color: var(--success); font-weight: 900;">REKLAM İZLE KAZAN</h3>
-            <p style="font-size: 12px; color: var(--text-dim); margin: 5px 0;">Her reklam izlediğinde anında **500 GEP** kazanırsın.</p>
-            <button class="btn-full" style="background: var(--success);" onclick="showAd()">REKLAMI BAŞLAT</button>
+        
+        <div class="cyber-module" style="text-align: center; border-left: 3px solid var(--success);">
+            <h3 style="color: var(--success); margin-bottom: 5px;">SİNYAL İZLE (REKLAM)</h3>
+            <p style="font-size: 12px; color: var(--text-dim);">Dış ağlardan gelen her sinyal onayı için anında <strong style="color:#fff;">500 GEP</strong> kazanırsın.</p>
+            <button class="btn-prime" style="background: var(--success); color: #000; margin-top: 10px;" onclick="showAd()">SİNYALİ BAŞLAT</button>
         </div>
 
-        <div class="card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center;">
-            <div style="border-right: 1px solid var(--border);">
-                <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 800;">DAVETLER</div>
-                <div id="stat-ref-count" style="font-size: 26px; font-weight: 900; color: var(--accent-lime);">0</div>
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div class="balance-label">AĞA KATILANLAR</div>
+                <div id="stat-ref-count" class="stat-val" style="color: var(--cyan);">0</div>
             </div>
-            <div>
-                <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 800;">DURUM</div>
-                <div id="user-status-text" style="font-size: 14px; font-weight: 900; color: var(--accent-blue); margin-top:5px;">AKTİF</div>
+            <div class="stat-box">
+                <div class="balance-label">BAĞLANTI DURUMU</div>
+                <div id="user-status-text" class="stat-val" style="color: var(--success); font-size: 18px; margin-top: 5px;">STABİL</div>
             </div>
         </div>
         
-        <div class="card" style="flex-direction: column;">
-            <h3>📅 GÜNLÜK GİRİŞ</h3>
-            <div class="streak-container" id="streak-box"></div>
-            <button id="btn-checkin" class="btn-full" onclick="claimDaily()">GÜNLÜK ÖDÜLÜ AL</button>
+        <div class="cyber-module">
+            <h3 style="color: var(--text-main); font-size: 16px;">SİSTEM GİRİŞ SERİSİ</h3>
+            <div class="streak-grid" id="streak-box"></div>
+            <button id="btn-checkin" class="btn-prime btn-outline" onclick="claimDaily()">GÜNLÜK VERİYİ ÇEK</button>
         </div>
 
-        <div class="card" style="flex-direction: column; text-align: center;">
-            <h3>👥 ARKADAŞ DAVET ET</h3>
-            <p style="font-size: 12px; color: var(--success); margin: 5px 0; font-weight: bold;">Arkadaşını davet et, 2500 GEP kazan!</p>
-            <p style="font-size: 11px; color: var(--text-dim); margin-top: 0; margin-bottom: 10px;">Gelen arkadaşın da 1000 GEP ile başlar.</p>
-            <input type="text" id="ref-link" class="ref-box" readonly onclick="this.select()">
-            <button class="btn-full btn-secondary" onclick="copyRef()">LİNKİ KOPYALA</button>
+        <div class="cyber-module" style="text-align: center;">
+            <h3 style="color: var(--magenta);">AĞI GENİŞLET</h3>
+            <p style="font-size: 12px; color: var(--text-main); margin: 5px 0;">Yeni bir node davet et, <strong style="color:var(--cyan);">2500 GEP</strong> kazan!</p>
+            <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 15px;">Katılan kişi de 1000 GEP başlangıç bonusu alır.</p>
+            <input type="text" id="ref-link" class="cyber-input" readonly onclick="this.select()">
+            <button class="btn-prime" style="background: var(--magenta); color: #fff;" onclick="copyRef()">KOPYALA</button>
         </div>
     </div>
 
     <div id="page-admin" class="page">
-        <h3 style="margin-left:10px; border-left: 3px solid var(--danger); padding-left: 10px; color: var(--danger);">📊 SİSTEM İSTATİSTİKLERİ</h3>
-        <div class="admin-card-grid">
-            <div class="stat-card">
-                <div style="font-size:10px; color:var(--text-dim); text-transform: uppercase;">TOPLAM ÜYE</div>
-                <div id="adm-stat-users" style="font-size:22px; font-weight:900; color:var(--accent-lime)">0</div>
+        <h3 style="color: var(--alert);">// YÖNETİCİ TERMİNALİ</h3>
+        
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div class="balance-label">TOPLAM NODE</div>
+                <div id="adm-stat-users" class="stat-val" style="color:var(--cyan)">0</div>
             </div>
-            <div class="stat-card">
-                <div style="font-size:10px; color:var(--text-dim); text-transform: uppercase;">TOPLAM GEP</div>
-                <div id="adm-stat-points" style="font-size:22px; font-weight:900; color:var(--accent-blue);">0</div>
+            <div class="stat-box">
+                <div class="balance-label">TOPLAM GEP</div>
+                <div id="adm-stat-points" class="stat-val" style="color:var(--magenta)">0</div>
             </div>
         </div>
 
-        <div class="card" style="flex-direction: column;">
-            <h3>📢 DUYURU YÖNETİMİ</h3>
-            <input type="text" id="adm-ann-text" class="ref-box" placeholder="Duyuru metni yazın...">
-            <button class="btn-full" onclick="addAnnouncement()">YAYINLA</button>
-            <div id="adm-ann-list" style="width:100%; margin-top:15px; max-height:150px; overflow-y:auto;"></div>
+        <div class="cyber-module">
+            <h4>Duyuru Yayınla</h4>
+            <input type="text" id="adm-ann-text" class="cyber-input" placeholder="Sistem mesajı...">
+            <button class="btn-prime btn-outline" onclick="addAnnouncement()">YAYINLA</button>
+            <div id="adm-ann-list" style="margin-top:15px; max-height:150px; overflow-y:auto;"></div>
         </div>
 
-        <div class="card" style="flex-direction: column;">
-            <h3>🛠️ GÖREV YÖNETİMİ</h3>
-            <input type="text" id="adm-task-title" class="ref-box" placeholder="Görev Başlığı">
-            <input type="number" id="adm-task-reward" class="ref-box" placeholder="Ödül (GEP)">
-            <input type="text" id="adm-task-target" class="ref-box" placeholder="Link (https://...)">
-            <button class="btn-full" onclick="addTask()">GÖREVİ EKLE</button>
-            <div id="adm-task-list" style="width:100%; margin-top:15px; max-height: 150px; overflow-y: auto;"></div>
+        <div class="cyber-module">
+            <h4>Görev Terminali</h4>
+            <input type="text" id="adm-task-title" class="cyber-input" placeholder="Görev Başlığı">
+            <input type="number" id="adm-task-reward" class="cyber-input" placeholder="Ödül (GEP)">
+            <input type="text" id="adm-task-target" class="cyber-input" placeholder="Link (https://...)">
+            <button class="btn-prime btn-outline" style="border-color: var(--magenta); color: var(--magenta);" onclick="addTask()">EKLE</button>
+            <div id="adm-task-list" style="margin-top:15px; max-height: 150px; overflow-y: auto;"></div>
         </div>
         
-        <div class="card" style="flex-direction: column;">
-            <h3>👤 KULLANICI YÖNETİMİ</h3>
-            <input type="text" id="adm-target-id" class="ref-box" placeholder="ID veya @Username">
-            <input type="number" id="adm-amount" class="ref-box" placeholder="Miktar">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; width:100%;">
-                <button class="btn-full" onclick="manageUser('add')" style="background:var(--success); color:white; font-size:12px;">EKLE</button>
-                <button class="btn-full" onclick="manageUser('set')" style="background:var(--text-main); color:#000; font-size:12px;">EŞİTLE</button>
-                <button class="btn-full" onclick="manageUser('ban')" style="background:var(--danger); color:white; font-size:12px;">BAN</button>
-                <button class="btn-full" onclick="manageUser('unban')" style="background:var(--text-dim); color:white; font-size:12px;">KALDIR</button>
+        <div class="cyber-module">
+            <h4>Node Yönetimi (Kullanıcı)</h4>
+            <input type="text" id="adm-target-id" class="cyber-input" placeholder="ID veya @Username">
+            <input type="number" id="adm-amount" class="cyber-input" placeholder="Miktar">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <button class="btn-prime" style="padding: 12px; font-size: 12px; background:var(--success); color:#000;" onclick="manageUser('add')">EKLE</button>
+                <button class="btn-prime btn-outline" style="padding: 12px; font-size: 12px;" onclick="manageUser('set')">EŞİTLE</button>
+                <button class="btn-prime" style="padding: 12px; font-size: 12px; background:var(--alert); color:#fff;" onclick="manageUser('ban')">BAN</button>
+                <button class="btn-prime btn-alert" style="padding: 12px; font-size: 12px;" onclick="manageUser('unban')">KALDIR</button>
             </div>
         </div>
     </div>
 
-    <nav class="nav-bar">
-        <a href="javascript:void(0)" class="nav-item active" onclick="showPage('tasks', this)"><div style="font-size:22px;">📋</div><span>GÖREV</span></a>
-        <a href="javascript:void(0)" class="nav-item" onclick="showPage('leaderboard', this)"><div style="font-size:22px;">🏆</div><span>SIRALAMA</span></a>
-        <a href="javascript:void(0)" class="nav-item" onclick="showPage('mine', this)"><div style="font-size:22px;">⛏️</div><span>MADEN</span></a>
-        <a href="javascript:void(0)" class="nav-item" onclick="showPage('profile', this)"><div style="font-size:22px;">👤</div><span>PROFİL</span></a>
-        <a href="javascript:void(0)" id="nav-admin" class="nav-item" style="display:none" onclick="showPage('admin', this)"><div style="font-size:22px;">⚙️</div><span>ADMİN</span></a>
-    </nav>
+    <div class="dock-container">
+        <a href="javascript:void(0)" class="dock-item active" onclick="showPage('tasks', this)">
+            <div class="dock-icon">⚡</div><div class="dock-text">GÖREV</div>
+        </a>
+        <a href="javascript:void(0)" class="dock-item" onclick="showPage('leaderboard', this)">
+            <div class="dock-icon">🏆</div><div class="dock-text">AĞ</div>
+        </a>
+        <a href="javascript:void(0)" class="dock-item" onclick="showPage('mine', this)">
+            <div class="dock-icon">⚙️</div><div class="dock-text">ÜRETİM</div>
+        </a>
+        <a href="javascript:void(0)" class="dock-item" onclick="showPage('profile', this)">
+            <div class="dock-icon">👤</div><div class="dock-text">PROFİL</div>
+        </a>
+        <a href="javascript:void(0)" id="nav-admin" class="dock-item" style="display:none" onclick="showPage('admin', this)">
+            <div class="dock-icon">🛡️</div><div class="dock-text">TERMİNAL</div>
+        </a>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.setHeaderColor('#05050a'); // Telegram üst barını temaya uydurur
         const API = window.location.origin;
         let user, tasks = [], miningInterval;
         let lbAllTime = [], lbDaily = [], lbYesterday = [];
@@ -245,7 +354,11 @@
         async function init() {
             try {
                 const tgUser = tg.initDataUnsafe?.user;
-                if (!tgUser) return;
+                if (!tgUser) {
+                    // Tarayıcıdan giriş yapmaya çalışanlar için UI gizleme
+                    document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--alert); font-family:Rajdhani;'><h2>SİSTEME ERİŞİM REDDEDİLDİ. TELEGRAM GEREKLİ.</h2></div>";
+                    return;
+                }
 
                 let refId = tg.initDataUnsafe?.start_param || getQueryParam('tgWebAppStartParam') || "";
 
@@ -255,7 +368,7 @@
                     body: JSON.stringify({ 
                         telegramId: tgUser.id.toString(), 
                         username: tgUser.username || "", 
-                        firstName: tgUser.first_name || "Kullanıcı",
+                        firstName: tgUser.first_name || "Guest",
                         referrerId: refId,
                         initData: tg.initData 
                     })
@@ -267,12 +380,14 @@
                     user.isAdmin = data.isAdmin;
                     
                     if(user.isBanned) {
-                        document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; flex-direction:column; text-align:center; color:var(--danger);'><h1>🚫 ERİŞİM REDDEDİLDİ</h1></div>";
+                        document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--alert); font-family:Rajdhani;'><h1>🚫 NODE BANNED</h1></div>";
                         return;
                     }
 
                     document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
                     if(user.isAdmin) document.getElementById('nav-admin').style.display = 'flex';
+
+                    document.getElementById('header-name').innerText = (user.username ? '@'+user.username : user.firstName).toUpperCase();
 
                     await refreshTasks();
                     updateUI();
@@ -283,7 +398,7 @@
                     tg.showAlert(data.message);
                 }
             } catch (e) { console.error("Init Error:", e); } finally {
-                setTimeout(() => { const loader = document.getElementById('loader'); if(loader) loader.style.display = 'none'; }, 800);
+                setTimeout(() => { const loader = document.getElementById('loader'); if(loader) loader.style.opacity = '0'; setTimeout(()=> loader.style.display='none',500) }, 800);
             }
         }
 
@@ -291,7 +406,7 @@
             const annContainer = document.getElementById('ann-container');
             const annScroll = document.getElementById('ann-scroll');
             if (annList && annList.length > 0) {
-                annScroll.innerText = annList.join(" 📢 ") + " 📢 ";
+                annScroll.innerText = annList.join(" ⚠️ ") + " ⚠️ ";
                 annContainer.style.display = 'flex';
             } else {
                 annContainer.style.display = 'none';
@@ -304,22 +419,22 @@
             document.getElementById('usd').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`;
             
             const lvl = document.getElementById('user-level');
-            lvl.innerText = `${user.level} COMMANDER`; 
-            lvl.className = `level-badge level-${user.level}`;
+            lvl.innerText = `LVL: ${user.level}`; 
+            
             if (document.getElementById('stat-ref-count')) document.getElementById('stat-ref-count').innerText = user.referralCount || 0;
             
             document.getElementById('ui-mine-level').innerText = user.miningLevel || 1;
             const currentReward = 1000 + (((user.miningLevel || 1) - 1) * 500);
-            document.getElementById('ui-mine-reward').innerText = `${currentReward.toLocaleString()} GEP`;
+            document.getElementById('ui-mine-reward').innerText = `${currentReward.toLocaleString()}`;
             
             const upgradeCost = (user.miningLevel || 1) * 10000;
-            document.getElementById('ui-upgrade-cost').innerText = `REQ: ${upgradeCost.toLocaleString()} GEP`; 
+            document.getElementById('ui-upgrade-cost').innerText = `GEREKEN: ${upgradeCost.toLocaleString()} GEP`; 
 
             renderStreak();
         }
 
         async function showAd() {
-            if(!AdController) return tg.showAlert("Reklam hazır değil.");
+            if(!AdController) return tg.showAlert("Sinyal hazır değil.");
             AdController.show().then(async (result) => {
                 if (result.done) {
                     const res = await fetch(`${API}/api/adsgram-reward`, {
@@ -330,7 +445,7 @@
                     if (res.ok) { 
                         const data = await res.json();
                         if(data.success) { user.points = data.points; updateUI(); }
-                        tg.showAlert("🎉 500 GEP ADDED!"); 
+                        tg.showAlert("Sinyal alındı! +500 GEP eklendi."); 
                     }
                 }
             });
@@ -343,7 +458,7 @@
                 body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) 
             });
             const data = await res.json();
-            if(data.success) { tg.showAlert(`🎉 REWARD CLAIMED! Streak: ${data.streak} Days (+${data.reward} GEP)`); init(); }
+            if(data.success) { tg.showAlert(`GÜNLÜK VERİ ÇEKİLDİ! Seri: ${data.streak}. Gün (+${data.reward} GEP)`); init(); }
             else tg.showAlert(data.message);
         }
 
@@ -360,14 +475,14 @@
                 user.points = data.points; 
                 user.lastMining = new Date().toISOString();
                 updateUI(); 
-                tg.showAlert(`🚀 MINING SUCCESS! +${data.reward} GEP.`);
+                tg.showAlert(`ÜRETİM BAŞARILI! +${data.reward} GEP.`);
                 runTimer(4 * 60 * 60 * 1000);
             } else { tg.showAlert(data.message); btn.disabled = false; }
         }
 
         async function upgradeMine() {
             const upgradeCost = (user.miningLevel || 1) * 10000;
-            tg.showConfirm(`Upgrade Mining to Level ${(user.miningLevel || 1) + 1}?\n\nCost: ${upgradeCost.toLocaleString()} GEP`, async (confirmed) => {
+            tg.showConfirm(`Motoru Seviye ${(user.miningLevel || 1) + 1} yapmak istiyor musun?\n\nBedel: ${upgradeCost.toLocaleString()} GEP`, async (confirmed) => {
                 if (!confirmed) return;
                 
                 const btn = document.getElementById('btn-upgrade');
@@ -384,7 +499,7 @@
                     user.points = data.points;
                     user.miningLevel = data.newLevel;
                     updateUI();
-                    tg.showAlert(`🎉 UPGRADE SUCCESS! Now Level ${data.newLevel}`);
+                    tg.showAlert(`GÜNCELLEME TAMAM! Yeni Seviye: ${data.newLevel}`);
                 } else {
                     tg.showAlert(data.message);
                 }
@@ -405,10 +520,15 @@
             const btn = document.getElementById('btn-mine');
             const timerDiv = document.getElementById('mining-timer');
             const statusText = document.getElementById('mine-status-text');
+            const icon = document.getElementById('mine-icon');
             
             btn.disabled = true;
             timerDiv.style.display = "block";
-            statusText.innerText = "WAIT FOR NEXT MINE:";
+            statusText.innerText = "ÜRETİM DEVAM EDİYOR";
+            statusText.style.color = "var(--text-dim)";
+            icon.style.animation = "none";
+            icon.style.borderColor = "var(--text-dim)";
+            icon.innerText = "⏳";
             
             clearInterval(miningInterval);
             miningInterval = setInterval(() => {
@@ -417,7 +537,11 @@
                     clearInterval(miningInterval);
                     btn.disabled = false;
                     timerDiv.style.display = "none";
-                    statusText.innerText = "Maden Hazır";
+                    statusText.innerText = "SİSTEM HAZIR";
+                    statusText.style.color = "#fff";
+                    icon.style.animation = "pulse-ring 2s infinite";
+                    icon.style.borderColor = "var(--cyan)";
+                    icon.innerText = "⚡";
                     return;
                 }
                 const h = Math.floor(timeLeft / 3600000);
@@ -440,11 +564,14 @@
             cont.innerHTML = tasks.map(t => {
                 const isDone = user.completedTasks.includes(t.taskId);
                 return `
-                <div class='card'>
-                    <div><h4 style="margin:0; font-size:14px;">${t.title}</h4><p style="margin:5px 0 0; color:var(--accent-lime); font-weight:800;">+${t.reward} GEP</p></div>
-                    <button style="background:${isDone ? 'var(--border)' : 'var(--accent-lime)'}; color:${isDone ? 'var(--text-dim)' : '#000'}; border:none; padding:10px 18px; border-radius:0; font-weight:900; text-transform:uppercase; font-size:11px; letter-spacing:1px;" 
+                <div class="task-row" style="${isDone ? 'border-left-color: var(--text-dim); opacity:0.6;' : ''}">
+                    <div>
+                        <div style="font-weight: 700; margin-bottom: 3px;">${t.title}</div>
+                        <div style="font-family: 'Rajdhani'; color: ${isDone ? 'var(--text-dim)' : 'var(--magenta)'}; font-weight: 700; letter-spacing: 1px;">+${t.reward} GEP</div>
+                    </div>
+                    <button class="btn-prime ${isDone ? '' : 'btn-outline'}" style="${isDone ? 'background:#333; border:none; padding:8px 15px; width:auto; font-size:12px;' : 'border-color:var(--magenta); color:var(--magenta); padding:8px 15px; width:auto; font-size:12px;'}" 
                         ${isDone ? 'disabled' : ''} onclick="completeTask('${t.taskId}','${t.target}')">
-                        ${isDone ? 'DONE' : 'GO'}
+                        ${isDone ? 'BİTTİ' : 'BAŞLA'}
                     </button>
                 </div>`;
             }).join('');
@@ -458,13 +585,13 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ telegramId: user.telegramId, taskId: tid, initData: tg.initData }) 
                 });
-                if((await res.json()).success) { tg.showAlert("REWARD ADDED!"); init(); }
+                if((await res.json()).success) { tg.showAlert("Veri Aktarıldı. Ödül Eklendi."); init(); }
             }, 3000);
         }
 
         async function loadLeaderboard() {
             const list = document.getElementById('leader-list');
-            list.innerHTML = "<p style='text-align:center; padding: 20px; color:var(--text-dim);'>LOADING PROFILES...</p>";
+            list.innerHTML = "<p style='text-align:center; padding: 20px; color:var(--text-dim);'>AĞ TARANIYOR...</p>";
             const res = await fetch(`${API}/api/leaderboard`);
             const data = await res.json();
             if(data.success) {
@@ -482,13 +609,9 @@
             tabs.forEach(t => {
                 const btn = document.getElementById(`tab-lb-${t}`);
                 if (t === tab) {
-                    btn.style.background = 'var(--accent-lime)';
-                    btn.style.color = '#000';
-                    btn.style.border = 'none';
+                    btn.classList.add('active');
                 } else {
-                    btn.style.background = 'transparent';
-                    btn.style.color = 'var(--accent-lime)';
-                    btn.style.border = '2px solid var(--accent-lime)';
+                    btn.classList.remove('active');
                 }
             });
             
@@ -504,7 +627,7 @@
             else dataToRender = lbYesterday;
             
             if(dataToRender.length === 0) {
-                list.innerHTML = `<p style='text-align:center; padding: 20px; color: var(--text-dim);'>${currentLbTab === 'yesterday' ? 'NO LOGS FOR YESTERDAY.' : 'NO POINTS EARNED YET.'}</p>`;
+                list.innerHTML = `<p style='text-align:center; padding: 20px; color: var(--text-dim);'>${currentLbTab === 'yesterday' ? 'DÜN İÇİN KAYIT BULUNAMADI.' : 'HENÜZ VERİ YOK.'}</p>`;
                 return;
             }
 
@@ -514,9 +637,9 @@
                 if(currentLbTab === 'daily') displayPoints = u.dailyPoints || 0;
                 
                 return `
-                <div class="card" style="margin:0; border-radius:0; border-bottom:1px solid var(--border); background: ${i < 3 ? 'rgba(50,255,126,0.03)' : 'transparent'};">
-                    <span style="color: ${i < 3 ? 'var(--accent-lime)' : 'var(--text-main)'}; font-weight: ${i < 3 ? 800 : 400};">${rank}. ${u.username || u.firstName}</span>
-                    <span style="color:var(--accent-lime); font-weight:900;">${displayPoints.toLocaleString()} GEP</span>
+                <div class="leader-row">
+                    <span style="color: ${i < 3 ? 'var(--cyan)' : 'var(--text-main)'}; font-weight: ${i < 3 ? 700 : 400};">${rank}. ${u.username || u.firstName}</span>
+                    <span style="font-family:'Rajdhani'; color:var(--cyan); font-weight:700; letter-spacing:1px;">${displayPoints.toLocaleString()}</span>
                 </div>
                 `;
             }).join('');
@@ -531,7 +654,7 @@
                 const rewardVal = 100 * Math.pow(2, i - 1);
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `streak-day ${i <= currentStreak ? 'completed' : ''}`;
-                dayDiv.innerHTML = `<div>DAY ${i}</div><div style="font-weight:900; margin-top:3px; font-size:10px; color:var(--accent-lime);">${rewardVal}</div>`;
+                dayDiv.innerHTML = `<div style="font-family:'Rajdhani'; font-weight:700; font-size:12px;">GÜN ${i}</div><div style="font-family:'Rajdhani'; font-weight:700; margin-top:2px; font-size:10px; color:var(--cyan);">${rewardVal}</div>`;
                 streakBox.appendChild(dayDiv);
             }
         }
@@ -547,16 +670,16 @@
             document.getElementById('adm-stat-points').innerText = data.totalPoints.toLocaleString();
             
             document.getElementById('adm-task-list').innerHTML = data.tasks.map(t => `
-                <div class="admin-list-item">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-glow); padding:10px 0;">
                     <span style="font-size:13px;">${t.title}</span>
-                    <button class="btn-small btn-danger" onclick="deleteTask('${t.taskId}')">SİL</button>
+                    <button class="btn-prime btn-alert" style="padding:6px 12px; width:auto; font-size:10px;" onclick="deleteTask('${t.taskId}')">SİL</button>
                 </div>
             `).join('') || "Görev yok.";
 
             document.getElementById('adm-ann-list').innerHTML = data.announcements.map((a, i) => `
-                <div class="admin-list-item">
-                    <span style="font-size:11px;">${a.substring(0,30)}...</span>
-                    <button class="btn-small btn-danger" onclick="deleteAnnouncement(${i})">SİL</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-glow); padding:10px 0;">
+                    <span style="font-size:11px; color:var(--text-dim);">${a.substring(0,30)}...</span>
+                    <button class="btn-prime btn-alert" style="padding:6px 12px; width:auto; font-size:10px;" onclick="deleteAnnouncement(${i})">SİL</button>
                 </div>
             `).join('') || "Duyuru yok.";
         }
@@ -565,7 +688,7 @@
             const title = document.getElementById('adm-task-title').value;
             const reward = document.getElementById('adm-task-reward').value;
             const target = document.getElementById('adm-task-target').value;
-            if(!title || !reward || !target) return tg.showAlert("Lütfen tüm alanları doldurun.");
+            if(!title || !reward || !target) return tg.showAlert("Tüm alanlar zorunludur.");
             
             await fetch(`${API}/api/admin/add-task`, {
                 method: 'POST',
@@ -622,12 +745,12 @@
                 body: JSON.stringify({ adminId: user.telegramId, targetId, action, amount, initData: tg.initData }) 
             });
             const data = await res.json();
-            tg.showAlert(data.success ? "İşlem Tamamlandı" : "Kullanıcı bulunamadı veya Hata!");
+            tg.showAlert(data.success ? "İşlem Tamamlandı" : "Hata!");
         }
 
         function showPage(p, el) {
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelectorAll('.dock-item').forEach(nav => nav.classList.remove('active'));
             document.getElementById(`page-${p}`).classList.add('active');
             el.classList.add('active');
             
@@ -638,7 +761,7 @@
         function copyRef() {
             const input = document.getElementById('ref-link');
             input.select(); document.execCommand('copy');
-            tg.showAlert("✅ Link kopyalandı!");
+            tg.showAlert("Bağlantı kopyalandı!");
         }
 
         window.onload = init;
