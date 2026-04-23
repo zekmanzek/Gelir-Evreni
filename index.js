@@ -35,8 +35,8 @@ const User = mongoose.model('User', new mongoose.Schema({
     username: { type: String, default: '', index: true }, 
     firstName: { type: String, default: 'Kullanıcı' }, 
     points: { type: Number, default: 1000 },
-    dailyPoints: { type: Number, default: 0 }, // YENİ: Günlük kazanılan puan
-    lastPointDate: { type: Date, default: Date.now }, // YENİ: Son puan kazanma tarihi (sıfırlama için)
+    dailyPoints: { type: Number, default: 0 }, 
+    lastPointDate: { type: Date, default: Date.now }, 
     completedTasks: { type: [String], default: [] },
     lastMining: { type: Date, default: new Date(0) },
     lastCheckin: { type: Date, default: new Date(0) },
@@ -59,10 +59,17 @@ const Settings = mongoose.model('Settings', new mongoose.Schema({
     botUsername: { type: String, default: 'gelirevreni_bot' }
 }));
 
-// YENİ HELPER FONKSİYON: Puan eklerken günlük puanı da sıfırlar veya üstüne ekler
+// YENİ: Dünün Kazananları için Veritabanı Tablosu
+const YesterdayWinner = mongoose.model('YesterdayWinner', new mongoose.Schema({
+    rank: Number,
+    username: String,
+    firstName: String,
+    points: Number,
+    date: { type: Date, default: Date.now }
+}));
+
 function addPoints(user, amount) {
     const now = new Date();
-    // Eğer kullanıcının son puan kazandığı tarih bugün değilse, günlük puanı sıfırla
     if (user.lastPointDate.toDateString() !== now.toDateString()) {
         user.dailyPoints = 0;
     }
@@ -70,6 +77,53 @@ function addPoints(user, amount) {
     user.dailyPoints += amount;
     user.lastPointDate = now;
 }
+
+// YENİ: Gece Bekçisi - Her gün 23:58'de günlük sıralamayı arşivler
+async function archiveDailyLeaderboard() {
+    try {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        // Bugün arşiv yapılmış mı kontrol et (çift kayıt olmasın)
+        const existing = await YesterdayWinner.findOne({ date: { $gte: today } });
+        if (existing) return;
+
+        // Günlük puanı en yüksek 100 kişiyi bul
+        const winners = await User.find({ dailyPoints: { $gt: 0 } })
+            .sort({ dailyPoints: -1 })
+            .limit(100);
+
+        if (winners.length > 0) {
+            await YesterdayWinner.deleteMany({}); // Eski arşivi temizle
+            
+            const archiveData = winners.map((u, i) => ({
+                rank: i + 1,
+                username: u.username,
+                firstName: u.firstName,
+                points: u.dailyPoints,
+                date: new Date()
+            }));
+            await YesterdayWinner.insertMany(archiveData);
+            
+            // Tüm kullanıcıların dailyPoints değerini 0 yap
+            await User.updateMany({}, { $set: { dailyPoints: 0 } });
+            console.log("✅ Günlük sıralama arşive eklendi ve sıfırlandı.");
+        } else {
+            // Liste boşsa bile bugünü işaretle ki sistem sürekli çalışmaya çalışmasın
+            await YesterdayWinner.create({ rank: 0, username: 'sistem', firstName: 'sistem', points: 0, date: new Date() });
+        }
+    } catch (err) {
+        console.error("Arşivleme Hatası:", err);
+    }
+}
+
+// Zamanlayıcı: Her 1 dakikada bir kontrol eder. Saat 23:58 olduğunda arşivi tetikler.
+setInterval(() => {
+    const now = new Date();
+    if (now.getHours() === 23 && now.getMinutes() === 58) {
+        archiveDailyLeaderboard();
+    }
+}, 60000);
 
 // --- API ROTALARI ---
 
@@ -84,18 +138,18 @@ app.post('/api/user/auth', async (req, res) => {
                 telegramId, 
                 username: (username || '').toLowerCase(), 
                 firstName,
-                points: 0, // Aşağıda 1000 eklenecek
+                points: 0, 
                 dailyPoints: 0
             });
-            addPoints(user, 1000); // Başlangıç puanı günlük puana da işler
+            addPoints(user, 1000); 
 
             if (referrerId && String(referrerId) !== String(telegramId)) {
                 const referrer = await User.findOne({ telegramId: referrerId });
                 if (referrer) {
-                    addPoints(referrer, 2500); // Davet edene ekle
+                    addPoints(referrer, 2500); 
                     referrer.referralCount += 1;
                     await referrer.save();
-                    addPoints(user, 1000); // Davet edilene ekle
+                    addPoints(user, 1000); 
                 }
             }
         } else {
@@ -177,7 +231,7 @@ app.post('/api/upgrade-mine', async (req, res) => {
     const upgradeCost = user.miningLevel * 10000;
 
     if (user.points >= upgradeCost) {
-        user.points -= upgradeCost; // Harcama günlük kazanılanı (dailyPoints) düşürmez, genelden düşer
+        user.points -= upgradeCost; 
         user.miningLevel += 1;
         await user.save();
         res.json({ success: true, points: user.points, newLevel: user.miningLevel, newReward: 1000 + ((user.miningLevel - 1) * 500) });
@@ -199,17 +253,20 @@ app.post('/api/tasks/complete', async (req, res) => {
 
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
 
-// GÜNCELLENDİ: Hem genel hem günlük liderlik tablosunu yollar
+// GÜNCELLENDİ: Liderlik Tablosu artık DÜNÜN verilerini de yolluyor
 app.get('/api/leaderboard', async (req, res) => { 
     // Genel Top 100
     const allTime = await User.find().sort({ points: -1 }).limit(100); 
     
-    // Günlük Top 100 (Sadece bugün puan kazanmış olanlar)
+    // Günlük Top 100
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const daily = await User.find({ lastPointDate: { $gte: today } }).sort({ dailyPoints: -1 }).limit(100);
 
-    res.json({ success: true, leaderboard: allTime, dailyLeaderboard: daily }); 
+    // Dünün Top 100 (Sistem güvenlik kaydı olan rank: 0 hariç)
+    const yesterday = await YesterdayWinner.find({ rank: { $gt: 0 } }).sort({ rank: 1 });
+
+    res.json({ success: true, leaderboard: allTime, dailyLeaderboard: daily, yesterdayLeaderboard: yesterday }); 
 });
 
 // --- ADMIN API ---
