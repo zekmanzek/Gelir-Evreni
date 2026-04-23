@@ -157,6 +157,8 @@
 
         <div class="card" style="flex-direction: column; text-align: center;">
             <h3>👥 Arkadaş Davet Et</h3>
+            <p style="font-size: 12px; color: var(--success); margin: 5px 0; font-weight: bold;">Arkadaşını davet et, 2500 GEP kazan!</p>
+            <p style="font-size: 11px; color: var(--text-dim); margin-top: 0; margin-bottom: 10px;">Gelen arkadaşın da 1000 GEP ile başlar.</p>
             <input type="text" id="ref-link" class="ref-box" readonly onclick="this.select()">
             <button class="btn-full" onclick="copyRef()">LİNKİ KOPYALA</button>
         </div>
@@ -217,7 +219,7 @@
         tg.expand();
         const API = window.location.origin;
         let user, tasks = [], miningInterval;
-        let lbAllTime = [], lbDaily = [], lbYesterday = []; // YENİ: lbYesterday eklendi
+        let lbAllTime = [], lbDaily = [], lbYesterday = [];
         let currentLbTab = 'all'; 
         
         const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "27433" }) : null;
@@ -452,7 +454,7 @@
             if(data.success) {
                 lbAllTime = data.leaderboard || [];
                 lbDaily = data.dailyLeaderboard || [];
-                lbYesterday = data.yesterdayLeaderboard || []; // YENİ
+                lbYesterday = data.yesterdayLeaderboard || []; 
                 renderLB();
             }
         }
@@ -460,7 +462,6 @@
         function switchLB(tab) {
             currentLbTab = tab;
             
-            // Butonların hepsini önce pasif duruma getir
             const tabs = ['all', 'daily', 'yesterday'];
             tabs.forEach(t => {
                 const btn = document.getElementById(`tab-lb-${t}`);
@@ -481,7 +482,6 @@
         function renderLB() {
             const list = document.getElementById('leader-list');
             
-            // Hangi verinin gösterileceğini seç
             let dataToRender = [];
             if(currentLbTab === 'all') dataToRender = lbAllTime;
             else if(currentLbTab === 'daily') dataToRender = lbDaily;
@@ -493,9 +493,7 @@
             }
 
             list.innerHTML = dataToRender.map((u, i) => {
-                // Eğer "Dün" sekmesindeysek veritabanından gelen rank'ı (sıralamayı) kullan
                 const rank = currentLbTab === 'yesterday' && u.rank ? u.rank : (i + 1);
-                // "Genel" sekmesi u.points kullanır, "Günlük" ve "Dün" sekmeleri u.dailyPoints veya u.points (yesterday modeli direkt points olarak tutar)
                 let displayPoints = u.points;
                 if(currentLbTab === 'daily') displayPoints = u.dailyPoints || 0;
                 
