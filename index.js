@@ -59,7 +59,6 @@ const Settings = mongoose.model('Settings', new mongoose.Schema({
     botUsername: { type: String, default: 'gelirevreni_bot' }
 }));
 
-// YENİ: Dünün Kazananları için Veritabanı Tablosu
 const YesterdayWinner = mongoose.model('YesterdayWinner', new mongoose.Schema({
     rank: Number,
     username: String,
@@ -78,23 +77,20 @@ function addPoints(user, amount) {
     user.lastPointDate = now;
 }
 
-// YENİ: Gece Bekçisi - Her gün 23:58'de günlük sıralamayı arşivler
 async function archiveDailyLeaderboard() {
     try {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-        // Bugün arşiv yapılmış mı kontrol et (çift kayıt olmasın)
         const existing = await YesterdayWinner.findOne({ date: { $gte: today } });
         if (existing) return;
 
-        // Günlük puanı en yüksek 100 kişiyi bul
         const winners = await User.find({ dailyPoints: { $gt: 0 } })
             .sort({ dailyPoints: -1 })
             .limit(100);
 
         if (winners.length > 0) {
-            await YesterdayWinner.deleteMany({}); // Eski arşivi temizle
+            await YesterdayWinner.deleteMany({}); 
             
             const archiveData = winners.map((u, i) => ({
                 rank: i + 1,
@@ -105,11 +101,9 @@ async function archiveDailyLeaderboard() {
             }));
             await YesterdayWinner.insertMany(archiveData);
             
-            // Tüm kullanıcıların dailyPoints değerini 0 yap
             await User.updateMany({}, { $set: { dailyPoints: 0 } });
             console.log("✅ Günlük sıralama arşive eklendi ve sıfırlandı.");
         } else {
-            // Liste boşsa bile bugünü işaretle ki sistem sürekli çalışmaya çalışmasın
             await YesterdayWinner.create({ rank: 0, username: 'sistem', firstName: 'sistem', points: 0, date: new Date() });
         }
     } catch (err) {
@@ -117,7 +111,6 @@ async function archiveDailyLeaderboard() {
     }
 }
 
-// Zamanlayıcı: Her 1 dakikada bir kontrol eder. Saat 23:58 olduğunda arşivi tetikler.
 setInterval(() => {
     const now = new Date();
     if (now.getHours() === 23 && now.getMinutes() === 58) {
@@ -125,9 +118,71 @@ setInterval(() => {
     }
 }, 60000);
 
-// --- API ROTALARI ---
 
-app.post('/api/user/auth', async (req, res) => {
+// ==========================================
+// 🛡️ YENİ: KRİPTOGRAFİK GÜVENLİK SİSTEMİ 🛡️
+// ==========================================
+
+// 1. Telegram Kimlik Kartı Doğrulayıcı
+function verifyTelegramWebAppData(telegramInitData) {
+    try {
+        if (!telegramInitData) return false;
+        const initData = new URLSearchParams(telegramInitData);
+        const hash = initData.get('hash');
+        const authDate = initData.get('auth_date');
+        
+        if (!hash || !authDate) return false;
+
+        // İstek 24 saatten eskiyse reddet (Hackerların eski veriyi kopyalamasını engeller)
+        const now = Math.floor(Date.now() / 1000);
+        if (now - parseInt(authDate) > 86400) return false;
+
+        initData.delete('hash');
+        const keys = Array.from(initData.keys()).sort();
+        const dataCheckString = keys.map(key => `${key}=${initData.get(key)}`).join('\n');
+        
+        const secretKey = crypto.createHmac('sha256', 'WebAppData').update(TOKEN).digest();
+        const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+        
+        return calculatedHash === hash;
+    } catch (error) {
+        return false;
+    }
+}
+
+// 2. Güvenlik Duvarı (Middleware)
+const secureRoute = (req, res, next) => {
+    const initData = req.body.initData; 
+    const reqId = req.body.telegramId || req.body.adminId;
+
+    if (!initData) {
+        return res.status(403).json({ success: false, message: "⚠️ Güvenlik Kilidi Eksik! Uygulamayı kapatıp tekrar açın." });
+    }
+
+    if (!verifyTelegramWebAppData(initData)) {
+        return res.status(403).json({ success: false, message: "⚠️ Geçersiz veya sahte kimlik tespiti!" });
+    }
+
+    try {
+        const params = new URLSearchParams(initData);
+        const userData = JSON.parse(params.get('user'));
+        
+        // Dışarıdan biri senin veya başkasının ID'sini yazıp istek atmaya çalışırsa engelle!
+        if (reqId && String(reqId) !== String(userData.id)) {
+            return res.status(403).json({ success: false, message: "⚠️ Kimlik hırsızlığı engellendi!" });
+        }
+        
+        next();
+    } catch (e) {
+        return res.status(403).json({ success: false, message: "Veri okuma hatası!" });
+    }
+};
+// ==========================================
+
+
+// --- API ROTALARI (GÜVENLİK DUVARI EKLENDİ) ---
+
+app.post('/api/user/auth', secureRoute, async (req, res) => {
     const { telegramId, username, firstName, referrerId } = req.body;
     
     try {
@@ -172,7 +227,7 @@ app.post('/api/user/auth', async (req, res) => {
     }
 });
 
-app.post('/api/daily-reward', async (req, res) => {
+app.post('/api/daily-reward', secureRoute, async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
     if (!user) return res.json({ success: false });
@@ -199,7 +254,7 @@ app.post('/api/daily-reward', async (req, res) => {
     res.json({ success: true, points: user.points, streak: user.streak, reward });
 });
 
-app.post('/api/adsgram-reward', async (req, res) => {
+app.post('/api/adsgram-reward', secureRoute, async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
     if (!user) return res.json({ success: false });
@@ -209,7 +264,7 @@ app.post('/api/adsgram-reward', async (req, res) => {
     res.json({ success: true, points: user.points });
 });
 
-app.post('/api/mine', async (req, res) => {
+app.post('/api/mine', secureRoute, async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
     const now = new Date();
@@ -223,7 +278,7 @@ app.post('/api/mine', async (req, res) => {
     res.json({ success: false, message: "Maden hazır değil." });
 });
 
-app.post('/api/upgrade-mine', async (req, res) => {
+app.post('/api/upgrade-mine', secureRoute, async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
     if (!user) return res.json({ success: false });
@@ -240,7 +295,7 @@ app.post('/api/upgrade-mine', async (req, res) => {
     }
 });
 
-app.post('/api/tasks/complete', async (req, res) => {
+app.post('/api/tasks/complete', secureRoute, async (req, res) => {
     const { telegramId, taskId } = req.body;
     const user = await User.findOne({ telegramId });
     const task = await Task.findOne({ taskId });
@@ -251,42 +306,42 @@ app.post('/api/tasks/complete', async (req, res) => {
     res.json({ success: true, points: user.points });
 });
 
+// GET rotalarına güvenlik kilidi gerekmez, çünkü buralar sadece "okuma" (liste çekme) işlemleridir. Veri manipüle edilemez.
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
 
-// GÜNCELLENDİ: Liderlik Tablosu artık DÜNÜN verilerini de yolluyor
 app.get('/api/leaderboard', async (req, res) => { 
-    // Genel Top 100
     const allTime = await User.find().sort({ points: -1 }).limit(100); 
     
-    // Günlük Top 100
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const daily = await User.find({ lastPointDate: { $gte: today } }).sort({ dailyPoints: -1 }).limit(100);
 
-    // Dünün Top 100 (Sistem güvenlik kaydı olan rank: 0 hariç)
     const yesterday = await YesterdayWinner.find({ rank: { $gt: 0 } }).sort({ rank: 1 });
 
     res.json({ success: true, leaderboard: allTime, dailyLeaderboard: daily, yesterdayLeaderboard: yesterday }); 
 });
 
-// --- ADMIN API ---
-app.post('/api/admin/stats', async (req, res) => {
+// --- ADMIN API (GÜVENLİK DUVARI EKLENDİ) ---
+app.post('/api/admin/stats', secureRoute, async (req, res) => {
     if (String(req.body.adminId) !== String(ADMIN_ID)) return res.status(403).send("Yetkisiz");
     const settings = await Settings.findOne() || { announcements: [] };
     res.json({ totalUsers: await User.countDocuments(), totalPoints: (await User.aggregate([{$group: {_id:null, total:{$sum:"$points"}}}]))[0]?.total || 0, announcements: settings.announcements, tasks: await Task.find() });
 });
 
-app.post('/api/admin/add-task', async (req, res) => {
+app.post('/api/admin/add-task', secureRoute, async (req, res) => {
+    if (String(req.body.adminId) !== String(ADMIN_ID)) return res.status(403).send("Yetkisiz");
     await Task.create({ taskId: Date.now().toString(), title: req.body.title, reward: req.body.reward, target: req.body.target });
     res.json({ success: true });
 });
 
-app.post('/api/admin/delete-task', async (req, res) => {
+app.post('/api/admin/delete-task', secureRoute, async (req, res) => {
+    if (String(req.body.adminId) !== String(ADMIN_ID)) return res.status(403).send("Yetkisiz");
     await Task.deleteOne({ taskId: req.body.taskId });
     res.json({ success: true });
 });
 
-app.post('/api/admin/announcement', async (req, res) => {
+app.post('/api/admin/announcement', secureRoute, async (req, res) => {
+    if (String(req.body.adminId) !== String(ADMIN_ID)) return res.status(403).send("Yetkisiz");
     const s = await Settings.findOne() || await Settings.create({});
     if(req.body.action === 'add') s.announcements.push(req.body.text);
     else s.announcements.splice(req.body.index, 1);
@@ -294,7 +349,8 @@ app.post('/api/admin/announcement', async (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/admin/user-manage', async (req, res) => {
+app.post('/api/admin/user-manage', secureRoute, async (req, res) => {
+    if (String(req.body.adminId) !== String(ADMIN_ID)) return res.status(403).send("Yetkisiz");
     const { targetId, action, amount } = req.body;
     const user = await User.findOne({ $or: [{ telegramId: targetId }, { username: targetId }] });
     if (!user) return res.json({ success: false });
