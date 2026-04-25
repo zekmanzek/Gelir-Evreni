@@ -3,33 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gelir Evreni | Cyber Node</title>
+    <title>Gelir Evreni | Premium Web3</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg-deep: #05050a;
-            --panel-bg: rgba(15, 15, 25, 0.7);
-            --cyan: #00f3ff;
-            --magenta: #bc13fe;
-            --alert: #ff003c;
-            --success: #00ff66;
-            --text-main: #e2e8f0;
-            --text-dim: #64748b;
-            --border-glow: rgba(0, 243, 255, 0.3);
+            --bg-dark: #020617;
+            --bg-glow: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 70%);
+            --glass-bg: rgba(15, 23, 42, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --gold: #F59E0B;
+            --gold-glow: rgba(245, 158, 11, 0.4);
+            --cyan: #06b6d4;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body { 
-            font-family: 'Space Grotesk', sans-serif; 
-            background-color: var(--bg-deep); 
-            /* Holografik Izgara Arka Plan */
-            background-image: 
-                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
+            font-family: 'Outfit', sans-serif; 
+            background: var(--bg-dark);
+            background-image: var(--bg-glow);
+            background-attachment: fixed;
             color: var(--text-main); 
             margin: 0; 
             padding-bottom: 120px; 
@@ -37,144 +36,128 @@
             overflow-x: hidden; 
         }
         
-        h1, h2, h3, h4 { font-family: 'Rajdhani', sans-serif; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 15px 0;}
+        h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; margin: 0 0 15px 0; letter-spacing: -0.5px; }
 
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-deep); display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s; }
-        .cyber-spinner { width: 60px; height: 60px; border: 3px solid transparent; border-top-color: var(--cyan); border-right-color: var(--magenta); border-radius: 50%; animation: spin 1s linear infinite; }
+        /* Premium Loader */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease-out; }
+        .loader-ring { width: 80px; height: 80px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; filter: drop-shadow(0 0 10px var(--gold-glow)); }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .announcement-container { background: var(--alert); color: #fff; font-family: 'Rajdhani', sans-serif; overflow: hidden; white-space: nowrap; position: sticky; top: 0; z-index: 2000; height: 30px; display: none; align-items: center; border-bottom: 1px solid #fff; }
-        .announcement-scroll { display: inline-block; padding-left: 100%; animation: marquee 20s linear infinite; font-size: 14px; font-weight: 700; letter-spacing: 2px;}
+        .announcement-container { background: linear-gradient(90deg, #ef4444, #f97316); color: #fff; overflow: hidden; white-space: nowrap; position: sticky; top: 0; z-index: 2000; height: 35px; display: none; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-weight: 800; font-size: 13px; letter-spacing: 1px;}
+        .announcement-scroll { display: inline-block; padding-left: 100%; animation: marquee 25s linear infinite; }
         @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-        /* Kokpit Header */
+        /* Game HUD (Header) */
         .header-panel { 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: linear-gradient(180deg, rgba(0, 243, 255, 0.1) 0%, transparent 100%);
-            border-bottom: 1px solid var(--border-glow);
-            padding: 25px 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            padding: 30px 20px 20px; text-align: center;
+            background: linear-gradient(180deg, rgba(15,23,42,0.8) 0%, transparent 100%);
         }
-        .header-left { display: flex; flex-direction: column; align-items: flex-start; }
-        .header-right { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
-        
         .level-badge { 
-            font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 2px;
-            padding: 4px 10px; border-left: 3px solid var(--cyan); background: rgba(0,243,255,0.1); 
+            display: inline-block; padding: 6px 16px; border-radius: 20px;
+            font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+            margin-bottom: 15px; color: var(--gold); box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        
-        .balance-label { font-size: 10px; color: var(--text-dim); font-weight: 700; letter-spacing: 2px; margin-bottom: 5px; }
-        .points { font-family: 'Rajdhani', sans-serif; font-size: 42px; font-weight: 700; color: #fff; text-shadow: 0 0 15px var(--cyan); line-height: 1; }
-        .usd-val { font-size: 12px; color: var(--cyan); margin-top: 5px; font-weight: 700; }
+        .balance-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .balance-label { font-size: 12px; color: var(--text-dim); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
+        .points-row { display: flex; align-items: baseline; gap: 8px; filter: drop-shadow(0 0 20px var(--gold-glow)); }
+        .points { font-family: 'Space Grotesk', sans-serif; font-size: 52px; font-weight: 700; line-height: 1; }
+        .currency { font-size: 20px; font-weight: 800; color: var(--gold); }
+        .usd-val { font-size: 14px; color: var(--cyan); margin-top: 8px; font-weight: 600; background: rgba(6, 182, 212, 0.1); padding: 4px 12px; border-radius: 12px;}
 
-        .page { display: none; padding: 20px; animation: glitch-in 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+        /* Sayfa Geçişleri */
+        .page { display: none; padding: 15px 20px; animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
         .page.active { display: block; }
-        @keyframes glitch-in { 0% { transform: translateY(20px); opacity: 0; filter: contrast(200%); } 100% { transform: translateY(0); opacity: 1; filter: contrast(100%); } }
+        @keyframes fadeSlideUp { to { opacity: 1; transform: translateY(0); } }
 
-        /* Kesik Köşeli Cyber Modüller */
-        .cyber-module {
-            position: relative;
-            background: var(--panel-bg);
-            backdrop-filter: blur(10px);
-            padding: 25px 20px;
-            margin-bottom: 20px;
-            /* Bilim Kurgu Kesik Köşe Efekti */
-            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-        .cyber-module::before {
-            content: ''; position: absolute; top: 0; left: 15px; width: 40px; height: 2px; background: var(--cyan);
-            box-shadow: 0 0 10px var(--cyan);
+        /* Premium Glassmorphism Kartlar */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+            transition: transform 0.3s ease;
         }
 
-        /* Yüzen Kapsül Navigasyon */
+        /* Yüzen Cam Navigasyon */
         .dock-container {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 400px;
-            background: rgba(5, 5, 10, 0.85); backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glow);
-            border-radius: 30px; /* Kapsül Görünümü */
+            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+            width: 92%; max-width: 400px;
+            background: rgba(15, 23, 42, 0.85); 
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px; 
             display: flex; justify-content: space-between; align-items: center;
-            padding: 8px 15px; box-shadow: 0 15px 35px rgba(0,243,255,0.15);
+            padding: 8px 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
             z-index: 1000;
         }
         .dock-item {
             flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: var(--text-dim); text-decoration: none; transition: all 0.3s ease;
-            height: 50px; border-radius: 20px;
+            color: var(--text-dim); text-decoration: none; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 54px; border-radius: 20px; position: relative;
         }
-        .dock-icon { font-size: 20px; margin-bottom: 2px; transition: transform 0.3s; }
-        .dock-text { font-family: 'Rajdhani', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+        .dock-icon { font-size: 22px; margin-bottom: 4px; transition: transform 0.3s; filter: grayscale(100%) opacity(0.7); }
+        .dock-text { font-size: 10px; font-weight: 800; letter-spacing: 0.5px; opacity: 0; transform: translateY(5px); transition: all 0.3s; position: absolute; bottom: 6px; }
         
-        .dock-item.active { color: var(--cyan); background: rgba(0, 243, 255, 0.1); }
-        .dock-item.active .dock-icon { transform: translateY(-3px); text-shadow: 0 0 10px var(--cyan); filter: drop-shadow(0 0 5px var(--cyan)); }
+        .dock-item.active { background: rgba(255,255,255,0.05); color: var(--gold); }
+        .dock-item.active .dock-icon { transform: translateY(-8px) scale(1.1); filter: grayscale(0%) drop-shadow(0 0 8px var(--gold-glow)); }
+        .dock-item.active .dock-text { opacity: 1; transform: translateY(0); }
 
-        /* Form ve Inputlar */
-        .cyber-input {
-            width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border-glow);
-            padding: 15px; color: var(--cyan); font-family: 'Space Grotesk', sans-serif;
-            font-size: 14px; text-align: center; margin-bottom: 15px; outline: none;
-            transition: 0.3s;
+        /* Oyun Butonları */
+        .game-btn {
+            width: 100%; padding: 18px; border-radius: 16px;
+            font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700;
+            letter-spacing: 1px; text-transform: uppercase; cursor: pointer; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: none;
+            background: linear-gradient(135deg, var(--gold) 0%, #d97706 100%);
+            color: #000; box-shadow: 0 4px 15px var(--gold-glow), inset 0 -3px 0 rgba(0,0,0,0.2);
         }
-        .cyber-input:focus { background: rgba(0,243,255,0.05); box-shadow: inset 0 0 10px rgba(0,243,255,0.2); }
+        .game-btn:active { transform: scale(0.96) translateY(2px); box-shadow: 0 2px 5px var(--gold-glow), inset 0 -1px 0 rgba(0,0,0,0.2); }
+        .game-btn:disabled { background: #1e293b; color: #475569; box-shadow: none; cursor: not-allowed; transform: none; }
 
-        /* Butonlar */
-        .btn-prime {
-            width: 100%; padding: 18px; font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-            letter-spacing: 3px; text-transform: uppercase; cursor: pointer; transition: 0.2s;
-            background: var(--cyan); color: #000; border: none;
-            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-        }
-        .btn-prime:active { transform: scale(0.98); background: #fff; }
-        .btn-prime:disabled { background: #333; color: #666; cursor: not-allowed; }
-
-        .btn-outline { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); }
-        .btn-outline:active { background: var(--cyan); color: #000; }
+        .btn-outline { background: transparent; color: var(--gold); border: 2px solid var(--gold); box-shadow: none; }
+        .btn-outline:active { background: rgba(245, 158, 11, 0.1); }
         
-        .btn-alert { background: transparent; color: var(--alert); border: 1px solid var(--alert); }
-        .btn-alert:active { background: var(--alert); color: #000; }
+        .btn-success { background: linear-gradient(135deg, var(--success) 0%, #059669 100%); color: #fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3), inset 0 -3px 0 rgba(0,0,0,0.2); }
+        .btn-danger { background: var(--danger); color: #fff; box-shadow: none; }
+
+        .glass-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 12px; padding: 16px; color: var(--gold); font-family: 'Space Grotesk', sans-serif; font-size: 14px; text-align: center; margin-bottom: 15px; outline: none; transition: 0.3s; font-weight: 700; }
+        .glass-input:focus { border-color: var(--gold); background: rgba(245, 158, 11, 0.05); }
 
         /* Sıralama Sekmeleri */
-        .tab-container { display: flex; gap: 5px; margin-bottom: 20px; }
-        .tab-btn {
-            flex: 1; padding: 12px 0; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700;
-            background: transparent; border: 1px solid var(--border-glow); color: var(--text-dim);
-            cursor: pointer; transition: 0.3s; text-transform: uppercase;
-        }
-        .tab-btn.active { background: var(--cyan); color: #000; border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,243,255,0.3); }
+        .tab-container { display: flex; gap: 8px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 6px; border-radius: 16px; border: 1px solid var(--glass-border); }
+        .tab-btn { flex: 1; padding: 12px 0; border-radius: 12px; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700; background: transparent; border: none; color: var(--text-dim); cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .tab-btn.active { background: var(--glass-bg); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 1px solid var(--glass-border); }
 
-        /* Sıralama Listesi */
-        .leader-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05);
-            font-family: 'Space Grotesk', sans-serif; font-size: 14px;
-        }
-        .leader-row:first-child { background: linear-gradient(90deg, rgba(0,243,255,0.1), transparent); border-left: 2px solid var(--cyan); }
+        /* Sıralama & Görev Listeleri */
+        .list-row { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--glass-border); }
+        .list-row:last-child { border-bottom: none; }
+        .rank-top { background: linear-gradient(90deg, rgba(245, 158, 11, 0.1), transparent); border-left: 3px solid var(--gold); border-radius: 8px; margin-bottom: 4px;}
 
-        /* Görev Listesi */
-        .task-row {
-            display: flex; justify-content: space-between; align-items: center;
-            background: rgba(0,0,0,0.3); border: 1px solid var(--border-glow);
-            padding: 15px; margin-bottom: 10px; border-left: 3px solid var(--magenta);
-        }
-
-        /* Maden Alanı Özelleştirme */
-        .mine-circle {
-            width: 150px; height: 150px; margin: 0 auto 30px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(0,243,255,0.2) 0%, transparent 70%);
-            border: 2px dashed var(--cyan); display: flex; justify-content: center; align-items: center;
-            font-size: 50px; animation: pulse-ring 2s infinite; filter: drop-shadow(0 0 10px var(--cyan));
-        }
-        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(0,243,255,0.4); } 70% { box-shadow: 0 0 0 20px rgba(0,243,255,0); } 100% { box-shadow: 0 0 0 0 rgba(0,243,255,0); } }
+        .task-card { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 16px 20px; border-radius: 20px; margin-bottom: 12px; }
         
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .stat-box { background: rgba(0,0,0,0.4); padding: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
-        .stat-val { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; color: var(--magenta); }
+        /* Interactive Core (Maden Ekrani) */
+        .core-container { position: relative; width: 220px; height: 220px; margin: 20px auto 40px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        .core-glow { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%); animation: pulse 3s infinite; }
+        .core-button { font-size: 80px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2; user-select: none; }
+        .core-container:active .core-button { transform: scale(0.9); }
+        @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 0.8; } 100% { transform: scale(0.95); opacity: 0.5; } }
 
-        /* Streak (Seri) Kutuları */
-        .streak-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin: 20px 0; }
-        .streak-day { background: rgba(0,0,0,0.5); border: 1px solid var(--border-glow); padding: 10px 0; text-align: center; }
-        .streak-day.completed { background: rgba(0,255,102,0.1); border-color: var(--success); color: var(--success); }
+        /* Floating Animation (Uçuşan Rakamlar) */
+        @keyframes floatUpFade { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(1.2); } }
+        .floating-text { position: fixed; font-family: 'Space Grotesk', sans-serif; font-weight: 900; font-size: 28px; pointer-events: none; animation: floatUpFade 1s ease-out forwards; z-index: 9999; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-box { background: rgba(255,255,255,0.02); padding: 16px; text-align: center; border-radius: 20px; border: 1px solid var(--glass-border); }
+        .stat-val { font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 700; color: #fff; margin-top: 4px; }
+
+        .streak-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 20px 0; }
+        .streak-day { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); padding: 12px 0; text-align: center; border-radius: 12px; }
+        .streak-day.completed { background: rgba(16, 185, 129, 0.1); border-color: var(--success); }
     </style>
 </head>
 <body>
@@ -182,34 +165,43 @@
         <div id="ann-scroll" class="announcement-scroll"></div>
     </div>
     
-    <div id="loader"><div class="cyber-spinner"></div></div>
+    <div id="loader"><div class="loader-ring"></div></div>
 
     <div class="header-panel">
-        <div class="header-left">
-            <div id="user-level" class="level-badge">SYNCING...</div>
-            <div style="font-size: 12px; margin-top: 5px; color: var(--text-dim);" id="header-name">GUEST</div>
-        </div>
-        <div class="header-right">
-            <div class="balance-label">NODE BALANCE</div>
-            <div class="points" id="balance">0</div>
+        <div id="user-level" class="level-badge">YÜKLENİYOR...</div>
+        <div class="balance-wrapper">
+            <div class="balance-label">GÜNCEL BAKİYE</div>
+            <div class="points-row">
+                <div class="points" id="balance">0</div>
+                <div class="currency">GEP</div>
+            </div>
             <div class="usd-val" id="usd">≈ 0.00 USDT</div>
+            <div style="font-size: 12px; color: var(--text-dim); margin-top: 10px;" id="header-name">@KULLANICI</div>
         </div>
     </div>
 
     <div id="page-tasks" class="page active">
-        <h3 style="color: var(--cyan);">// PROTOKOL GÖREVLERİ</h3>
-        <p style="font-size: 12px; color: var(--text-dim); margin-top: -10px; margin-bottom: 20px;">Sistemi besle, ekstra GEP kazan.</p>
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <div style="font-size: 24px; margin-right: 10px;">🎯</div>
+            <div>
+                <h3 style="margin: 0; color: #fff;">GÖREVLER</h3>
+                <p style="font-size: 12px; margin: 0; color: var(--text-dim);">Tamamla ve kazan.</p>
+            </div>
+        </div>
         <div id="task-list"></div>
     </div>
 
     <div id="page-leaderboard" class="page">
-        <h3 style="color: var(--magenta);">// AĞ LİDERLERİ</h3>
+        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+            <div style="font-size: 24px; margin-right: 10px;">🏆</div>
+            <h3 style="margin: 0; color: #fff;">ŞAMPİYONLAR AĞI</h3>
+        </div>
         <div class="tab-container">
             <button id="tab-lb-all" class="tab-btn active" onclick="switchLB('all')">TOP 100</button>
             <button id="tab-lb-daily" class="tab-btn" onclick="switchLB('daily')">GÜNLÜK</button>
-            <button id="tab-lb-yesterday" class="tab-btn" onclick="switchLB('yesterday')">DÜN</button>
+            <button id="tab-lb-yesterday" class="tab-btn" onclick="switchLB('yesterday')">DÜNÜN KRALLARI</button>
         </div>
-        <div class="cyber-module" style="padding: 0;">
+        <div class="glass-card" style="padding: 0; overflow: hidden;">
             <div id="leader-list" style="width: 100%;"></div>
         </div>
     </div>
@@ -218,133 +210,171 @@
         <div class="stat-grid">
             <div class="stat-box">
                 <div class="balance-label">MOTOR SEVİYESİ</div>
-                <div id="ui-mine-level" class="stat-val" style="color: var(--cyan);">1</div>
+                <div id="ui-mine-level" class="stat-val" style="color: var(--gold);">1</div>
             </div>
             <div class="stat-box">
-                <div class="balance-label">GÜÇ (4 SAAT)</div>
-                <div id="ui-mine-reward" class="stat-val">1,000</div>
+                <div class="balance-label">KAPASİTE (4H)</div>
+                <div id="ui-mine-reward" class="stat-val" style="color: var(--cyan);">1,000</div>
             </div>
         </div>
 
-        <div class="cyber-module" style="text-align: center; padding: 40px 20px;">
-            <div class="mine-circle" id="mine-icon">⚡</div>
-            <h3 id="mine-status-text" style="color: #fff;">SİSTEM HAZIR</h3>
-            <div id="mining-timer" style="font-family: 'Rajdhani', sans-serif; font-size: 48px; font-weight: 700; color: var(--cyan); margin: 10px 0; display: none;">00:00:00</div>
+        <div class="glass-card" style="text-align: center; padding: 40px 20px;">
+            <div class="core-container" onclick="startMining(event)">
+                <div class="core-glow" id="core-glow"></div>
+                <div class="core-button" id="mine-icon">⛏️</div>
+            </div>
             
-            <button id="btn-mine" class="btn-prime" style="margin-top: 20px;" onclick="startMining()">ÜRETİMİ BAŞLAT</button>
+            <h3 id="mine-status-text" style="color: #fff; letter-spacing: 1px;">SİSTEM HAZIR</h3>
+            <div id="mining-timer" style="font-family: 'Space Grotesk'; font-size: 40px; font-weight: 700; color: var(--gold); margin: 10px 0; display: none;">00:00:00</div>
             
-            <button id="btn-upgrade" class="btn-prime btn-outline" style="margin-top: 15px;" onclick="upgradeMine()">
-                <span style="font-size: 12px; display: block; color: var(--text-dim); line-height: 1;">SEVİYE YÜKSELT</span>
-                <span id="ui-upgrade-cost" style="font-size: 14px;">GEREKEN: 10,000 GEP</span>
+            <button id="btn-mine" class="game-btn" style="margin-top: 10px;" onclick="startMining(event)">ÜRETİMİ BAŞLAT</button>
+            
+            <button id="btn-upgrade" class="game-btn btn-outline" style="margin-top: 15px; padding: 14px;" onclick="upgradeMine(event)">
+                <span style="font-size: 11px; display: block; color: var(--text-main); font-weight: 600;">SEVİYE YÜKSELT</span>
+                <span id="ui-upgrade-cost" style="font-size: 14px; font-weight: 800;">10,000 GEP</span>
             </button>
         </div>
     </div>
 
     <div id="page-profile" class="page">
         
-        <div class="cyber-module" style="text-align: center; border-left: 3px solid var(--success);">
-            <h3 style="color: var(--success); margin-bottom: 5px;">SİNYAL İZLE (REKLAM)</h3>
-            <p style="font-size: 12px; color: var(--text-dim);">Dış ağlardan gelen her sinyal onayı için anında <strong style="color:#fff;">500 GEP</strong> kazanırsın.</p>
-            <button class="btn-prime" style="background: var(--success); color: #000; margin-top: 10px;" onclick="showAd()">SİNYALİ BAŞLAT</button>
+        <div class="glass-card" style="text-align: center; background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(15,23,42,0.6) 100%); border-color: rgba(16,185,129,0.3);">
+            <div style="font-size: 36px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(16,185,129,0.5));">📺</div>
+            <h3 style="color: #fff; margin-bottom: 5px;">İZLE & KAZAN</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Her reklam onayı <strong style="color:var(--success);">+500 GEP</strong> kazandırır.</p>
+            <button class="game-btn btn-success" onclick="showAd(event)">REKLAM BAŞLAT</button>
         </div>
 
         <div class="stat-grid">
             <div class="stat-box">
-                <div class="balance-label">AĞA KATILANLAR</div>
-                <div id="stat-ref-count" class="stat-val" style="color: var(--cyan);">0</div>
+                <div class="balance-label">DAVET ETTİKLERİN</div>
+                <div id="stat-ref-count" class="stat-val" style="color: var(--gold);">0</div>
             </div>
             <div class="stat-box">
-                <div class="balance-label">BAĞLANTI DURUMU</div>
-                <div id="user-status-text" class="stat-val" style="color: var(--success); font-size: 18px; margin-top: 5px;">STABİL</div>
+                <div class="balance-label">HESAP DURUMU</div>
+                <div id="user-status-text" class="stat-val" style="color: var(--success); font-size: 18px; margin-top: 8px;">AKTİF</div>
             </div>
         </div>
         
-        <div class="cyber-module">
-            <h3 style="color: var(--text-main); font-size: 16px;">SİSTEM GİRİŞ SERİSİ</h3>
+        <div class="glass-card">
+            <h3 style="font-size: 16px;">GÜNLÜK SERİ</h3>
             <div class="streak-grid" id="streak-box"></div>
-            <button id="btn-checkin" class="btn-prime btn-outline" onclick="claimDaily()">GÜNLÜK VERİYİ ÇEK</button>
+            <button id="btn-checkin" class="game-btn btn-outline" style="margin-top: 10px;" onclick="claimDaily(event)">GÜNLÜK ÖDÜLÜ AL</button>
         </div>
 
-        <div class="cyber-module" style="text-align: center;">
-            <h3 style="color: var(--magenta);">AĞI GENİŞLET</h3>
-            <p style="font-size: 12px; color: var(--text-main); margin: 5px 0;">Yeni bir node davet et, <strong style="color:var(--cyan);">2500 GEP</strong> kazan!</p>
-            <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 15px;">Katılan kişi de 1000 GEP başlangıç bonusu alır.</p>
-            <input type="text" id="ref-link" class="cyber-input" readonly onclick="this.select()">
-            <button class="btn-prime" style="background: var(--magenta); color: #fff;" onclick="copyRef()">KOPYALA</button>
+        <div class="glass-card" style="text-align: center;">
+            <h3 style="color: #fff;">AĞI BÜYÜT</h3>
+            <p style="font-size: 13px; color: var(--text-main); margin: 5px 0;">Arkadaşını davet et, <strong style="color:var(--gold);">2500 GEP</strong> kazan!</p>
+            <input type="text" id="ref-link" class="glass-input" style="margin-top: 15px;" readonly onclick="this.select()">
+            <button class="game-btn" onclick="copyRef(event)">LİNKİ KOPYALA</button>
         </div>
     </div>
 
     <div id="page-admin" class="page">
-        <h3 style="color: var(--alert);">// YÖNETİCİ TERMİNALİ</h3>
+        <h3 style="color: var(--danger);">🛡️ YÖNETİCİ TERMİNALİ</h3>
         
         <div class="stat-grid">
             <div class="stat-box">
-                <div class="balance-label">TOPLAM NODE</div>
+                <div class="balance-label">TOPLAM OYUNCU</div>
                 <div id="adm-stat-users" class="stat-val" style="color:var(--cyan)">0</div>
             </div>
             <div class="stat-box">
                 <div class="balance-label">TOPLAM GEP</div>
-                <div id="adm-stat-points" class="stat-val" style="color:var(--magenta)">0</div>
+                <div id="adm-stat-points" class="stat-val" style="color:var(--gold)">0</div>
             </div>
         </div>
 
-        <div class="cyber-module">
+        <div class="glass-card">
             <h4>Duyuru Yayınla</h4>
-            <input type="text" id="adm-ann-text" class="cyber-input" placeholder="Sistem mesajı...">
-            <button class="btn-prime btn-outline" onclick="addAnnouncement()">YAYINLA</button>
+            <input type="text" id="adm-ann-text" class="glass-input" placeholder="Sistem mesajı...">
+            <button class="game-btn btn-outline" onclick="addAnnouncement()">YAYINLA</button>
             <div id="adm-ann-list" style="margin-top:15px; max-height:150px; overflow-y:auto;"></div>
         </div>
 
-        <div class="cyber-module">
-            <h4>Görev Terminali</h4>
-            <input type="text" id="adm-task-title" class="cyber-input" placeholder="Görev Başlığı">
-            <input type="number" id="adm-task-reward" class="cyber-input" placeholder="Ödül (GEP)">
-            <input type="text" id="adm-task-target" class="cyber-input" placeholder="Link (https://...)">
-            <button class="btn-prime btn-outline" style="border-color: var(--magenta); color: var(--magenta);" onclick="addTask()">EKLE</button>
+        <div class="glass-card">
+            <h4>Görev Ekle</h4>
+            <input type="text" id="adm-task-title" class="glass-input" placeholder="Görev Başlığı">
+            <input type="number" id="adm-task-reward" class="glass-input" placeholder="Ödül (GEP)">
+            <input type="text" id="adm-task-target" class="glass-input" placeholder="Link (https://...)">
+            <button class="game-btn btn-success" onclick="addTask()">EKLE</button>
             <div id="adm-task-list" style="margin-top:15px; max-height: 150px; overflow-y: auto;"></div>
         </div>
         
-        <div class="cyber-module">
-            <h4>Node Yönetimi (Kullanıcı)</h4>
-            <input type="text" id="adm-target-id" class="cyber-input" placeholder="ID veya @Username">
-            <input type="number" id="adm-amount" class="cyber-input" placeholder="Miktar">
+        <div class="glass-card">
+            <h4>Kullanıcı Yönetimi</h4>
+            <input type="text" id="adm-target-id" class="glass-input" placeholder="ID veya @Username">
+            <input type="number" id="adm-amount" class="glass-input" placeholder="Miktar">
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <button class="btn-prime" style="padding: 12px; font-size: 12px; background:var(--success); color:#000;" onclick="manageUser('add')">EKLE</button>
-                <button class="btn-prime btn-outline" style="padding: 12px; font-size: 12px;" onclick="manageUser('set')">EŞİTLE</button>
-                <button class="btn-prime" style="padding: 12px; font-size: 12px; background:var(--alert); color:#fff;" onclick="manageUser('ban')">BAN</button>
-                <button class="btn-prime btn-alert" style="padding: 12px; font-size: 12px;" onclick="manageUser('unban')">KALDIR</button>
+                <button class="game-btn btn-success" style="padding: 12px; font-size: 12px;" onclick="manageUser('add')">EKLE</button>
+                <button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="manageUser('set')">EŞİTLE</button>
+                <button class="game-btn btn-danger" style="padding: 12px; font-size: 12px;" onclick="manageUser('ban')">BAN</button>
+                <button class="game-btn" style="padding: 12px; font-size: 12px; background: #334155; color:#fff;" onclick="manageUser('unban')">KALDIR</button>
             </div>
         </div>
     </div>
 
     <div class="dock-container">
         <a href="javascript:void(0)" class="dock-item active" onclick="showPage('tasks', this)">
-            <div class="dock-icon">⚡</div><div class="dock-text">GÖREV</div>
+            <div class="dock-icon">📋</div><div class="dock-text">GÖREV</div>
         </a>
         <a href="javascript:void(0)" class="dock-item" onclick="showPage('leaderboard', this)">
-            <div class="dock-icon">🏆</div><div class="dock-text">AĞ</div>
+            <div class="dock-icon">🏆</div><div class="dock-text">LİDERLİK</div>
         </a>
         <a href="javascript:void(0)" class="dock-item" onclick="showPage('mine', this)">
-            <div class="dock-icon">⚙️</div><div class="dock-text">ÜRETİM</div>
+            <div class="dock-icon">⛏️</div><div class="dock-text">ÜRETİM</div>
         </a>
         <a href="javascript:void(0)" class="dock-item" onclick="showPage('profile', this)">
             <div class="dock-icon">👤</div><div class="dock-text">PROFİL</div>
         </a>
         <a href="javascript:void(0)" id="nav-admin" class="dock-item" style="display:none" onclick="showPage('admin', this)">
-            <div class="dock-icon">🛡️</div><div class="dock-text">TERMİNAL</div>
+            <div class="dock-icon">🛡️</div><div class="dock-text">ADMİN</div>
         </a>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.setHeaderColor('#05050a'); // Telegram üst barını temaya uydurur
+        tg.setHeaderColor('#020617'); // Premium karanlık tepe
         const API = window.location.origin;
         let user, tasks = [], miningInterval;
         let lbAllTime = [], lbDaily = [], lbYesterday = [];
         let currentLbTab = 'all'; 
         
         const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "27433" }) : null;
+
+        // --- MİKRO ETKİLEŞİMLER (OYUN HİSSİYATI) ---
+        function triggerHaptic(type = 'light') {
+            if(tg.HapticFeedback) {
+                if(type === 'success') tg.HapticFeedback.notificationOccurred('success');
+                else if(type === 'error') tg.HapticFeedback.notificationOccurred('error');
+                else if(type === 'warning') tg.HapticFeedback.notificationOccurred('warning');
+                else tg.HapticFeedback.impactOccurred(type); // light, medium, heavy, rigid, soft
+            }
+        }
+
+        function spawnFloatingText(e, text, color) {
+            // Eğer e (event) yoksa ekranin ortasindan baslat
+            let x = window.innerWidth / 2;
+            let y = window.innerHeight / 2;
+            
+            if(e && e.touches && e.touches.length > 0) {
+                x = e.touches[0].clientX;
+                y = e.touches[0].clientY;
+            } else if (e && e.clientX) {
+                x = e.clientX;
+                y = e.clientY;
+            }
+
+            const el = document.createElement("div");
+            el.className = "floating-text";
+            el.innerText = text;
+            el.style.left = (x - 40) + "px"; // Ortalama
+            el.style.top = (y - 20) + "px";
+            el.style.color = color || "var(--gold)";
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1000);
+        }
+        // ------------------------------------------
 
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -355,8 +385,7 @@
             try {
                 const tgUser = tg.initDataUnsafe?.user;
                 if (!tgUser) {
-                    // Tarayıcıdan giriş yapmaya çalışanlar için UI gizleme
-                    document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--alert); font-family:Rajdhani;'><h2>SİSTEME ERİŞİM REDDEDİLDİ. TELEGRAM GEREKLİ.</h2></div>";
+                    document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--danger); font-family:Outfit;'><h2>SİSTEME ERİŞİM REDDEDİLDİ.<br>TELEGRAM GEREKLİ.</h2></div>";
                     return;
                 }
 
@@ -368,7 +397,7 @@
                     body: JSON.stringify({ 
                         telegramId: tgUser.id.toString(), 
                         username: tgUser.username || "", 
-                        firstName: tgUser.first_name || "Guest",
+                        firstName: tgUser.first_name || "Kullanıcı",
                         referrerId: refId,
                         initData: tg.initData 
                     })
@@ -380,7 +409,7 @@
                     user.isAdmin = data.isAdmin;
                     
                     if(user.isBanned) {
-                        document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--alert); font-family:Rajdhani;'><h1>🚫 NODE BANNED</h1></div>";
+                        document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--danger); font-family:Outfit;'><h1>🚫 HESAP YASAKLANDI</h1></div>";
                         return;
                     }
 
@@ -406,7 +435,7 @@
             const annContainer = document.getElementById('ann-container');
             const annScroll = document.getElementById('ann-scroll');
             if (annList && annList.length > 0) {
-                annScroll.innerText = annList.join(" ⚠️ ") + " ⚠️ ";
+                annScroll.innerText = annList.join(" 🔔 ") + " 🔔 ";
                 annContainer.style.display = 'flex';
             } else {
                 annContainer.style.display = 'none';
@@ -419,7 +448,7 @@
             document.getElementById('usd').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`;
             
             const lvl = document.getElementById('user-level');
-            lvl.innerText = `LVL: ${user.level}`; 
+            lvl.innerText = `${user.level} ÜYE`; 
             
             if (document.getElementById('stat-ref-count')) document.getElementById('stat-ref-count').innerText = user.referralCount || 0;
             
@@ -428,13 +457,14 @@
             document.getElementById('ui-mine-reward').innerText = `${currentReward.toLocaleString()}`;
             
             const upgradeCost = (user.miningLevel || 1) * 10000;
-            document.getElementById('ui-upgrade-cost').innerText = `GEREKEN: ${upgradeCost.toLocaleString()} GEP`; 
+            document.getElementById('ui-upgrade-cost').innerText = `${upgradeCost.toLocaleString()} GEP`; 
 
             renderStreak();
         }
 
-        async function showAd() {
-            if(!AdController) return tg.showAlert("Sinyal hazır değil.");
+        async function showAd(event) {
+            triggerHaptic('medium');
+            if(!AdController) return tg.showAlert("Reklam hazır değil.");
             AdController.show().then(async (result) => {
                 if (result.done) {
                     const res = await fetch(`${API}/api/adsgram-reward`, {
@@ -444,27 +474,43 @@
                     });
                     if (res.ok) { 
                         const data = await res.json();
-                        if(data.success) { user.points = data.points; updateUI(); }
-                        tg.showAlert("Sinyal alındı! +500 GEP eklendi."); 
+                        if(data.success) { 
+                            user.points = data.points; 
+                            updateUI(); 
+                            triggerHaptic('success');
+                            spawnFloatingText(event, "+500", "var(--success)");
+                            tg.showAlert("Tebrikler! +500 GEP eklendi."); 
+                        }
                     }
                 }
             });
         }
 
-        async function claimDaily() {
+        async function claimDaily(event) {
+            triggerHaptic('medium');
             const res = await fetch(`${API}/api/daily-reward`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) 
             });
             const data = await res.json();
-            if(data.success) { tg.showAlert(`GÜNLÜK VERİ ÇEKİLDİ! Seri: ${data.streak}. Gün (+${data.reward} GEP)`); init(); }
-            else tg.showAlert(data.message);
+            if(data.success) { 
+                triggerHaptic('success');
+                spawnFloatingText(event, "+" + data.reward, "var(--gold)");
+                tg.showAlert(`🎉 Ödül Alındı! Seri: ${data.streak}. Gün (+${data.reward} GEP)`); 
+                init(); 
+            } else {
+                triggerHaptic('error');
+                tg.showAlert(data.message);
+            }
         }
 
-        async function startMining() {
+        async function startMining(event) {
+            triggerHaptic('heavy');
             const btn = document.getElementById('btn-mine');
+            if(btn.disabled) return; // Zaten kazılıyorsa core'a basılınca tetiklenmesin
             btn.disabled = true;
+            
             const res = await fetch(`${API}/api/mine`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -475,12 +521,18 @@
                 user.points = data.points; 
                 user.lastMining = new Date().toISOString();
                 updateUI(); 
-                tg.showAlert(`ÜRETİM BAŞARILI! +${data.reward} GEP.`);
+                triggerHaptic('success');
+                spawnFloatingText(event, "+" + data.reward, "var(--cyan)");
                 runTimer(4 * 60 * 60 * 1000);
-            } else { tg.showAlert(data.message); btn.disabled = false; }
+            } else { 
+                triggerHaptic('error');
+                if(event.target.id === 'btn-mine') tg.showAlert(data.message); // Sadece butona basıldıysa uyarı ver
+                btn.disabled = false; 
+            }
         }
 
-        async function upgradeMine() {
+        async function upgradeMine(event) {
+            triggerHaptic('light');
             const upgradeCost = (user.miningLevel || 1) * 10000;
             tg.showConfirm(`Motoru Seviye ${(user.miningLevel || 1) + 1} yapmak istiyor musun?\n\nBedel: ${upgradeCost.toLocaleString()} GEP`, async (confirmed) => {
                 if (!confirmed) return;
@@ -499,8 +551,11 @@
                     user.points = data.points;
                     user.miningLevel = data.newLevel;
                     updateUI();
-                    tg.showAlert(`GÜNCELLEME TAMAM! Yeni Seviye: ${data.newLevel}`);
+                    triggerHaptic('success');
+                    spawnFloatingText(event, "LVL UP!", "var(--gold)");
+                    tg.showAlert(`🎉 GÜNCELLEME TAMAM! Yeni Seviye: ${data.newLevel}`);
                 } else {
+                    triggerHaptic('error');
                     tg.showAlert(data.message);
                 }
                 btn.disabled = false;
@@ -520,15 +575,16 @@
             const btn = document.getElementById('btn-mine');
             const timerDiv = document.getElementById('mining-timer');
             const statusText = document.getElementById('mine-status-text');
+            const glow = document.getElementById('core-glow');
             const icon = document.getElementById('mine-icon');
             
             btn.disabled = true;
             timerDiv.style.display = "block";
             statusText.innerText = "ÜRETİM DEVAM EDİYOR";
             statusText.style.color = "var(--text-dim)";
-            icon.style.animation = "none";
-            icon.style.borderColor = "var(--text-dim)";
-            icon.innerText = "⏳";
+            glow.style.animation = "none";
+            glow.style.background = "radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)";
+            icon.style.filter = "grayscale(100%) opacity(0.5)";
             
             clearInterval(miningInterval);
             miningInterval = setInterval(() => {
@@ -539,9 +595,10 @@
                     timerDiv.style.display = "none";
                     statusText.innerText = "SİSTEM HAZIR";
                     statusText.style.color = "#fff";
-                    icon.style.animation = "pulse-ring 2s infinite";
-                    icon.style.borderColor = "var(--cyan)";
-                    icon.innerText = "⚡";
+                    glow.style.animation = "pulse 3s infinite";
+                    glow.style.background = "radial-gradient(circle, var(--gold-glow) 0%, transparent 70%)";
+                    icon.style.filter = "drop-shadow(0 10px 20px rgba(0,0,0,0.5))";
+                    triggerHaptic('notification');
                     return;
                 }
                 const h = Math.floor(timeLeft / 3600000);
@@ -564,20 +621,21 @@
             cont.innerHTML = tasks.map(t => {
                 const isDone = user.completedTasks.includes(t.taskId);
                 return `
-                <div class="task-row" style="${isDone ? 'border-left-color: var(--text-dim); opacity:0.6;' : ''}">
+                <div class="task-card" style="${isDone ? 'opacity:0.5;' : ''}">
                     <div>
-                        <div style="font-weight: 700; margin-bottom: 3px;">${t.title}</div>
-                        <div style="font-family: 'Rajdhani'; color: ${isDone ? 'var(--text-dim)' : 'var(--magenta)'}; font-weight: 700; letter-spacing: 1px;">+${t.reward} GEP</div>
+                        <div style="font-weight: 800; font-size:14px; margin-bottom: 4px;">${t.title}</div>
+                        <div style="font-family: 'Space Grotesk'; color: ${isDone ? 'var(--text-dim)' : 'var(--gold)'}; font-weight: 700;">+${t.reward} GEP</div>
                     </div>
-                    <button class="btn-prime ${isDone ? '' : 'btn-outline'}" style="${isDone ? 'background:#333; border:none; padding:8px 15px; width:auto; font-size:12px;' : 'border-color:var(--magenta); color:var(--magenta); padding:8px 15px; width:auto; font-size:12px;'}" 
-                        ${isDone ? 'disabled' : ''} onclick="completeTask('${t.taskId}','${t.target}')">
-                        ${isDone ? 'BİTTİ' : 'BAŞLA'}
+                    <button class="game-btn ${isDone ? '' : 'btn-outline'}" style="${isDone ? 'background:#1e293b; color:#64748b; padding:10px 20px; width:auto; font-size:12px; box-shadow:none;' : 'padding:10px 20px; width:auto; font-size:12px;'}" 
+                        ${isDone ? 'disabled' : ''} onclick="completeTask(event, '${t.taskId}','${t.target}')">
+                        ${isDone ? 'BİTTİ' : 'GİT'}
                     </button>
                 </div>`;
             }).join('');
         }
 
-        async function completeTask(tid, link) {
+        async function completeTask(e, tid, link) {
+            triggerHaptic('light');
             tg.openLink(link);
             setTimeout(async () => {
                 const res = await fetch(`${API}/api/tasks/complete`, {
@@ -585,13 +643,18 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ telegramId: user.telegramId, taskId: tid, initData: tg.initData }) 
                 });
-                if((await res.json()).success) { tg.showAlert("Veri Aktarıldı. Ödül Eklendi."); init(); }
+                const data = await res.json();
+                if(data.success) { 
+                    triggerHaptic('success');
+                    spawnFloatingText(e, "GÖREV TAMAM!", "var(--success)");
+                    init(); 
+                }
             }, 3000);
         }
 
         async function loadLeaderboard() {
             const list = document.getElementById('leader-list');
-            list.innerHTML = "<p style='text-align:center; padding: 20px; color:var(--text-dim);'>AĞ TARANIYOR...</p>";
+            list.innerHTML = "<p style='text-align:center; padding: 30px; font-weight:600; color:var(--text-dim);'>LİSTELER ÇEKİLİYOR...</p>";
             const res = await fetch(`${API}/api/leaderboard`);
             const data = await res.json();
             if(data.success) {
@@ -603,6 +666,7 @@
         }
 
         function switchLB(tab) {
+            triggerHaptic('light');
             currentLbTab = tab;
             
             const tabs = ['all', 'daily', 'yesterday'];
@@ -627,7 +691,7 @@
             else dataToRender = lbYesterday;
             
             if(dataToRender.length === 0) {
-                list.innerHTML = `<p style='text-align:center; padding: 20px; color: var(--text-dim);'>${currentLbTab === 'yesterday' ? 'DÜN İÇİN KAYIT BULUNAMADI.' : 'HENÜZ VERİ YOK.'}</p>`;
+                list.innerHTML = `<p style='text-align:center; padding: 30px; color: var(--text-dim); font-weight:600;'>${currentLbTab === 'yesterday' ? 'DÜN İÇİN KAYIT BULUNAMADI.' : 'HENÜZ VERİ YOK.'}</p>`;
                 return;
             }
 
@@ -637,9 +701,9 @@
                 if(currentLbTab === 'daily') displayPoints = u.dailyPoints || 0;
                 
                 return `
-                <div class="leader-row">
-                    <span style="color: ${i < 3 ? 'var(--cyan)' : 'var(--text-main)'}; font-weight: ${i < 3 ? 700 : 400};">${rank}. ${u.username || u.firstName}</span>
-                    <span style="font-family:'Rajdhani'; color:var(--cyan); font-weight:700; letter-spacing:1px;">${displayPoints.toLocaleString()}</span>
+                <div class="list-row ${i < 3 ? 'rank-top' : ''}">
+                    <span style="color: ${i < 3 ? 'var(--gold)' : 'var(--text-main)'}; font-weight: ${i < 3 ? 800 : 600}; font-size:15px;">${rank}. ${u.username || u.firstName}</span>
+                    <span style="font-family:'Space Grotesk'; color: ${i < 3 ? 'var(--gold)' : 'var(--cyan)'}; font-weight:700;">${displayPoints.toLocaleString()}</span>
                 </div>
                 `;
             }).join('');
@@ -654,7 +718,7 @@
                 const rewardVal = 100 * Math.pow(2, i - 1);
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `streak-day ${i <= currentStreak ? 'completed' : ''}`;
-                dayDiv.innerHTML = `<div style="font-family:'Rajdhani'; font-weight:700; font-size:12px;">GÜN ${i}</div><div style="font-family:'Rajdhani'; font-weight:700; margin-top:2px; font-size:10px; color:var(--cyan);">${rewardVal}</div>`;
+                dayDiv.innerHTML = `<div style="font-weight:800; font-size:11px; margin-bottom:4px; opacity:0.8">GÜN ${i}</div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:11px; color:var(--gold);">${rewardVal}</div>`;
                 streakBox.appendChild(dayDiv);
             }
         }
@@ -670,18 +734,18 @@
             document.getElementById('adm-stat-points').innerText = data.totalPoints.toLocaleString();
             
             document.getElementById('adm-task-list').innerHTML = data.tasks.map(t => `
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-glow); padding:10px 0;">
-                    <span style="font-size:13px;">${t.title}</span>
-                    <button class="btn-prime btn-alert" style="padding:6px 12px; width:auto; font-size:10px;" onclick="deleteTask('${t.taskId}')">SİL</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass-border); padding:12px 0;">
+                    <span style="font-size:13px; font-weight:600;">${t.title}</span>
+                    <button class="game-btn btn-danger" style="padding:6px 12px; width:auto; font-size:10px; border-radius:8px;" onclick="deleteTask('${t.taskId}')">SİL</button>
                 </div>
-            `).join('') || "Görev yok.";
+            `).join('') || "<div style='padding:10px; color:var(--text-dim)'>Görev yok.</div>";
 
             document.getElementById('adm-ann-list').innerHTML = data.announcements.map((a, i) => `
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-glow); padding:10px 0;">
-                    <span style="font-size:11px; color:var(--text-dim);">${a.substring(0,30)}...</span>
-                    <button class="btn-prime btn-alert" style="padding:6px 12px; width:auto; font-size:10px;" onclick="deleteAnnouncement(${i})">SİL</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass-border); padding:12px 0;">
+                    <span style="font-size:12px; color:var(--text-dim);">${a.substring(0,30)}...</span>
+                    <button class="game-btn btn-danger" style="padding:6px 12px; width:auto; font-size:10px; border-radius:8px;" onclick="deleteAnnouncement(${i})">SİL</button>
                 </div>
-            `).join('') || "Duyuru yok.";
+            `).join('') || "<div style='padding:10px; color:var(--text-dim)'>Duyuru yok.</div>";
         }
 
         async function addTask() {
@@ -749,6 +813,7 @@
         }
 
         function showPage(p, el) {
+            triggerHaptic('light');
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.querySelectorAll('.dock-item').forEach(nav => nav.classList.remove('active'));
             document.getElementById(`page-${p}`).classList.add('active');
@@ -758,10 +823,11 @@
             if(p === 'admin') loadAdminStats();
         }
 
-        function copyRef() {
+        function copyRef(e) {
+            triggerHaptic('success');
             const input = document.getElementById('ref-link');
             input.select(); document.execCommand('copy');
-            tg.showAlert("Bağlantı kopyalandı!");
+            spawnFloatingText(e, "KOPYALANDI!", "var(--success)");
         }
 
         window.onload = init;
