@@ -36,16 +36,18 @@
             overflow-x: hidden; 
             transition: direction 0.3s;
         }
-        
+
+        /* YENİ: Sağdan Sola (RTL) Düzeni (Arapça için) */
         body[dir="rtl"] { text-align: right; }
         body[dir="rtl"] .header-panel, body[dir="rtl"] .glass-card { text-align: right; }
         body[dir="rtl"] .list-row, body[dir="rtl"] .task-card { flex-direction: row-reverse; text-align: right; }
         body[dir="rtl"] .list-row span:first-child { border-left: none; border-right: 3px solid var(--gold); }
         body[dir="rtl"] .points-row { flex-direction: row-reverse; justify-content: center; }
-
+        body[dir="rtl"] .stat-grid { direction: rtl; }
+        
         h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; margin: 0 0 15px 0; letter-spacing: -0.5px; }
 
-        /* YENİ: Dil Seçici */
+        /* YENİ: Dil Seçici Dropdown */
         .lang-selector {
             position: absolute;
             top: 15px;
@@ -74,7 +76,7 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulseText { 0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 5px var(--gold-glow)); } 50% { opacity: 1; filter: drop-shadow(0 0 15px var(--gold)); } }
 
-        .announcement-container { background: linear-gradient(90deg, #ef4444, #f97316); color: #fff; overflow: hidden; white-space: nowrap; position: sticky; top: 0; z-index: 200; height: 35px; display: none; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-weight: 800; font-size: 13px; letter-spacing: 1px;}
+        .announcement-container { background: linear-gradient(90deg, #ef4444, #f97316); color: #fff; overflow: hidden; white-space: nowrap; position: sticky; top: 0; z-index: 2000; height: 35px; display: none; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-weight: 800; font-size: 13px; letter-spacing: 1px;}
         .announcement-scroll { display: inline-block; padding-left: 100%; animation: marquee 25s linear infinite; }
         @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
@@ -87,7 +89,7 @@
             display: inline-block; padding: 6px 16px; border-radius: 20px;
             font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
             background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
-            margin-bottom: 15px; margin-top: 25px; color: var(--gold); box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 15px; margin-top: 15px; color: var(--gold); box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         .balance-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .balance-label { font-size: 12px; color: var(--text-dim); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
@@ -377,7 +379,7 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.setHeaderColor('#020617');
+        tg.setHeaderColor('#020617'); // Premium karanlık tepe
         const API = window.location.origin;
         let user, tasks = [], miningInterval;
         let lbAllTime = [], lbDaily = [], lbYesterday = [];
@@ -403,7 +405,7 @@
             },
             en: {
                 loading: "INCOME UNIVERSE", loading_text: "LOADING...", current_balance: "CURRENT BALANCE",
-                tasks_title: "TASKS", tasks_desc: "Complete & earn.", champions: "CHAMPIONS NETWORK",
+                tasks_title: "TASKS", tasks_desc: "Complete & earn.", champions: "CHAMPION NETWORK",
                 top_100: "TOP 100", daily: "DAILY", yesterday: "YESTERDAY'S KINGS", engine_lvl: "ENGINE LEVEL",
                 capacity: "CAPACITY (4H)", sys_ready: "SYSTEM READY", start_mine: "START MINING",
                 upgrade_lvl: "UPGRADE LEVEL", watch_earn: "WATCH & EARN", start_ad: "START AD",
@@ -497,28 +499,29 @@
             document.body.dir = langCode === 'ar' ? 'rtl' : 'ltr';
             document.getElementById('lang-select').value = langCode;
             
-            // Tüm i18n etiketli elementleri güncelle
+            // HTML etiketlerini güncelle
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if(translations[langCode][key]) el.innerText = translations[langCode][key];
             });
 
-            // Özel Dinamik Alanları Güncelle
+            // Özel Dinamik Metinleri Güncelle
             document.getElementById('ad_desc').innerHTML = t('ad_desc').replace('+500 GEP', '<strong style="color:var(--success);">+500 GEP</strong>');
             document.getElementById('invite_desc').innerHTML = t('invite_desc').replace('2500 GEP', '<strong style="color:var(--gold);">2500 GEP</strong>');
             
-            updateUI(); // Verileri (sayılar vs) yeniden bas
-            if(tasks.length > 0) renderTasks(); // Görev metinlerini çevir
-            if(lbAllTime.length > 0) renderLB(); // Sıralama listesini çevir
-            renderStreak(); // Serileri çevir
-            
-            // Üretim Butonu Durumunu Güncelle
-            if(document.getElementById('btn-mine').disabled) {
-                document.getElementById('mine-status-text').innerText = t('msg_wait');
+            // Eğer veriler zaten yüklendiyse ekranı yenile
+            if (user) {
+                updateUI();
+                if(tasks.length > 0) renderTasks();
+                if(lbAllTime.length > 0) renderLB();
+                renderStreak();
+                
+                if(document.getElementById('btn-mine').disabled) {
+                    document.getElementById('mine-status-text').innerText = t('msg_wait');
+                }
             }
         }
         // ---------------------------------------------
-
 
         // --- MİKRO ETKİLEŞİMLER (OYUN HİSSİYATI) ---
         function triggerHaptic(type = 'light') {
@@ -534,8 +537,13 @@
             let x = window.innerWidth / 2;
             let y = window.innerHeight / 2;
             
-            if(e && e.touches && e.touches.length > 0) { x = e.touches[0].clientX; y = e.touches[0].clientY; } 
-            else if (e && e.clientX) { x = e.clientX; y = e.clientY; }
+            if(e && e.touches && e.touches.length > 0) {
+                x = e.touches[0].clientX;
+                y = e.touches[0].clientY;
+            } else if (e && e.clientX) {
+                x = e.clientX;
+                y = e.clientY;
+            }
 
             const el = document.createElement("div");
             el.className = "floating-text";
@@ -550,7 +558,7 @@
 
         async function init() {
             try {
-                // Başlangıç Dili Ayarla
+                // Sisteme girmeden önce dili ayarla
                 changeLanguage(currentLang);
 
                 const tgUser = tg.initDataUnsafe?.user;
@@ -678,7 +686,7 @@
         async function startMining(event) {
             triggerHaptic('heavy');
             const btn = document.getElementById('btn-mine');
-            if(btn.disabled) return;
+            if(btn.disabled) return; 
             btn.disabled = true;
             
             const res = await fetch(`${API}/api/mine`, {
