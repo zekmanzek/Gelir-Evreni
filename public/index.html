@@ -34,9 +34,37 @@
             padding-bottom: 120px; 
             min-height: 100vh; 
             overflow-x: hidden; 
+            transition: direction 0.3s;
         }
         
+        body[dir="rtl"] { text-align: right; }
+        body[dir="rtl"] .header-panel, body[dir="rtl"] .glass-card { text-align: right; }
+        body[dir="rtl"] .list-row, body[dir="rtl"] .task-card { flex-direction: row-reverse; text-align: right; }
+        body[dir="rtl"] .list-row span:first-child { border-left: none; border-right: 3px solid var(--gold); }
+        body[dir="rtl"] .points-row { flex-direction: row-reverse; justify-content: center; }
+
         h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; margin: 0 0 15px 0; letter-spacing: -0.5px; }
+
+        /* YENİ: Dil Seçici */
+        .lang-selector {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--gold);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            outline: none;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            cursor: pointer;
+        }
+        .lang-selector option { background: var(--bg-dark); color: var(--text-main); }
+        body[dir="rtl"] .lang-selector { right: auto; left: 15px; }
 
         /* Premium Loader & Brand Text */
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease-out; }
@@ -46,20 +74,20 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulseText { 0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 5px var(--gold-glow)); } 50% { opacity: 1; filter: drop-shadow(0 0 15px var(--gold)); } }
 
-        .announcement-container { background: linear-gradient(90deg, #ef4444, #f97316); color: #fff; overflow: hidden; white-space: nowrap; position: sticky; top: 0; z-index: 2000; height: 35px; display: none; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-weight: 800; font-size: 13px; letter-spacing: 1px;}
+        .announcement-container { background: linear-gradient(90deg, #ef4444, #f97316); color: #fff; overflow: hidden; white-space: nowrap; position: sticky; top: 0; z-index: 200; height: 35px; display: none; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-weight: 800; font-size: 13px; letter-spacing: 1px;}
         .announcement-scroll { display: inline-block; padding-left: 100%; animation: marquee 25s linear infinite; }
         @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
         /* Game HUD (Header) */
         .header-panel { 
-            padding: 30px 20px 20px; text-align: center;
+            padding: 30px 20px 20px; text-align: center; position: relative;
             background: linear-gradient(180deg, rgba(15,23,42,0.8) 0%, transparent 100%);
         }
         .level-badge { 
             display: inline-block; padding: 6px 16px; border-radius: 20px;
             font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
             background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
-            margin-bottom: 15px; color: var(--gold); box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 15px; margin-top: 25px; color: var(--gold); box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         .balance-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .balance-label { font-size: 12px; color: var(--text-dim); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
@@ -170,13 +198,23 @@
     
     <div id="loader">
         <div class="loader-ring"></div>
-        <div class="loader-text">GELİR EVRENİ</div>
+        <div class="loader-text" data-i18n="loading">GELİR EVRENİ</div>
     </div>
 
     <div class="header-panel">
-        <div id="user-level" class="level-badge">YÜKLENİYOR...</div>
+        <select class="lang-selector" id="lang-select" onchange="changeLanguage(this.value)">
+            <option value="tr">🇹🇷 TR</option>
+            <option value="en">🇬🇧 EN</option>
+            <option value="ru">🇷🇺 RU</option>
+            <option value="az">🇦🇿 AZ</option>
+            <option value="de">🇩🇪 DE</option>
+            <option value="it">🇮🇹 IT</option>
+            <option value="ar">🇸🇦 AR</option>
+        </select>
+
+        <div id="user-level" class="level-badge" data-i18n="loading_text">YÜKLENİYOR...</div>
         <div class="balance-wrapper">
-            <div class="balance-label">GÜNCEL BAKİYE</div>
+            <div class="balance-label" data-i18n="current_balance">GÜNCEL BAKİYE</div>
             <div class="points-row">
                 <div class="points" id="balance">0</div>
                 <div class="currency">GEP</div>
@@ -188,10 +226,10 @@
 
     <div id="page-tasks" class="page active">
         <div style="display: flex; align-items: center; margin-bottom: 20px;">
-            <div style="font-size: 24px; margin-right: 10px;">🎯</div>
+            <div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">🎯</div>
             <div>
-                <h3 style="margin: 0; color: #fff;">GÖREVLER</h3>
-                <p style="font-size: 12px; margin: 0; color: var(--text-dim);">Tamamla ve kazan.</p>
+                <h3 style="margin: 0; color: #fff;" data-i18n="tasks_title">GÖREVLER</h3>
+                <p style="font-size: 12px; margin: 0; color: var(--text-dim);" data-i18n="tasks_desc">Tamamla ve kazan.</p>
             </div>
         </div>
         <div id="task-list"></div>
@@ -199,13 +237,13 @@
 
     <div id="page-leaderboard" class="page">
         <div style="display: flex; align-items: center; margin-bottom: 15px;">
-            <div style="font-size: 24px; margin-right: 10px;">🏆</div>
-            <h3 style="margin: 0; color: #fff;">ŞAMPİYONLAR AĞI</h3>
+            <div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">🏆</div>
+            <h3 style="margin: 0; color: #fff;" data-i18n="champions">ŞAMPİYONLAR AĞI</h3>
         </div>
         <div class="tab-container">
-            <button id="tab-lb-all" class="tab-btn active" onclick="switchLB('all')">TOP 100</button>
-            <button id="tab-lb-daily" class="tab-btn" onclick="switchLB('daily')">GÜNLÜK</button>
-            <button id="tab-lb-yesterday" class="tab-btn" onclick="switchLB('yesterday')">DÜNÜN KRALLARI</button>
+            <button id="tab-lb-all" class="tab-btn active" onclick="switchLB('all')" data-i18n="top_100">TOP 100</button>
+            <button id="tab-lb-daily" class="tab-btn" onclick="switchLB('daily')" data-i18n="daily">GÜNLÜK</button>
+            <button id="tab-lb-yesterday" class="tab-btn" onclick="switchLB('yesterday')" data-i18n="yesterday">DÜNÜN KRALLARI</button>
         </div>
         <div class="glass-card" style="padding: 0; overflow: hidden;">
             <div id="leader-list" style="width: 100%;"></div>
@@ -215,11 +253,11 @@
     <div id="page-mine" class="page">
         <div class="stat-grid">
             <div class="stat-box">
-                <div class="balance-label">MOTOR SEVİYESİ</div>
+                <div class="balance-label" data-i18n="engine_lvl">MOTOR SEVİYESİ</div>
                 <div id="ui-mine-level" class="stat-val" style="color: var(--gold);">1</div>
             </div>
             <div class="stat-box">
-                <div class="balance-label">KAPASİTE (4H)</div>
+                <div class="balance-label" data-i18n="capacity">KAPASİTE (4H)</div>
                 <div id="ui-mine-reward" class="stat-val" style="color: var(--cyan);">1,000</div>
             </div>
         </div>
@@ -230,49 +268,48 @@
                 <div class="core-button" id="mine-icon">⛏️</div>
             </div>
             
-            <h3 id="mine-status-text" style="color: #fff; letter-spacing: 1px;">SİSTEM HAZIR</h3>
+            <h3 id="mine-status-text" style="color: #fff; letter-spacing: 1px;" data-i18n="sys_ready">SİSTEM HAZIR</h3>
             <div id="mining-timer" style="font-family: 'Space Grotesk'; font-size: 40px; font-weight: 700; color: var(--gold); margin: 10px 0; display: none;">00:00:00</div>
             
-            <button id="btn-mine" class="game-btn" style="margin-top: 10px;" onclick="startMining(event)">ÜRETİMİ BAŞLAT</button>
+            <button id="btn-mine" class="game-btn" style="margin-top: 10px;" onclick="startMining(event)" data-i18n="start_mine">ÜRETİMİ BAŞLAT</button>
             
             <button id="btn-upgrade" class="game-btn btn-outline" style="margin-top: 15px; padding: 14px;" onclick="upgradeMine(event)">
-                <span style="font-size: 11px; display: block; color: var(--text-main); font-weight: 600;">SEVİYE YÜKSELT</span>
+                <span style="font-size: 11px; display: block; color: var(--text-main); font-weight: 600;" data-i18n="upgrade_lvl">SEVİYE YÜKSELT</span>
                 <span id="ui-upgrade-cost" style="font-size: 14px; font-weight: 800;">10,000 GEP</span>
             </button>
         </div>
     </div>
 
     <div id="page-profile" class="page">
-        
         <div class="glass-card" style="text-align: center; background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(15,23,42,0.6) 100%); border-color: rgba(16,185,129,0.3);">
             <div style="font-size: 36px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(16,185,129,0.5));">📺</div>
-            <h3 style="color: #fff; margin-bottom: 5px;">İZLE & KAZAN</h3>
-            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Her reklam onayı <strong style="color:var(--success);">+500 GEP</strong> kazandırır.</p>
-            <button class="game-btn btn-success" onclick="showAd(event)">REKLAM BAŞLAT</button>
+            <h3 style="color: #fff; margin-bottom: 5px;" data-i18n="watch_earn">İZLE & KAZAN</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" id="ad_desc">Her reklam onayı <strong style="color:var(--success);">+500 GEP</strong> kazandırır.</p>
+            <button class="game-btn btn-success" onclick="showAd(event)" data-i18n="start_ad">REKLAM BAŞLAT</button>
         </div>
 
         <div class="stat-grid">
             <div class="stat-box">
-                <div class="balance-label">DAVET ETTİKLERİN</div>
+                <div class="balance-label" data-i18n="invited">DAVET ETTİKLERİN</div>
                 <div id="stat-ref-count" class="stat-val" style="color: var(--gold);">0</div>
             </div>
             <div class="stat-box">
-                <div class="balance-label">HESAP DURUMU</div>
-                <div id="user-status-text" class="stat-val" style="color: var(--success); font-size: 18px; margin-top: 8px;">AKTİF</div>
+                <div class="balance-label" data-i18n="status">HESAP DURUMU</div>
+                <div id="user-status-text" class="stat-val" style="color: var(--success); font-size: 18px; margin-top: 8px;" data-i18n="active">AKTİF</div>
             </div>
         </div>
         
         <div class="glass-card">
-            <h3 style="font-size: 16px;">GÜNLÜK SERİ</h3>
+            <h3 style="font-size: 16px;" data-i18n="daily_streak">GÜNLÜK SERİ</h3>
             <div class="streak-grid" id="streak-box"></div>
-            <button id="btn-checkin" class="game-btn btn-outline" style="margin-top: 10px;" onclick="claimDaily(event)">GÜNLÜK ÖDÜLÜ AL</button>
+            <button id="btn-checkin" class="game-btn btn-outline" style="margin-top: 10px;" onclick="claimDaily(event)" data-i18n="claim_daily">GÜNLÜK ÖDÜLÜ AL</button>
         </div>
 
         <div class="glass-card" style="text-align: center;">
-            <h3 style="color: #fff;">AĞI BÜYÜT</h3>
-            <p style="font-size: 13px; color: var(--text-main); margin: 5px 0;">Arkadaşını davet et, <strong style="color:var(--gold);">2500 GEP</strong> kazan!</p>
-            <input type="text" id="ref-link" class="glass-input" style="margin-top: 15px;" readonly onclick="this.select()">
-            <button class="game-btn" onclick="copyRef(event)">LİNKİ KOPYALA</button>
+            <h3 style="color: #fff;" data-i18n="grow_net">AĞI BÜYÜT</h3>
+            <p style="font-size: 13px; color: var(--text-main); margin: 5px 0;" id="invite_desc">Arkadaşını davet et, <strong style="color:var(--gold);">2500 GEP</strong> kazan!</p>
+            <input type="text" id="ref-link" class="glass-input" style="margin-top: 15px; direction: ltr;" readonly onclick="this.select()">
+            <button class="game-btn" onclick="copyRef(event)" data-i18n="copy_link">LİNKİ KOPYALA</button>
         </div>
     </div>
 
@@ -321,16 +358,16 @@
 
     <div class="dock-container">
         <a href="javascript:void(0)" class="dock-item active" onclick="showPage('tasks', this)">
-            <div class="dock-icon">📋</div><div class="dock-text">GÖREV</div>
+            <div class="dock-icon">📋</div><div class="dock-text" data-i18n="nav_task">GÖREV</div>
         </a>
         <a href="javascript:void(0)" class="dock-item" onclick="showPage('leaderboard', this)">
-            <div class="dock-icon">🏆</div><div class="dock-text">LİDERLİK</div>
+            <div class="dock-icon">🏆</div><div class="dock-text" data-i18n="nav_lb">LİDERLİK</div>
         </a>
         <a href="javascript:void(0)" class="dock-item" onclick="showPage('mine', this)">
-            <div class="dock-icon">⛏️</div><div class="dock-text">ÜRETİM</div>
+            <div class="dock-icon">⛏️</div><div class="dock-text" data-i18n="nav_mine">ÜRETİM</div>
         </a>
         <a href="javascript:void(0)" class="dock-item" onclick="showPage('profile', this)">
-            <div class="dock-icon">👤</div><div class="dock-text">PROFİL</div>
+            <div class="dock-icon">👤</div><div class="dock-text" data-i18n="nav_profile">PROFİL</div>
         </a>
         <a href="javascript:void(0)" id="nav-admin" class="dock-item" style="display:none" onclick="showPage('admin', this)">
             <div class="dock-icon">🛡️</div><div class="dock-text">ADMİN</div>
@@ -340,7 +377,7 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.setHeaderColor('#020617'); // Premium karanlık tepe
+        tg.setHeaderColor('#020617');
         const API = window.location.origin;
         let user, tasks = [], miningInterval;
         let lbAllTime = [], lbDaily = [], lbYesterday = [];
@@ -348,33 +385,162 @@
         
         const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "27433" }) : null;
 
+        // --- İ18N (ÇOKLU DİL DESTEĞİ) SÖZLÜĞÜ ---
+        const translations = {
+            tr: {
+                loading: "GELİR EVRENİ", loading_text: "YÜKLENİYOR...", current_balance: "GÜNCEL BAKİYE",
+                tasks_title: "GÖREVLER", tasks_desc: "Tamamla ve kazan.", champions: "ŞAMPİYONLAR AĞI",
+                top_100: "TOP 100", daily: "GÜNLÜK", yesterday: "DÜNÜN KRALLARI", engine_lvl: "MOTOR SEVİYESİ",
+                capacity: "KAPASİTE (4H)", sys_ready: "SİSTEM HAZIR", start_mine: "ÜRETİMİ BAŞLAT",
+                upgrade_lvl: "SEVİYE YÜKSELT", watch_earn: "İZLE & KAZAN", start_ad: "REKLAM BAŞLAT",
+                invited: "DAVET ETTİKLERİN", status: "HESAP DURUMU", active: "AKTİF", daily_streak: "GÜNLÜK SERİ",
+                claim_daily: "GÜNLÜK ÖDÜLÜ AL", grow_net: "AĞI BÜYÜT", copy_link: "LİNKİ KOPYALA",
+                nav_task: "GÖREV", nav_lb: "LİDERLİK", nav_mine: "ÜRETİM", nav_profile: "PROFİL",
+                btn_done: "BİTTİ", btn_go: "GİT", day: "GÜN", req: "GEREKEN:", lvl: "ÜYE",
+                msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır değil.", msg_ad_done: "Tebrikler! +500 GEP eklendi.",
+                msg_reward: "🎉 Ödül Alındı! Seri:", msg_mine_ok: "ÜRETİM BAŞARILI!", msg_upg_ok: "GÜNCELLEME TAMAM!",
+                msg_task_ok: "GÖREV TAMAM!", msg_wait: "ÜRETİM DEVAM EDİYOR", msg_no_data: "HENÜZ VERİ YOK.", msg_no_yesterday: "DÜN İÇİN KAYIT BULUNAMADI."
+            },
+            en: {
+                loading: "INCOME UNIVERSE", loading_text: "LOADING...", current_balance: "CURRENT BALANCE",
+                tasks_title: "TASKS", tasks_desc: "Complete & earn.", champions: "CHAMPIONS NETWORK",
+                top_100: "TOP 100", daily: "DAILY", yesterday: "YESTERDAY'S KINGS", engine_lvl: "ENGINE LEVEL",
+                capacity: "CAPACITY (4H)", sys_ready: "SYSTEM READY", start_mine: "START MINING",
+                upgrade_lvl: "UPGRADE LEVEL", watch_earn: "WATCH & EARN", start_ad: "START AD",
+                invited: "INVITED USERS", status: "ACCOUNT STATUS", active: "ACTIVE", daily_streak: "DAILY STREAK",
+                claim_daily: "CLAIM REWARD", grow_net: "GROW NETWORK", copy_link: "COPY LINK",
+                nav_task: "TASKS", nav_lb: "LEADERBOARD", nav_mine: "MINING", nav_profile: "PROFILE",
+                btn_done: "DONE", btn_go: "GO", day: "DAY", req: "REQUIRED:", lvl: "MEMBER",
+                msg_copied: "COPIED!", msg_ad_ready: "Ad is not ready.", msg_ad_done: "Congrats! +500 GEP added.",
+                msg_reward: "🎉 Reward Claimed! Streak:", msg_mine_ok: "MINING SUCCESSFUL!", msg_upg_ok: "UPGRADE COMPLETE!",
+                msg_task_ok: "TASK COMPLETE!", msg_wait: "MINING IN PROGRESS", msg_no_data: "NO DATA YET.", msg_no_yesterday: "NO RECORDS FOR YESTERDAY."
+            },
+            ru: {
+                loading: "ВСЕЛЕННАЯ ДОХОДА", loading_text: "ЗАГРУЗКА...", current_balance: "ТЕКУЩИЙ БАЛАНС",
+                tasks_title: "ЗАДАНИЯ", tasks_desc: "Выполняй и зарабатывай.", champions: "СЕТЬ ЧЕМПИОНОВ",
+                top_100: "ТОП 100", daily: "ЕЖЕДНЕВНО", yesterday: "КОРОЛИ ВЧЕРАШНЕГО ДНЯ", engine_lvl: "УРОВЕНЬ ДВИГАТЕЛЯ",
+                capacity: "ЕМКОСТЬ (4Ч)", sys_ready: "СИСТЕМА ГОТОВА", start_mine: "НАЧАТЬ ДОБЫЧУ",
+                upgrade_lvl: "ПОВЫСИТЬ УРОВЕНЬ", watch_earn: "СМОТРИ И ЗАРАБАТЫВАЙ", start_ad: "СМОТРЕТЬ РЕКЛАМУ",
+                invited: "ПРИГЛАШЕННЫЕ", status: "СТАТУС АККАУНТА", active: "АКТИВЕН", daily_streak: "ЕЖЕДНЕВНАЯ СЕРИЯ",
+                claim_daily: "ПОЛУЧИТЬ НАГРАДУ", grow_net: "РАСШИРЯТЬ СЕТЬ", copy_link: "СКОПИРОВАТЬ ССЫЛКУ",
+                nav_task: "ЗАДАНИЯ", nav_lb: "РЕЙТИНГ", nav_mine: "ДОБЫЧА", nav_profile: "ПРОФИЛЬ",
+                btn_done: "ГОТОВО", btn_go: "НАЧАТЬ", day: "ДЕНЬ", req: "ТРЕБУЕТСЯ:", lvl: "УЧАСТНИК",
+                msg_copied: "СКОПИРОВАНО!", msg_ad_ready: "Реклама не готова.", msg_ad_done: "Поздравляем! +500 GEP добавлено.",
+                msg_reward: "🎉 Награда получена! Серия:", msg_mine_ok: "ДОБЫЧА УСПЕШНА!", msg_upg_ok: "ОБНОВЛЕНИЕ ЗАВЕРШЕНО!",
+                msg_task_ok: "ЗАДАНИЕ ВЫПОЛНЕНО!", msg_wait: "ИДЕТ ДОБЫЧА", msg_no_data: "ПОКА НЕТ ДАННЫХ.", msg_no_yesterday: "НЕТ ЗАПИСЕЙ ЗА ВЧЕРА."
+            },
+            az: {
+                loading: "GƏLİR KAINATI", loading_text: "YÜKLƏNİR...", current_balance: "CİCARİ BALANS",
+                tasks_title: "TAPŞIRIQLAR", tasks_desc: "Tamamla və qazan.", champions: "ÇEMPİONLAR ŞƏBƏKƏSİ",
+                top_100: "TOP 100", daily: "GÜNLÜK", yesterday: "DÜNƏNİN KRALLARI", engine_lvl: "MÜHƏRRİK SƏVİYYƏSİ",
+                capacity: "KAPASİTƏ (4S)", sys_ready: "SİSTEM HAZIRDIR", start_mine: "İSTEHSALA BAŞLA",
+                upgrade_lvl: "SƏVİYYƏNİ YÜKSƏLT", watch_earn: "İZLƏ VƏ QAZAN", start_ad: "REKLAMA BAŞLA",
+                invited: "DƏVƏT EDİLƏNLƏR", status: "HESAB STATUSU", active: "AKTİV", daily_streak: "GÜNLÜK SERİYA",
+                claim_daily: "GÜNLÜK MÜKAFATI AL", grow_net: "ŞƏBƏKƏNİ BÖYÜT", copy_link: "LİNKİ KOPYALA",
+                nav_task: "TAPŞIRIQ", nav_lb: "LİDERLİK", nav_mine: "İSTEHSAL", nav_profile: "PROFİL",
+                btn_done: "BİTDİ", btn_go: "GİT", day: "GÜN", req: "TƏLƏB OLUNUR:", lvl: "ÜZV",
+                msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır deyil.", msg_ad_done: "Təbrik edirik! +500 GEP əlavə edildi.",
+                msg_reward: "🎉 Mükafat alındı! Seriya:", msg_mine_ok: "İSTEHSAL UĞURLU OLDU!", msg_upg_ok: "YENİLƏNMƏ TAMAMLANDI!",
+                msg_task_ok: "TAPŞIRIQ TAMAMLANDI!", msg_wait: "İSTEHSAL DAVAM EDİR", msg_no_data: "HƏLƏ MƏLUMAT YOXDUR.", msg_no_yesterday: "DÜNƏN ÜÇÜN QEYD YOXDUR."
+            },
+            de: {
+                loading: "EINKOMMENSUNIVERSUM", loading_text: "LÄDT...", current_balance: "AKTUELLES GUTHABEN",
+                tasks_title: "AUFGABEN", tasks_desc: "Abschließen & verdienen.", champions: "CHAMPION-NETZWERK",
+                top_100: "TOP 100", daily: "TÄGLICH", yesterday: "KÖNIGE VON GESTERN", engine_lvl: "MOTORLEVEL",
+                capacity: "KAPAZITÄT (4H)", sys_ready: "SYSTEM BEREIT", start_mine: "PRODUKTION STARTEN",
+                upgrade_lvl: "LEVEL VERBESSERN", watch_earn: "ANSEHEN & VERDIENEN", start_ad: "WERBUNG STARTEN",
+                invited: "EINGELADENE", status: "KONTOSTATUS", active: "AKTIV", daily_streak: "TÄGLICHE SERIE",
+                claim_daily: "BELOHNUNG ABHOLEN", grow_net: "NETZWERK ERWEITERN", copy_link: "LINK KOPIEREN",
+                nav_task: "AUFGABEN", nav_lb: "RANGLISTE", nav_mine: "PRODUKTION", nav_profile: "PROFIL",
+                btn_done: "FERTIG", btn_go: "LOS", day: "TAG", req: "BENÖTIGT:", lvl: "MITGLIED",
+                msg_copied: "KOPIERT!", msg_ad_ready: "Werbung nicht bereit.", msg_ad_done: "Glückwunsch! +500 GEP hinzugefügt.",
+                msg_reward: "🎉 Belohnung erhalten! Serie:", msg_mine_ok: "PRODUKTION ERFOLGREICH!", msg_upg_ok: "UPGRADE ABGESCHLOSSEN!",
+                msg_task_ok: "AUFGABE ERLEDIGT!", msg_wait: "PRODUKTION LÄUFT", msg_no_data: "NOCH KEINE DATEN.", msg_no_yesterday: "KEINE DATEN FÜR GESTERN."
+            },
+            it: {
+                loading: "UNIVERSO DEL REDDITO", loading_text: "CARICAMENTO...", current_balance: "SALDO ATTUALE",
+                tasks_title: "COMPITI", tasks_desc: "Completa e guadagna.", champions: "RETE DEI CAMPIONI",
+                top_100: "TOP 100", daily: "GIORNALIERO", yesterday: "RE DI IERI", engine_lvl: "LIVELLO MOTORE",
+                capacity: "CAPACITÀ (4 ORE)", sys_ready: "SISTEMA PRONTO", start_mine: "INIZIA PRODUZIONE",
+                upgrade_lvl: "MIGLIORA LIVELLO", watch_earn: "GUARDA E GUADAGNA", start_ad: "AVVIA ANNUNCIO",
+                invited: "UTENTI INVITATI", status: "STATO ACCOUNT", active: "ATTIVO", daily_streak: "SERIE GIORNALIERA",
+                claim_daily: "RICHIEDI PREMIO", grow_net: "ESPANDI LA RETE", copy_link: "COPIA LINK",
+                nav_task: "COMPITI", nav_lb: "CLASSIFICA", nav_mine: "PRODUZIONE", nav_profile: "PROFILO",
+                btn_done: "FATTO", btn_go: "VAI", day: "GIORNO", req: "RICHIESTO:", lvl: "MEMBRO",
+                msg_copied: "COPIATO!", msg_ad_ready: "Annuncio non pronto.", msg_ad_done: "Congratulazioni! +500 GEP aggiunti.",
+                msg_reward: "🎉 Premio riscosso! Serie:", msg_mine_ok: "PRODUZIONE RIUSCITA!", msg_upg_ok: "AGGIORNAMENTO COMPLETATO!",
+                msg_task_ok: "COMPITO COMPLETATO!", msg_wait: "PRODUZIONE IN CORSO", msg_no_data: "NESSUN DATO ANCORA.", msg_no_yesterday: "NESSUN DATO PER IERI."
+            },
+            ar: {
+                loading: "عالم الدخل", loading_text: "جار التحميل...", current_balance: "الرصيد الحالي",
+                tasks_title: "المهام", tasks_desc: "أكمل واكسب.", champions: "شبكة الأبطال",
+                top_100: "أفضل 100", daily: "يومياً", yesterday: "ملوك الأمس", engine_lvl: "مستوى المحرك",
+                capacity: "السعة (4 س)", sys_ready: "النظام جاهز", start_mine: "بدء الإنتاج",
+                upgrade_lvl: "ترقية المستوى", watch_earn: "شاهد واكسب", start_ad: "بدء الإعلان",
+                invited: "المدعوين", status: "حالة الحساب", active: "نشط", daily_streak: "سلسلة يومية",
+                claim_daily: "المطالبة بالمكافأة", grow_net: "توسيع الشبكة", copy_link: "نسخ الرابط",
+                nav_task: "المهام", nav_lb: "المتصدرين", nav_mine: "إنتاج", nav_profile: "ملف",
+                btn_done: "منجز", btn_go: "اذهب", day: "يوم", req: "مطلوب:", lvl: "عضو",
+                msg_copied: "تم النسخ!", msg_ad_ready: "الإعلان غير جاهز.", msg_ad_done: "تهانينا! تمت إضافة +500 GEP.",
+                msg_reward: "🎉 تم استلام المكافأة! سلسلة:", msg_mine_ok: "تم الإنتاج بنجاح!", msg_upg_ok: "اكتمل التحديث!",
+                msg_task_ok: "اكتملت المهمة!", msg_wait: "الإنتاج قيد التقدم", msg_no_data: "لا توجد بيانات بعد.", msg_no_yesterday: "لا توجد سجلات للأمس."
+            }
+        };
+
+        let currentLang = localStorage.getItem('appLang') || 'tr';
+        
+        function t(key) { return translations[currentLang][key] || translations['tr'][key]; }
+
+        function changeLanguage(langCode) {
+            currentLang = langCode;
+            localStorage.setItem('appLang', langCode);
+            document.body.dir = langCode === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('lang-select').value = langCode;
+            
+            // Tüm i18n etiketli elementleri güncelle
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(translations[langCode][key]) el.innerText = translations[langCode][key];
+            });
+
+            // Özel Dinamik Alanları Güncelle
+            document.getElementById('ad_desc').innerHTML = t('ad_desc').replace('+500 GEP', '<strong style="color:var(--success);">+500 GEP</strong>');
+            document.getElementById('invite_desc').innerHTML = t('invite_desc').replace('2500 GEP', '<strong style="color:var(--gold);">2500 GEP</strong>');
+            
+            updateUI(); // Verileri (sayılar vs) yeniden bas
+            if(tasks.length > 0) renderTasks(); // Görev metinlerini çevir
+            if(lbAllTime.length > 0) renderLB(); // Sıralama listesini çevir
+            renderStreak(); // Serileri çevir
+            
+            // Üretim Butonu Durumunu Güncelle
+            if(document.getElementById('btn-mine').disabled) {
+                document.getElementById('mine-status-text').innerText = t('msg_wait');
+            }
+        }
+        // ---------------------------------------------
+
+
         // --- MİKRO ETKİLEŞİMLER (OYUN HİSSİYATI) ---
         function triggerHaptic(type = 'light') {
             if(tg.HapticFeedback) {
                 if(type === 'success') tg.HapticFeedback.notificationOccurred('success');
                 else if(type === 'error') tg.HapticFeedback.notificationOccurred('error');
                 else if(type === 'warning') tg.HapticFeedback.notificationOccurred('warning');
-                else tg.HapticFeedback.impactOccurred(type); // light, medium, heavy, rigid, soft
+                else tg.HapticFeedback.impactOccurred(type); 
             }
         }
 
         function spawnFloatingText(e, text, color) {
-            // Eğer e (event) yoksa ekranin ortasindan baslat
             let x = window.innerWidth / 2;
             let y = window.innerHeight / 2;
             
-            if(e && e.touches && e.touches.length > 0) {
-                x = e.touches[0].clientX;
-                y = e.touches[0].clientY;
-            } else if (e && e.clientX) {
-                x = e.clientX;
-                y = e.clientY;
-            }
+            if(e && e.touches && e.touches.length > 0) { x = e.touches[0].clientX; y = e.touches[0].clientY; } 
+            else if (e && e.clientX) { x = e.clientX; y = e.clientY; }
 
             const el = document.createElement("div");
             el.className = "floating-text";
             el.innerText = text;
-            el.style.left = (x - 40) + "px"; // Ortalama
+            el.style.left = (x - 40) + "px"; 
             el.style.top = (y - 20) + "px";
             el.style.color = color || "var(--gold)";
             document.body.appendChild(el);
@@ -382,16 +548,14 @@
         }
         // ------------------------------------------
 
-        function getQueryParam(param) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
-        }
-
         async function init() {
             try {
+                // Başlangıç Dili Ayarla
+                changeLanguage(currentLang);
+
                 const tgUser = tg.initDataUnsafe?.user;
                 if (!tgUser) {
-                    document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--danger); font-family:Outfit;'><h2>SİSTEME ERİŞİM REDDEDİLDİ.<br>TELEGRAM GEREKLİ.</h2></div>";
+                    document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--danger); font-family:Outfit;'><h2 style='text-align:center;'>SİSTEME ERİŞİM REDDEDİLDİ.<br>TELEGRAM GEREKLİ.</h2></div>";
                     return;
                 }
 
@@ -454,7 +618,7 @@
             document.getElementById('usd').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`;
             
             const lvl = document.getElementById('user-level');
-            lvl.innerText = `${user.level} ÜYE`; 
+            lvl.innerText = `${user.level} ${t('lvl')}`; 
             
             if (document.getElementById('stat-ref-count')) document.getElementById('stat-ref-count').innerText = user.referralCount || 0;
             
@@ -463,14 +627,14 @@
             document.getElementById('ui-mine-reward').innerText = `${currentReward.toLocaleString()}`;
             
             const upgradeCost = (user.miningLevel || 1) * 10000;
-            document.getElementById('ui-upgrade-cost').innerText = `${upgradeCost.toLocaleString()} GEP`; 
+            document.getElementById('ui-upgrade-cost').innerText = `${t('req')} ${upgradeCost.toLocaleString()} GEP`; 
 
             renderStreak();
         }
 
         async function showAd(event) {
             triggerHaptic('medium');
-            if(!AdController) return tg.showAlert("Reklam hazır değil.");
+            if(!AdController) return tg.showAlert(t('msg_ad_ready'));
             AdController.show().then(async (result) => {
                 if (result.done) {
                     const res = await fetch(`${API}/api/adsgram-reward`, {
@@ -485,7 +649,7 @@
                             updateUI(); 
                             triggerHaptic('success');
                             spawnFloatingText(event, "+500", "var(--success)");
-                            tg.showAlert("Tebrikler! +500 GEP eklendi."); 
+                            tg.showAlert(t('msg_ad_done')); 
                         }
                     }
                 }
@@ -503,7 +667,7 @@
             if(data.success) { 
                 triggerHaptic('success');
                 spawnFloatingText(event, "+" + data.reward, "var(--gold)");
-                tg.showAlert(`🎉 Ödül Alındı! Seri: ${data.streak}. Gün (+${data.reward} GEP)`); 
+                tg.showAlert(`${t('msg_reward')} ${data.streak}. ${t('day')} (+${data.reward} GEP)`); 
                 init(); 
             } else {
                 triggerHaptic('error');
@@ -514,7 +678,7 @@
         async function startMining(event) {
             triggerHaptic('heavy');
             const btn = document.getElementById('btn-mine');
-            if(btn.disabled) return; // Zaten kazılıyorsa core'a basılınca tetiklenmesin
+            if(btn.disabled) return;
             btn.disabled = true;
             
             const res = await fetch(`${API}/api/mine`, {
@@ -532,7 +696,7 @@
                 runTimer(4 * 60 * 60 * 1000);
             } else { 
                 triggerHaptic('error');
-                if(event.target.id === 'btn-mine') tg.showAlert(data.message); // Sadece butona basıldıysa uyarı ver
+                if(event.target.id === 'btn-mine') tg.showAlert(data.message); 
                 btn.disabled = false; 
             }
         }
@@ -540,7 +704,7 @@
         async function upgradeMine(event) {
             triggerHaptic('light');
             const upgradeCost = (user.miningLevel || 1) * 10000;
-            tg.showConfirm(`Motoru Seviye ${(user.miningLevel || 1) + 1} yapmak istiyor musun?\n\nBedel: ${upgradeCost.toLocaleString()} GEP`, async (confirmed) => {
+            tg.showConfirm(`${t('upgrade_lvl')} ${(user.miningLevel || 1) + 1}?\n\n${t('req')} ${upgradeCost.toLocaleString()} GEP`, async (confirmed) => {
                 if (!confirmed) return;
                 
                 const btn = document.getElementById('btn-upgrade');
@@ -559,7 +723,7 @@
                     updateUI();
                     triggerHaptic('success');
                     spawnFloatingText(event, "LVL UP!", "var(--gold)");
-                    tg.showAlert(`🎉 GÜNCELLEME TAMAM! Yeni Seviye: ${data.newLevel}`);
+                    tg.showAlert(`${t('msg_upg_ok')} LVL: ${data.newLevel}`);
                 } else {
                     triggerHaptic('error');
                     tg.showAlert(data.message);
@@ -586,7 +750,7 @@
             
             btn.disabled = true;
             timerDiv.style.display = "block";
-            statusText.innerText = "ÜRETİM DEVAM EDİYOR";
+            statusText.innerText = t('msg_wait');
             statusText.style.color = "var(--text-dim)";
             glow.style.animation = "none";
             glow.style.background = "radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)";
@@ -599,7 +763,7 @@
                     clearInterval(miningInterval);
                     btn.disabled = false;
                     timerDiv.style.display = "none";
-                    statusText.innerText = "SİSTEM HAZIR";
+                    statusText.innerText = t('sys_ready');
                     statusText.style.color = "#fff";
                     glow.style.animation = "pulse 3s infinite";
                     glow.style.background = "radial-gradient(circle, var(--gold-glow) 0%, transparent 70%)";
@@ -624,17 +788,17 @@
         function renderTasks() {
             const cont = document.getElementById('task-list');
             if(!cont) return;
-            cont.innerHTML = tasks.map(t => {
-                const isDone = user.completedTasks.includes(t.taskId);
+            cont.innerHTML = tasks.map(tData => {
+                const isDone = user.completedTasks.includes(tData.taskId);
                 return `
                 <div class="task-card" style="${isDone ? 'opacity:0.5;' : ''}">
                     <div>
-                        <div style="font-weight: 800; font-size:14px; margin-bottom: 4px;">${t.title}</div>
-                        <div style="font-family: 'Space Grotesk'; color: ${isDone ? 'var(--text-dim)' : 'var(--gold)'}; font-weight: 700;">+${t.reward} GEP</div>
+                        <div style="font-weight: 800; font-size:14px; margin-bottom: 4px;">${tData.title}</div>
+                        <div style="font-family: 'Space Grotesk'; color: ${isDone ? 'var(--text-dim)' : 'var(--gold)'}; font-weight: 700;">+${tData.reward} GEP</div>
                     </div>
                     <button class="game-btn ${isDone ? '' : 'btn-outline'}" style="${isDone ? 'background:#1e293b; color:#64748b; padding:10px 20px; width:auto; font-size:12px; box-shadow:none;' : 'padding:10px 20px; width:auto; font-size:12px;'}" 
-                        ${isDone ? 'disabled' : ''} onclick="completeTask(event, '${t.taskId}','${t.target}')">
-                        ${isDone ? 'BİTTİ' : 'GİT'}
+                        ${isDone ? 'disabled' : ''} onclick="completeTask(event, '${tData.taskId}','${tData.target}')">
+                        ${isDone ? t('btn_done') : t('btn_go')}
                     </button>
                 </div>`;
             }).join('');
@@ -652,7 +816,7 @@
                 const data = await res.json();
                 if(data.success) { 
                     triggerHaptic('success');
-                    spawnFloatingText(e, "GÖREV TAMAM!", "var(--success)");
+                    spawnFloatingText(e, t('msg_task_ok'), "var(--success)");
                     init(); 
                 }
             }, 3000);
@@ -660,7 +824,7 @@
 
         async function loadLeaderboard() {
             const list = document.getElementById('leader-list');
-            list.innerHTML = "<p style='text-align:center; padding: 30px; font-weight:600; color:var(--text-dim);'>LİSTELER ÇEKİLİYOR...</p>";
+            list.innerHTML = `<p style='text-align:center; padding: 30px; font-weight:600; color:var(--text-dim);'>${t('loading_text')}</p>`;
             const res = await fetch(`${API}/api/leaderboard`);
             const data = await res.json();
             if(data.success) {
@@ -676,9 +840,9 @@
             currentLbTab = tab;
             
             const tabs = ['all', 'daily', 'yesterday'];
-            tabs.forEach(t => {
-                const btn = document.getElementById(`tab-lb-${t}`);
-                if (t === tab) {
+            tabs.forEach(tName => {
+                const btn = document.getElementById(`tab-lb-${tName}`);
+                if (tName === tab) {
                     btn.classList.add('active');
                 } else {
                     btn.classList.remove('active');
@@ -697,7 +861,7 @@
             else dataToRender = lbYesterday;
             
             if(dataToRender.length === 0) {
-                list.innerHTML = `<p style='text-align:center; padding: 30px; color: var(--text-dim); font-weight:600;'>${currentLbTab === 'yesterday' ? 'DÜN İÇİN KAYIT BULUNAMADI.' : 'HENÜZ VERİ YOK.'}</p>`;
+                list.innerHTML = `<p style='text-align:center; padding: 30px; color: var(--text-dim); font-weight:600;'>${currentLbTab === 'yesterday' ? t('msg_no_yesterday') : t('msg_no_data')}</p>`;
                 return;
             }
 
@@ -724,7 +888,7 @@
                 const rewardVal = 100 * Math.pow(2, i - 1);
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `streak-day ${i <= currentStreak ? 'completed' : ''}`;
-                dayDiv.innerHTML = `<div style="font-weight:800; font-size:11px; margin-bottom:4px; opacity:0.8">GÜN ${i}</div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:11px; color:var(--gold);">${rewardVal}</div>`;
+                dayDiv.innerHTML = `<div style="font-weight:800; font-size:11px; margin-bottom:4px; opacity:0.8">${t('day')} ${i}</div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:11px; color:var(--gold);">${rewardVal}</div>`;
                 streakBox.appendChild(dayDiv);
             }
         }
@@ -833,7 +997,7 @@
             triggerHaptic('success');
             const input = document.getElementById('ref-link');
             input.select(); document.execCommand('copy');
-            spawnFloatingText(e, "KOPYALANDI!", "var(--success)");
+            spawnFloatingText(e, t('msg_copied'), "var(--success)");
         }
 
         window.onload = init;
