@@ -44,7 +44,8 @@ const User = mongoose.model('User', new mongoose.Schema({
     streak: { type: Number, default: 0 },
     level: { type: String, default: 'Bronz' },
     isBanned: { type: Boolean, default: false },
-    miningLevel: { type: Number, default: 1 } 
+    miningLevel: { type: Number, default: 1 },
+    adTickets: { type: Number, default: 0 } // YENİ: Reklam İzleme Bileti
 }));
 
 const Task = mongoose.model('Task', new mongoose.Schema({
@@ -60,18 +61,12 @@ const Settings = mongoose.model('Settings', new mongoose.Schema({
 }));
 
 const YesterdayWinner = mongoose.model('YesterdayWinner', new mongoose.Schema({
-    rank: Number,
-    username: String,
-    firstName: String,
-    points: Number,
-    date: { type: Date, default: Date.now }
+    rank: Number, username: String, firstName: String, points: Number, date: { type: Date, default: Date.now }
 }));
 
 function addPoints(user, amount) {
     const now = new Date();
-    if (user.lastPointDate.toDateString() !== now.toDateString()) {
-        user.dailyPoints = 0;
-    }
+    if (user.lastPointDate.toDateString() !== now.toDateString()) { user.dailyPoints = 0; }
     user.points += amount;
     user.dailyPoints += amount;
     user.lastPointDate = now;
@@ -84,19 +79,13 @@ async function archiveDailyLeaderboard() {
         const existing = await YesterdayWinner.findOne({ date: { $gte: today } });
         if (existing) return;
 
-        const winners = await User.find({ dailyPoints: { $gt: 0 } })
-            .sort({ dailyPoints: -1 })
-            .limit(100);
+        const winners = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(100);
 
         if (winners.length > 0) {
             await YesterdayWinner.deleteMany({}); 
-            const archiveData = winners.map((u, i) => ({
-                rank: i + 1, username: u.username, firstName: u.firstName,
-                points: u.dailyPoints, date: new Date()
-            }));
+            const archiveData = winners.map((u, i) => ({ rank: i + 1, username: u.username, firstName: u.firstName, points: u.dailyPoints, date: new Date() }));
             await YesterdayWinner.insertMany(archiveData);
             await User.updateMany({}, { $set: { dailyPoints: 0 } });
-            console.log("✅ Günlük sıralama arşive eklendi ve sıfırlandı.");
         } else {
             await YesterdayWinner.create({ rank: 0, username: 'sistem', firstName: 'sistem', points: 0, date: new Date() });
         }
@@ -115,8 +104,7 @@ function verifyTelegramWebAppData(telegramInitData) {
     try {
         if (!telegramInitData) return false;
         const initData = new URLSearchParams(telegramInitData);
-        const hash = initData.get('hash');
-        const authDate = initData.get('auth_date');
+        const hash = initData.get('hash'); const authDate = initData.get('auth_date');
         if (!hash || !authDate) return false;
 
         const now = Math.floor(Date.now() / 1000);
@@ -133,22 +121,15 @@ function verifyTelegramWebAppData(telegramInitData) {
 }
 
 const secureRoute = (req, res, next) => {
-    const initData = req.body.initData; 
-    const reqId = req.body.telegramId || req.body.adminId;
-
+    const initData = req.body.initData; const reqId = req.body.telegramId || req.body.adminId;
     if (!initData) return res.status(403).json({ success: false, message: "⚠️ Güvenlik Kilidi Eksik!" });
     if (!verifyTelegramWebAppData(initData)) return res.status(403).json({ success: false, message: "⚠️ Geçersiz kimlik tespiti!" });
-
     try {
-        const params = new URLSearchParams(initData);
-        const userData = JSON.parse(params.get('user'));
-        if (reqId && String(reqId) !== String(userData.id)) {
-            return res.status(403).json({ success: false, message: "⚠️ Kimlik hırsızlığı engellendi!" });
-        }
+        const params = new URLSearchParams(initData); const userData = JSON.parse(params.get('user'));
+        if (reqId && String(reqId) !== String(userData.id)) { return res.status(403).json({ success: false, message: "⚠️ Kimlik hırsızlığı engellendi!" }); }
         next();
     } catch (e) { return res.status(403).json({ success: false, message: "Veri okuma hatası!" }); }
 };
-
 
 // --- API ROTALARI ---
 
@@ -157,19 +138,12 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
     try {
         let user = await User.findOne({ telegramId });
         if (!user) {
-            user = new User({ 
-                telegramId, username: (username || '').toLowerCase(), firstName, points: 0, dailyPoints: 0
-            });
+            user = new User({ telegramId, username: (username || '').toLowerCase(), firstName, points: 0, dailyPoints: 0 });
             addPoints(user, 1000); 
 
             if (referrerId && String(referrerId) !== String(telegramId)) {
                 const referrer = await User.findOne({ telegramId: referrerId });
-                if (referrer) {
-                    addPoints(referrer, 2500); 
-                    referrer.referralCount += 1;
-                    await referrer.save();
-                    addPoints(user, 1000); 
-                }
+                if (referrer) { addPoints(referrer, 2500); referrer.referralCount += 1; await referrer.save(); addPoints(user, 1000); }
             }
         } else {
             if (username) user.username = username.toLowerCase();
@@ -177,11 +151,7 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
         }
         await user.save();
         let settings = await Settings.findOne() || await Settings.create({});
-        
-        res.json({ 
-            success: true, user, botUsername: settings.botUsername, 
-            isAdmin: String(telegramId) === String(ADMIN_ID), announcements: settings.announcements 
-        });
+        res.json({ success: true, user, botUsername: settings.botUsername, isAdmin: String(telegramId) === String(ADMIN_ID), announcements: settings.announcements });
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
@@ -190,28 +160,56 @@ app.post('/api/daily-reward', secureRoute, async (req, res) => {
     const user = await User.findOne({ telegramId });
     if (!user) return res.json({ success: false });
     
-    const now = new Date();
-    const lastCheckin = new Date(user.lastCheckin);
-    const diffHours = (now - lastCheckin) / (1000 * 60 * 60);
+    const now = new Date(); const lastCheckin = new Date(user.lastCheckin); const diffHours = (now - lastCheckin) / (1000 * 60 * 60);
 
     if (diffHours < 24) return res.json({ success: false, message: "Ödülünüzü zaten aldınız, 24 saat bekleyin." });
     if (diffHours >= 48) user.streak = 1; else user.streak = user.streak >= 7 ? 1 : user.streak + 1;
 
     const reward = 100 * Math.pow(2, user.streak - 1);
-    addPoints(user, reward);
-    user.lastCheckin = now;
-    await user.save();
+    addPoints(user, reward); user.lastCheckin = now; await user.save();
     res.json({ success: true, points: user.points, streak: user.streak, reward });
 });
 
+// YENİ: REKLAM BİLETİ SATIN ALMA
+app.post('/api/buy-ad-package', secureRoute, async (req, res) => {
+    const { telegramId, packageId } = req.body;
+    const user = await User.findOne({ telegramId });
+    if (!user) return res.json({ success: false });
+
+    let cost = 0; let tickets = 0;
+
+    if (packageId === 1) { cost = 1000; tickets = 10; }
+    else if (packageId === 2) { cost = 5000; tickets = 50; }
+    else if (packageId === 3) { cost = 10000; tickets = 100; }
+    else return res.json({ success: false, message: "Geçersiz paket." });
+
+    if (user.points < cost) return res.json({ success: false, message: "Yetersiz GEP bakiye!" });
+
+    user.points -= cost;
+    user.adTickets += tickets; // Biletleri hesaba ekle
+    await user.save();
+
+    res.json({ success: true, points: user.points, adTickets: user.adTickets });
+});
+
+// GÜNCELLENDİ: REKLAM İZLEME (BİLET KONTROLÜ)
 app.post('/api/adsgram-reward', secureRoute, async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
     if (!user) return res.json({ success: false });
+    
+    // Bilet kontrolü
+    if (user.adTickets <= 0) {
+        return res.json({ success: false, message: "Hiç reklam biletiniz kalmadı! Önce mağazadan bilet paketi satın alın." });
+    }
+    
     const settings = await Settings.findOne() || { adsgramReward: 500 };
-    addPoints(user, settings.adsgramReward);
+    
+    user.adTickets -= 1; // 1 bilet harca
+    addPoints(user, settings.adsgramReward); // 500 GEP ver
     await user.save();
-    res.json({ success: true, points: user.points });
+    
+    res.json({ success: true, points: user.points, adTickets: user.adTickets });
 });
 
 app.post('/api/mine', secureRoute, async (req, res) => {
@@ -220,9 +218,7 @@ app.post('/api/mine', secureRoute, async (req, res) => {
     const now = new Date();
     if (user && (now - new Date(user.lastMining)) > 4 * 60 * 60 * 1000) {
         const reward = 1000 + ((user.miningLevel - 1) * 500);
-        addPoints(user, reward);
-        user.lastMining = now;
-        await user.save();
+        addPoints(user, reward); user.lastMining = now; await user.save();
         return res.json({ success: true, points: user.points, reward: reward });
     }
     res.json({ success: false, message: "Maden hazır değil." });
@@ -235,9 +231,7 @@ app.post('/api/upgrade-mine', secureRoute, async (req, res) => {
 
     const upgradeCost = user.miningLevel * 10000;
     if (user.points >= upgradeCost) {
-        user.points -= upgradeCost; 
-        user.miningLevel += 1;
-        await user.save();
+        user.points -= upgradeCost; user.miningLevel += 1; await user.save();
         res.json({ success: true, points: user.points, newLevel: user.miningLevel });
     } else {
         res.json({ success: false, message: `Yetersiz Bakiye! Gerekli: ${upgradeCost.toLocaleString()} GEP` });
@@ -249,92 +243,58 @@ app.post('/api/tasks/complete', secureRoute, async (req, res) => {
     const user = await User.findOne({ telegramId });
     const task = await Task.findOne({ taskId });
     if (!user || !task || user.completedTasks.includes(taskId)) return res.json({ success: false });
-    addPoints(user, task.reward);
-    user.completedTasks.push(taskId);
-    await user.save();
+    addPoints(user, task.reward); user.completedTasks.push(taskId); await user.save();
     res.json({ success: true, points: user.points });
 });
 
-// ==========================================
-// 🕹️ ARCADE OYUNLARI API (YENİ) 🕹️
-// ==========================================
-
-// Oyun 1: Siber Çark (Rulet)
 app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
-    const cost = 500; // Çark bedeli
-    
-    if (!user || user.points < cost) {
-        return res.json({ success: false, message: "Yetersiz GEP Bakiye!" });
-    }
+    const cost = 500; 
+    if (!user || user.points < cost) return res.json({ success: false, message: "Yetersiz GEP Bakiye!" });
 
-    user.points -= cost; // Parayı kes
+    user.points -= cost; 
     
-    // Hile Korumalı RNG (Rastgele Sayı Üretici)
     const rand = Math.random() * 100;
-    let prize = 0;
-    let msg = "BOŞ";
+    let prize = 0; let msg = "BOŞ";
 
-    if (rand <= 40) { prize = 0; msg = "Şansını Tekrar Dene"; } // %40 ihtimal Boş
-    else if (rand <= 75) { prize = 250; msg = "Yarım Teselli"; } // %35 ihtimal 250
-    else if (rand <= 92) { prize = 500; msg = "Amorti!"; } // %17 ihtimal 500
-    else if (rand <= 99) { prize = 1000; msg = "İKİYE KATLADIN!"; } // %7 ihtimal 1000
-    else { prize = 5000; msg = "💥 JACKPOT! 💥"; } // %1 ihtimal 5000
+    if (rand <= 40) { prize = 0; msg = "Şansını Tekrar Dene"; } 
+    else if (rand <= 75) { prize = 250; msg = "Yarım Teselli"; } 
+    else if (rand <= 92) { prize = 500; msg = "Amorti!"; } 
+    else if (rand <= 99) { prize = 1000; msg = "İKİYE KATLADIN!"; } 
+    else { prize = 5000; msg = "💥 JACKPOT! 💥"; } 
 
     if (prize > 0) addPoints(user, prize);
     await user.save();
-
     res.json({ success: true, prize, msg, points: user.points });
 });
 
-// Oyun 2: Kripto Kahini (BTC Fiyat Tahmini)
 app.post('/api/arcade/predict', secureRoute, async (req, res) => {
-    const { telegramId, guess } = req.body; // guess: 'UP' veya 'DOWN'
+    const { telegramId, guess } = req.body; 
     const user = await User.findOne({ telegramId });
-    const cost = 1000; // Bahis bedeli
-    
-    if (!user || user.points < cost) {
-        return res.json({ success: false, message: "Yetersiz GEP Bakiye!" });
-    }
+    const cost = 1000; 
+    if (!user || user.points < cost) return res.json({ success: false, message: "Yetersiz GEP Bakiye!" });
 
     try {
-        // Binance'den Anlık Fiyatı Al
         const response1 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
-        const data1 = await response1.json();
-        const price1 = parseFloat(data1.price);
+        const data1 = await response1.json(); const price1 = parseFloat(data1.price);
 
-        user.points -= cost; // Parayı kes ve kaydet (Hacklenmeyi önlemek için)
-        await user.save();
-
-        // Sunucuyu 10 saniye bekletiyoruz (1 Dakika telefonda sıkıcı olur, 10 saniye dopamin için idealdir)
+        user.points -= cost; await user.save();
         await new Promise(resolve => setTimeout(resolve, 10000));
 
-        // 10 saniye sonraki fiyatı al
         const response2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
-        const data2 = await response2.json();
-        const price2 = parseFloat(data2.price);
+        const data2 = await response2.json(); const price2 = parseFloat(data2.price);
 
-        let won = false;
-        let reward = 0;
-
+        let won = false; let reward = 0;
         if ((guess === 'UP' && price2 > price1) || (guess === 'DOWN' && price2 < price1)) {
-            won = true;
-            reward = 2000; // 2x Kazanç
-            addPoints(user, reward);
-            await user.save();
+            won = true; reward = 2000; addPoints(user, reward); await user.save();
         }
-
         res.json({ success: true, won, price1, price2, reward, points: user.points });
-
     } catch (e) {
-        // Eğer Binance API çökerse parayı iade et
-        user.points += cost;
-        await user.save();
+        user.points += cost; await user.save();
         res.json({ success: false, message: "Piyasa verisi çekilemedi. Bakiye iade edildi." });
     }
 });
-// ==========================================
 
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
 
@@ -389,7 +349,7 @@ app.post('/api/admin/user-manage', secureRoute, async (req, res) => {
 bot.onText(/\/start(?:\s+(.*))?/, (msg, match) => {
     const refId = match[1] ? match[1].trim() : '';
     const appUrl = refId ? `${WEBHOOK_URL}?tgWebAppStartParam=${refId}` : WEBHOOK_URL;
-    bot.sendMessage(msg.chat.id, "🌟 **Gelir Evreni'ne Hoş Geldin!**\n\nHemen maden kazmaya ve oyun oynamaya başla.", {
+    bot.sendMessage(msg.chat.id, "🌟 **Gelir Evreni'ne Hoş Geldin!**", {
         parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: appUrl } }]] } 
     });
 });
