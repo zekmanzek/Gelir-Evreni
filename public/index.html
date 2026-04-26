@@ -34,16 +34,8 @@
             padding-bottom: 120px; 
             min-height: 100vh; 
             overflow-x: hidden; 
-            transition: direction 0.3s;
         }
 
-        body[dir="rtl"] { text-align: right; }
-        body[dir="rtl"] .header-panel, body[dir="rtl"] .glass-card { text-align: right; }
-        body[dir="rtl"] .list-row, body[dir="rtl"] .task-card { flex-direction: row-reverse; text-align: right; }
-        body[dir="rtl"] .list-row span:first-child { border-left: none; border-right: 3px solid var(--gold); }
-        body[dir="rtl"] .points-row { flex-direction: row-reverse; justify-content: center; }
-        body[dir="rtl"] .stat-grid { direction: rtl; }
-        
         h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; margin: 0 0 15px 0; letter-spacing: -0.5px; }
 
         .lang-selector {
@@ -64,7 +56,6 @@
             cursor: pointer;
         }
         .lang-selector option { background: var(--bg-dark); color: var(--text-main); }
-        body[dir="rtl"] .lang-selector { right: auto; left: 15px; }
 
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease-out; }
         .loader-ring { width: 80px; height: 80px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; filter: drop-shadow(0 0 10px var(--gold-glow)); margin-bottom: 20px;}
@@ -274,20 +265,90 @@
             </div>
         </div>
 
-        <div class="glass-card" style="opacity: 0.6; position: relative; overflow: hidden; padding-top: 30px;">
-            <div style="position: absolute; top:12px; right:15px; background:var(--danger); color:#fff; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:800; letter-spacing:1px;" data-i18n="coming_soon">YAKINDA</div>
-            <div style="font-size: 40px; margin-bottom: 10px;">📈</div>
-            <h3 style="color: var(--cyan); margin-bottom: 5px;" data-i18n="game1_title">Kripto Kahini</h3>
-            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="game1_desc">BTC fiyatı 1 dakika sonra nerede olacak? Tahmin et, GEP'lerini katla.</p>
+        <style>
+            .arcade-card { opacity: 0.6; position: relative; overflow: hidden; padding-top: 35px; border-color: rgba(255,255,255,0.05); }
+            .badge-soon { position: absolute; top:12px; right:15px; background:var(--danger); color:#fff; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:800; letter-spacing:1px; }
+            .arcade-icon { font-size: 40px; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
+        </style>
+
+        <div class="glass-card arcade-card">
+            <div class="badge-soon" data-i18n="coming_soon">YAKINDA</div>
+            <div class="arcade-icon">📈</div>
+            <h3 style="color: var(--cyan); margin-bottom: 5px;" data-i18n="g1_t">Kripto Kahini</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g1_d">BTC fiyatını tahmin et, GEP'lerini katla.</p>
             <button class="game-btn btn-outline" disabled style="padding: 12px; font-size: 12px;" data-i18n="system_lock">SİSTEM KİLİTLİ</button>
         </div>
 
-        <div class="glass-card" style="opacity: 0.6; position: relative; overflow: hidden; padding-top: 30px;">
-            <div style="position: absolute; top:12px; right:15px; background:var(--danger); color:#fff; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:800; letter-spacing:1px;" data-i18n="coming_soon">YAKINDA</div>
-            <div style="font-size: 40px; margin-bottom: 10px;">🎰</div>
-            <h3 style="color: var(--gold); margin-bottom: 5px;" data-i18n="game2_title">Siber Çark</h3>
-            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="game2_desc">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p>
-            <button class="game-btn btn-outline" disabled style="padding: 12px; font-size: 12px; border-color:var(--text-dim); color:var(--text-dim);" data-i18n="system_lock">SİSTEM KİLİTLİ</button>
+        <div class="glass-card arcade-card">
+            <div class="badge-soon" data-i18n="coming_soon">YAKINDA</div>
+            <div class="arcade-icon">🎰</div>
+            <h3 style="color: var(--gold); margin-bottom: 5px;" data-i18n="g2_t">Siber Çark</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g2_d">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p>
+            <button class="game-btn btn-outline" disabled style="padding: 12px; font-size: 12px;" data-i18n="system_lock">SİSTEM KİLİTLİ</button>
+        </div>
+
+        <div class="glass-card arcade-card">
+            <div class="badge-soon" data-i18n="coming_soon">YAKINDA</div>
+            <div class="arcade-icon">🚀</div>
+            <h3 style="color: #f43f5e; margin-bottom: 5px;" data-i18n="g3_t">Siber Çöküş</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g3_d">Veri roketi patlamadan önce bakiye çek, riski yönet.</p>
+            <button class="game-btn btn-outline" disabled style="padding: 12px; font-size: 12px;" data-i18n="system_lock">SİSTEM KİLİTLİ</button>
+        </div>
+
+        <div class="glass-card arcade-card">
+            <div class="badge-soon" data-i18n="coming_soon">YAKINDA</div>
+            <div class="arcade-icon">⚔️</div>
+            <h3 style="color: #8b5cf6; margin-bottom: 5px;" data-i18n="g4_t">Sistem Savaşı</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g4_d">Tüm ağla birleş, ana sunucuyu hackle ve ödülü paylaş.</p>
+            <button class="game-btn btn-outline" disabled style="padding: 12px; font-size: 12px;" data-i18n="system_lock">SİSTEM KİLİTLİ</button>
+        </div>
+
+        <div class="glass-card arcade-card">
+            <div class="badge-soon" data-i18n="coming_soon">YAKINDA</div>
+            <div class="arcade-icon">📦</div>
+            <h3 style="color: #10b981; margin-bottom: 5px;" data-i18n="g5_t">Veri Kapsülleri</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g5_d">Nadir kapsülleri aç, içinden çıkan efsane ödülleri topla.</p>
+            <button class="game-btn btn-outline" disabled style="padding: 12px; font-size: 12px;" data-i18n="system_lock">SİSTEM KİLİTLİ</button>
+        </div>
+
+        <div class="glass-card arcade-card">
+            <div class="badge-soon" data-i18n="coming_soon">YAKINDA</div>
+            <div class="arcade-icon">🧩</div>
+            <h3 style="color: #3b82f6; margin-bottom: 5px;" data-i18n="g6_t">Node Merge</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g6_d">Mikroçipleri birleştir, en güçlü donanıma ulaş.</p>
+            <button class="game-btn btn-outline" disabled style="padding: 12px; font-size: 12px;" data-i18n="system_lock">SİSTEM KİLİTLİ</button>
+        </div>
+
+        <div class="glass-card arcade-card">
+            <div class="badge-soon" data-i18n="coming_soon">YAKINDA</div>
+            <div class="arcade-icon">🎫</div>
+            <h3 style="color: #ec4899; margin-bottom: 5px;" data-i18n="g7_t">Siber Kazı</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g7_d">Kartı kazı, 3 aynı sembolü bul ve anında kazan.</p>
+            <button class="game-btn btn-outline" disabled style="padding: 12px; font-size: 12px;" data-i18n="system_lock">SİSTEM KİLİTLİ</button>
+        </div>
+
+        <div class="glass-card arcade-card">
+            <div class="badge-soon" data-i18n="coming_soon">YAKINDA</div>
+            <div class="arcade-icon">🔐</div>
+            <h3 style="color: #f59e0b; margin-bottom: 5px;" data-i18n="g8_t">Kod Kırıcı</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g8_d">Günün gizli kodunu 6 denemede bul, GEP ödülünü al.</p>
+            <button class="game-btn btn-outline" disabled style="padding: 12px; font-size: 12px;" data-i18n="system_lock">SİSTEM KİLİTLİ</button>
+        </div>
+
+        <div class="glass-card arcade-card">
+            <div class="badge-soon" data-i18n="coming_soon">YAKINDA</div>
+            <div class="arcade-icon">🏃</div>
+            <h3 style="color: #06b6d4; margin-bottom: 5px;" data-i18n="g9_t">Ağ Koşucusu</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g9_d">Güvenlik duvarlarından kaç, yoldaki tüm GEP'leri topla.</p>
+            <button class="game-btn btn-outline" disabled style="padding: 12px; font-size: 12px;" data-i18n="system_lock">SİSTEM KİLİTLİ</button>
+        </div>
+
+        <div class="glass-card arcade-card">
+            <div class="badge-soon" data-i18n="coming_soon">YAKINDA</div>
+            <div class="arcade-icon">⚡</div>
+            <h3 style="color: #fb7185; margin-bottom: 5px;" data-i18n="g10_t">Siber Refleks</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g10_d">Zamanlama her şeydir. Doğru anda dokun, kazan.</p>
+            <button class="game-btn btn-outline" disabled style="padding: 12px; font-size: 12px;" data-i18n="system_lock">SİSTEM KİLİTLİ</button>
         </div>
     </div>
 
@@ -414,9 +475,17 @@
                 msg_reward: "🎉 Ödül Alındı! Seri:", msg_mine_ok: "ÜRETİM BAŞARILI!", msg_upg_ok: "GÜNCELLEME TAMAM!",
                 msg_task_ok: "GÖREV TAMAM!", msg_wait: "ÜRETİM DEVAM EDİYOR", msg_no_data: "HENÜZ VERİ YOK.", msg_no_yesterday: "DÜN İÇİN KAYIT BULUNAMADI.",
                 ad_desc: "Her reklam onayı +500 GEP kazandırır.", invite_desc: "Arkadaşını davet et, 2500 GEP kazan!",
-                arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar çok yakında.", coming_soon: "YAKINDA",
-                game1_title: "Kripto Kahini", game1_desc: "BTC fiyatı 1 dakika sonra nerede olacak? Tahmin et, GEP'lerini katla.",
-                game2_title: "Siber Çark", game2_desc: "Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.", system_lock: "SİSTEM KİLİTLİ"
+                arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar çok yakında.", coming_soon: "YAKINDA", system_lock: "SİSTEM KİLİTLİ",
+                g1_t: "Kripto Kahini", g1_d: "BTC fiyatını tahmin et, GEP'lerini katla.",
+                g2_t: "Siber Çark", g2_d: "Çarkı çevir, Jackpot şansını yakala.",
+                g3_t: "Siber Çöküş", g3_d: "Roket patlamadan çekil, kazancı al.",
+                g4_t: "Sistem Savaşı", g4_d: "Boss'u tüm ağla beraber hackle.",
+                g5_t: "Veri Kapsülleri", g5_d: "Sandıkları aç, sürprizleri yakala.",
+                g6_t: "Node Merge", g6_d: "Çipleri birleştir, node'u güçlendir.",
+                g7_t: "Siber Kazı", g7_d: "Kazı kazan ile anında ödül kazan.",
+                g8_t: "Kod Kırıcı", g8_d: "Günün şifresini çöz, GEP'i kap.",
+                g9_t: "Ağ Koşucusu", g9_d: "Engellerden kaç, GEP'leri topla.",
+                g10_t: "Siber Refleks", g10_d: "Doğru anda dokun, refleksini konuştur."
             },
             az: {
                 loading: "GƏLİR KAINATI", loading_text: "YÜKLƏNİR...", current_balance: "CİCARİ BALANS",
@@ -432,9 +501,17 @@
                 msg_reward: "🎉 Mükafat alındı! Seriya:", msg_mine_ok: "İSTEHSAL UĞURLU OLDU!", msg_upg_ok: "YENİLƏNMƏ TAMAMLANDI!",
                 msg_task_ok: "TAPŞIRIQ TAMAMLANDI!", msg_wait: "İSTEHSAL DAVAM EDİR", msg_no_data: "HƏLƏ MƏLUMAT YOXDUR.", msg_no_yesterday: "DÜNƏN ÜÇÜN QEYD YOXDUR.",
                 ad_desc: "Hər reklam təsdiqi +500 GEP qazandırır.", invite_desc: "Dostunu dəvət et, 2500 GEP qazan!",
-                arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar tezliklə.", coming_soon: "TEZLİKLƏ",
-                game1_title: "Kripto Kahini", game1_desc: "BTC qiyməti 1 dəqiqə sonra harada olacaq? Təxmin et, GEP-lərini qatla.",
-                game2_title: "Siber Çərx", game2_desc: "Çərxi fırlat, nəhəng Jackpot qazanma şansını yaxala.", system_lock: "SİSTEM KİLİDLİDİR"
+                arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar tezliklə.", coming_soon: "TEZLİKLƏ", system_lock: "SİSTEM KİLİDLİDİR",
+                g1_t: "Kripto Kahini", g1_d: "BTC qiymətini təxmin et, GEP-ləri qatla.",
+                g2_t: "Siber Çərx", g2_d: "Çərxi fırlat, Jackpot şansını yaxala.",
+                g3_t: "Siber Çöküş", g3_d: "Raket partlamadan çıx, qazancı götür.",
+                g4_t: "Sistem Müharibəsi", g4_d: "Boss-u bütün şəbəkə ilə hack-lə.",
+                g5_t: "Məlumat Kapsulları", g5_d: "Sandıqları aç, sürprizləri qazan.",
+                g6_t: "Node Merge", g6_d: "Çipləri birləşdir, node-u gücləndir.",
+                g7_t: "Siber Qazıntı", g7_d: "Qazı qazan ilə dərhal mükafat qazan.",
+                g8_t: "Kod Qıran", g8_d: "Günün şifrəsini tap, GEP-i götür.",
+                g9_t: "Şəbəkə Qaçışçısı", g9_d: "Maneələrdən qaç, GEP-ləri topla.",
+                g10_t: "Siber Refleks", g10_d: "Düzgün zamanda toxun, qabiliyyətini göstər."
             }
         };
 
@@ -479,15 +556,8 @@
         function spawnFloatingText(e, text, color) {
             let x = window.innerWidth / 2;
             let y = window.innerHeight / 2;
-            
-            if(e && e.touches && e.touches.length > 0) {
-                x = e.touches[0].clientX;
-                y = e.touches[0].clientY;
-            } else if (e && e.clientX) {
-                x = e.clientX;
-                y = e.clientY;
-            }
-
+            if(e && e.touches && e.touches.length > 0) { x = e.touches[0].clientX; y = e.touches[0].clientY; } 
+            else if (e && e.clientX) { x = e.clientX; y = e.clientY; }
             const el = document.createElement("div");
             el.className = "floating-text";
             el.innerText = text;
@@ -506,15 +576,12 @@
         async function init() {
             try {
                 changeLanguage(currentLang); 
-
                 const tgUser = tg.initDataUnsafe?.user;
                 if (!tgUser) {
                     document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--danger); font-family:Outfit;'><h2 style='text-align:center;'>SİSTEME ERİŞİM REDDEDİLDİ.<br>TELEGRAM GEREKLİ.</h2></div>";
                     return;
                 }
-
                 let refId = tg.initDataUnsafe?.start_param || getQueryParam('tgWebAppStartParam') || "";
-
                 const res = await fetch(`${API}/api/user/auth`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -526,22 +593,17 @@
                         initData: tg.initData 
                     })
                 });
-
                 const data = await res.json();
                 if (data.success) {
                     user = data.user;
                     user.isAdmin = data.isAdmin;
-                    
                     if(user.isBanned) {
                         document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--danger); font-family:Outfit;'><h1>🚫 HESAP YASAKLANDI</h1></div>";
                         return;
                     }
-
                     document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
                     if(user.isAdmin) document.getElementById('nav-admin').style.display = 'flex';
-
                     document.getElementById('header-name').innerText = (user.username ? '@'+user.username : user.firstName).toUpperCase();
-
                     await refreshTasks();
                     updateUI();
                     checkMiningTimer();
@@ -570,19 +632,14 @@
             if (!user) return;
             document.getElementById('balance').innerText = Math.floor(user.points).toLocaleString();
             document.getElementById('usd').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`;
-            
             const lvl = document.getElementById('user-level');
             lvl.innerText = `${user.level} ${t('lvl')}`; 
-            
             if (document.getElementById('stat-ref-count')) document.getElementById('stat-ref-count').innerText = user.referralCount || 0;
-            
             document.getElementById('ui-mine-level').innerText = user.miningLevel || 1;
             const currentReward = 1000 + (((user.miningLevel || 1) - 1) * 500);
             document.getElementById('ui-mine-reward').innerText = `${currentReward.toLocaleString()}`;
-            
             const upgradeCost = (user.miningLevel || 1) * 10000;
             document.getElementById('ui-upgrade-cost').innerText = `${t('req')} ${upgradeCost.toLocaleString()} GEP`; 
-
             renderStreak();
         }
 
@@ -634,7 +691,6 @@
             const btn = document.getElementById('btn-mine');
             if(btn.disabled) return; 
             btn.disabled = true;
-            
             const res = await fetch(`${API}/api/mine`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -660,16 +716,13 @@
             const upgradeCost = (user.miningLevel || 1) * 10000;
             tg.showConfirm(`${t('upgrade_lvl')} ${(user.miningLevel || 1) + 1}?\n\n${t('req')} ${upgradeCost.toLocaleString()} GEP`, async (confirmed) => {
                 if (!confirmed) return;
-                
                 const btn = document.getElementById('btn-upgrade');
                 btn.disabled = true;
-                
                 const res = await fetch(`${API}/api/upgrade-mine`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) 
                 });
-                
                 const data = await res.json();
                 if(data.success) {
                     user.points = data.points;
@@ -690,9 +743,7 @@
             if (!user.lastMining || new Date(user.lastMining).getTime() === 0) return;
             const cooldown = 4 * 60 * 60 * 1000;
             const diff = new Date().getTime() - new Date(user.lastMining).getTime();
-            if (diff < cooldown) {
-                runTimer(cooldown - diff);
-            }
+            if (diff < cooldown) { runTimer(cooldown - diff); }
         }
 
         function runTimer(timeLeft) {
@@ -701,7 +752,6 @@
             const statusText = document.getElementById('mine-status-text');
             const glow = document.getElementById('core-glow');
             const icon = document.getElementById('mine-icon');
-            
             btn.disabled = true;
             timerDiv.style.display = "block";
             statusText.innerText = t('msg_wait');
@@ -709,7 +759,6 @@
             glow.style.animation = "none";
             glow.style.background = "radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)";
             icon.style.filter = "grayscale(100%) opacity(0.5)";
-            
             clearInterval(miningInterval);
             miningInterval = setInterval(() => {
                 timeLeft -= 1000;
@@ -792,44 +841,33 @@
         function switchLB(tab) {
             triggerHaptic('light');
             currentLbTab = tab;
-            
             const tabs = ['all', 'daily', 'yesterday'];
             tabs.forEach(tName => {
                 const btn = document.getElementById(`tab-lb-${tName}`);
-                if (tName === tab) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
+                if (tName === tab) { btn.classList.add('active'); } else { btn.classList.remove('active'); }
             });
-            
             renderLB();
         }
 
         function renderLB() {
             const list = document.getElementById('leader-list');
-            
             let dataToRender = [];
             if(currentLbTab === 'all') dataToRender = lbAllTime;
             else if(currentLbTab === 'daily') dataToRender = lbDaily;
             else dataToRender = lbYesterday;
-            
             if(dataToRender.length === 0) {
                 list.innerHTML = `<p style='text-align:center; padding: 30px; color: var(--text-dim); font-weight:600;'>${currentLbTab === 'yesterday' ? t('msg_no_yesterday') : t('msg_no_data')}</p>`;
                 return;
             }
-
             list.innerHTML = dataToRender.map((u, i) => {
                 const rank = currentLbTab === 'yesterday' && u.rank ? u.rank : (i + 1);
                 let displayPoints = u.points;
                 if(currentLbTab === 'daily') displayPoints = u.dailyPoints || 0;
-                
                 return `
                 <div class="list-row ${i < 3 ? 'rank-top' : ''}">
                     <span style="color: ${i < 3 ? 'var(--gold)' : 'var(--text-main)'}; font-weight: ${i < 3 ? 800 : 600}; font-size:15px;">${rank}. ${u.username || u.firstName}</span>
                     <span style="font-family:'Space Grotesk'; color: ${i < 3 ? 'var(--gold)' : 'var(--cyan)'}; font-weight:700;">${displayPoints.toLocaleString()}</span>
-                </div>
-                `;
+                </div>`;
             }).join('');
         }
 
@@ -856,14 +894,12 @@
             const data = await res.json();
             document.getElementById('adm-stat-users').innerText = data.totalUsers;
             document.getElementById('adm-stat-points').innerText = data.totalPoints.toLocaleString();
-            
             document.getElementById('adm-task-list').innerHTML = data.tasks.map(t => `
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass-border); padding:12px 0;">
                     <span style="font-size:13px; font-weight:600;">${t.title}</span>
                     <button class="game-btn btn-danger" style="padding:6px 12px; width:auto; font-size:10px; border-radius:8px;" onclick="deleteTask('${t.taskId}')">SİL</button>
                 </div>
             `).join('') || "<div style='padding:10px; color:var(--text-dim)'>Görev yok.</div>";
-
             document.getElementById('adm-ann-list').innerHTML = data.announcements.map((a, i) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass-border); padding:12px 0;">
                     <span style="font-size:12px; color:var(--text-dim);">${a.substring(0,30)}...</span>
@@ -877,7 +913,6 @@
             const reward = document.getElementById('adm-task-reward').value;
             const target = document.getElementById('adm-task-target').value;
             if(!title || !reward || !target) return tg.showAlert("Tüm alanlar zorunludur.");
-            
             await fetch(`${API}/api/admin/add-task`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -941,8 +976,7 @@
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
             document.querySelectorAll('.dock-item').forEach(nav => nav.classList.remove('active'));
             document.getElementById(`page-${p}`).classList.add('active');
-            el.classList.add('active');
-            
+            if(el) el.classList.add('active');
             if(p === 'leaderboard') loadLeaderboard();
             if(p === 'admin') loadAdminStats();
         }
