@@ -21,7 +21,7 @@ const bot = new TelegramBot(TOKEN);
 bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v6.4 - Siber Pano Akıllı Butonlar Aktif"))
+    .then(() => console.log("✅ Gelir Evreni v6.5 - Reklam Ödülü (5000) Sabitlendi"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -177,8 +177,12 @@ app.post('/api/buy-ad-package', secureRoute, async (req, res) => {
 app.post('/api/adsgram-reward', secureRoute, async (req, res) => {
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, adTickets: { $gt: 0 } }, { $inc: { adTickets: -1 } }, { new: true });
     if (!user) return res.json({ success: false, message: "Hiç reklam biletiniz kalmadı!" });
-    const settings = await Settings.findOne() || { adsgramReward: 5000 };
-    addPoints(user, settings.adsgramReward); await user.save();
+    
+    // GÜNCELLENDİ: Veritabanındaki eski "500" değerini görmezden gel, 5000'i sabit olarak ver.
+    const REWARD_AMOUNT = 5000;
+    addPoints(user, REWARD_AMOUNT); 
+    await user.save();
+    
     res.json({ success: true, points: user.points, adTickets: user.adTickets });
 });
 
@@ -246,11 +250,8 @@ app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
     if (prize > 0) addPoints(updatedUser, prize); await updatedUser.save(); res.json({ success: true, prize, msg, points: updatedUser.points, lastLootbox1: updatedUser.lastLootbox1, lastLootbox2: updatedUser.lastLootbox2, lastLootbox3: updatedUser.lastLootbox3 });
 });
 
-// GÜNCELLENDİ: Güvenlik eklendi, sadece yetkili kullanıcı kendi verilerini çekerken "Katıldım mı?" diye görebilir.
 app.post('/api/airdrop/list', secureRoute, async (req, res) => {
     const links = await AirdropLink.find().sort({ updatedAt: -1 }).limit(30);
-    
-    // Frontende yollarken verileri kullanıcının profiline göre işaretle
     const userLinks = links.map(l => {
         return {
             _id: l._id,
@@ -258,17 +259,16 @@ app.post('/api/airdrop/list', secureRoute, async (req, res) => {
             title: l.title,
             description: l.description,
             url: l.url,
-            hasJoined: l.joinedUsers.includes(req.realTelegramId), // Kullanıcı bu projeye katılmış mı?
-            isOwner: l.telegramId === req.realTelegramId // Proje kullanıcının kendi projesi mi?
+            hasJoined: l.joinedUsers.includes(req.realTelegramId), 
+            isOwner: l.telegramId === req.realTelegramId 
         };
     });
-    
     res.json({ success: true, links: userLinks });
 });
 
 app.post('/api/airdrop/share', secureRoute, async (req, res) => {
     const { title, description, url } = req.body;
-    const cost = 1000000; // GÜNCELLENDİ: 1 Milyon GEP yapıldı
+    const cost = 1000000; 
     
     if(!url.startsWith("http")) return res.json({success: false, message: "Geçerli bir link (https://) girin!"});
     if(!title || title.length > 25) return res.json({success: false, message: "Başlık çok uzun (Max 25 harf)."});
@@ -303,7 +303,7 @@ app.post('/api/airdrop/join', secureRoute, async (req, res) => {
         await project.save();
 
         const user = await User.findOne({ telegramId: req.realTelegramId });
-        addPoints(user, 10000); // GÜNCELLENDİ: Katılım ödülü 10 Bin GEP yapıldı
+        addPoints(user, 10000);
         await user.save();
 
         res.json({ success: true, points: user.points, message: "Katılım onaylandı!" });
@@ -375,4 +375,4 @@ bot.onText(/\/kabul/, async (msg) => {
 bot.onText(/\/bahsis (\d+)/, async (msg, match) => { if (!msg.reply_to_message) return; const amount = parseInt(match[1]); const sender = await User.findOne({ telegramId: msg.from.id.toString() }); const receiver = await User.findOne({ telegramId: msg.reply_to_message.from.id.toString() }); if (sender && receiver && sender.points >= amount && sender.telegramId !== receiver.telegramId) { sender.points -= amount; addPoints(receiver, amount); await sender.save(); await receiver.save(); bot.sendMessage(msg.chat.id, `💸 **Transfer Başarılı!**\n${sender.firstName} ➔ ${receiver.firstName}: **${amount} GEP**`); } });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Sunucu aktif.`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Sunucu aktif.`));    
