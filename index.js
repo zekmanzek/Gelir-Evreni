@@ -292,24 +292,44 @@ app.post('/api/arcade/predict', secureRoute, async (req, res) => {
     }
 });
 
-// YENİ OYUN 3: VERİ KAPSÜLLERİ (LOOTBOX)
+// GÜNCELLENDİ: 3 SEVİYELİ KAPSÜL SİSTEMİ (TIER 1, 2, 3)
 app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
-    const { telegramId } = req.body;
+    const { telegramId, boxType } = req.body;
     const user = await User.findOne({ telegramId });
-    const cost = 2500; 
+    
+    let cost = 0;
+    if (boxType === 1) cost = 1000;
+    else if (boxType === 2) cost = 5000;
+    else if (boxType === 3) cost = 25000;
+    else return res.json({ success: false, message: "Geçersiz Kapsül Türü." });
+
     if (!user || user.points < cost) return res.json({ success: false, message: "Yetersiz GEP Bakiye!" });
 
     user.points -= cost; 
     
-    // Kutu İhtimal Motoru (RNG)
+    // İhtimal Motoru
     const rand = Math.random() * 100;
     let prize = 0; let msg = "BOŞ KAPSÜL";
 
-    if (rand <= 35) { prize = 0; msg = "🗑️ Çöp Veri (0 GEP)"; } // %35 ihtimal
-    else if (rand <= 70) { prize = 1500; msg = "⚙️ Sıradan Çip (1.500 GEP)"; } // %35 ihtimal
-    else if (rand <= 90) { prize = 3500; msg = "💎 Nadir Veri (3.500 GEP)"; } // %20 ihtimal
-    else if (rand <= 98) { prize = 10000; msg = "🔥 Destansı Çekirdek (10.000 GEP)"; } // %8 ihtimal
-    else { prize = 50000; msg = "👑 EFSANEVİ NODE (50.000 GEP) 👑"; } // %2 ihtimal
+    if (boxType === 1) { // 1.000 GEP'lik Kutu
+        if (rand <= 40) { prize = 0; msg = "🗑️ Çöp Veri (0 GEP)"; }
+        else if (rand <= 70) { prize = 500; msg = "⚙️ Kırık Çip (500 GEP)"; }
+        else if (rand <= 90) { prize = 1500; msg = "🔋 Standart Veri (1.5K GEP)"; }
+        else if (rand <= 99) { prize = 5000; msg = "💎 Nadir Kod (5K GEP)"; }
+        else { prize = 10000; msg = "🔥 MEGA KAZANÇ (10K GEP) 🔥"; }
+    } else if (boxType === 2) { // 5.000 GEP'lik Kutu
+        if (rand <= 30) { prize = 0; msg = "🗑️ Çöp Veri (0 GEP)"; }
+        else if (rand <= 65) { prize = 3000; msg = "🔋 Kaliteli Veri (3K GEP)"; }
+        else if (rand <= 85) { prize = 7500; msg = "💎 Nadir Çip (7.5K GEP)"; }
+        else if (rand <= 95) { prize = 20000; msg = "🔥 Destansı Çekirdek (20K GEP)"; }
+        else { prize = 50000; msg = "👑 EFSANEVİ NODE (50K GEP) 👑"; }
+    } else if (boxType === 3) { // 25.000 GEP'lik Kutu
+        if (rand <= 20) { prize = 0; msg = "🗑️ Çöp Veri (0 GEP)"; }
+        else if (rand <= 50) { prize = 15000; msg = "💎 Parazitli Node (15K GEP)"; }
+        else if (rand <= 80) { prize = 40000; msg = "🔥 Saf Çekirdek (40K GEP)"; }
+        else if (rand <= 95) { prize = 100000; msg = "👑 EFSANEVİ KOD (100K GEP) 👑"; }
+        else { prize = 500000; msg = "🌌 UZAY BOŞLUĞU (500K GEP) 🌌"; }
+    }
 
     if (prize > 0) addPoints(user, prize);
     await user.save();
