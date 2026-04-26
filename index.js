@@ -81,7 +81,6 @@ async function archiveDailyLeaderboard() {
     try {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
         const existing = await YesterdayWinner.findOne({ date: { $gte: today } });
         if (existing) return;
 
@@ -91,49 +90,35 @@ async function archiveDailyLeaderboard() {
 
         if (winners.length > 0) {
             await YesterdayWinner.deleteMany({}); 
-            
             const archiveData = winners.map((u, i) => ({
-                rank: i + 1,
-                username: u.username,
-                firstName: u.firstName,
-                points: u.dailyPoints,
-                date: new Date()
+                rank: i + 1, username: u.username, firstName: u.firstName,
+                points: u.dailyPoints, date: new Date()
             }));
             await YesterdayWinner.insertMany(archiveData);
-            
             await User.updateMany({}, { $set: { dailyPoints: 0 } });
             console.log("✅ Günlük sıralama arşive eklendi ve sıfırlandı.");
         } else {
             await YesterdayWinner.create({ rank: 0, username: 'sistem', firstName: 'sistem', points: 0, date: new Date() });
         }
-    } catch (err) {
-        console.error("Arşivleme Hatası:", err);
-    }
+    } catch (err) { console.error("Arşivleme Hatası:", err); }
 }
 
 setInterval(() => {
     const now = new Date();
-    if (now.getHours() === 23 && now.getMinutes() === 58) {
-        archiveDailyLeaderboard();
-    }
+    if (now.getHours() === 23 && now.getMinutes() === 58) archiveDailyLeaderboard();
 }, 60000);
 
-
 // ==========================================
-// 🛡️ YENİ: KRİPTOGRAFİK GÜVENLİK SİSTEMİ 🛡️
+// 🛡️ KRİPTOGRAFİK GÜVENLİK SİSTEMİ 
 // ==========================================
-
-// 1. Telegram Kimlik Kartı Doğrulayıcı
 function verifyTelegramWebAppData(telegramInitData) {
     try {
         if (!telegramInitData) return false;
         const initData = new URLSearchParams(telegramInitData);
         const hash = initData.get('hash');
         const authDate = initData.get('auth_date');
-        
         if (!hash || !authDate) return false;
 
-        // İstek 24 saatten eskiyse reddet (Hackerların eski veriyi kopyalamasını engeller)
         const now = Math.floor(Date.now() / 1000);
         if (now - parseInt(authDate) > 86400) return false;
 
@@ -143,58 +128,37 @@ function verifyTelegramWebAppData(telegramInitData) {
         
         const secretKey = crypto.createHmac('sha256', 'WebAppData').update(TOKEN).digest();
         const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
-        
         return calculatedHash === hash;
-    } catch (error) {
-        return false;
-    }
+    } catch (error) { return false; }
 }
 
-// 2. Güvenlik Duvarı (Middleware)
 const secureRoute = (req, res, next) => {
     const initData = req.body.initData; 
     const reqId = req.body.telegramId || req.body.adminId;
 
-    if (!initData) {
-        return res.status(403).json({ success: false, message: "⚠️ Güvenlik Kilidi Eksik! Uygulamayı kapatıp tekrar açın." });
-    }
-
-    if (!verifyTelegramWebAppData(initData)) {
-        return res.status(403).json({ success: false, message: "⚠️ Geçersiz veya sahte kimlik tespiti!" });
-    }
+    if (!initData) return res.status(403).json({ success: false, message: "⚠️ Güvenlik Kilidi Eksik!" });
+    if (!verifyTelegramWebAppData(initData)) return res.status(403).json({ success: false, message: "⚠️ Geçersiz kimlik tespiti!" });
 
     try {
         const params = new URLSearchParams(initData);
         const userData = JSON.parse(params.get('user'));
-        
-        // Dışarıdan biri senin veya başkasının ID'sini yazıp istek atmaya çalışırsa engelle!
         if (reqId && String(reqId) !== String(userData.id)) {
             return res.status(403).json({ success: false, message: "⚠️ Kimlik hırsızlığı engellendi!" });
         }
-        
         next();
-    } catch (e) {
-        return res.status(403).json({ success: false, message: "Veri okuma hatası!" });
-    }
+    } catch (e) { return res.status(403).json({ success: false, message: "Veri okuma hatası!" }); }
 };
-// ==========================================
 
 
-// --- API ROTALARI (GÜVENLİK DUVARI EKLENDİ) ---
+// --- API ROTALARI ---
 
 app.post('/api/user/auth', secureRoute, async (req, res) => {
     const { telegramId, username, firstName, referrerId } = req.body;
-    
     try {
         let user = await User.findOne({ telegramId });
-        
         if (!user) {
             user = new User({ 
-                telegramId, 
-                username: (username || '').toLowerCase(), 
-                firstName,
-                points: 0, 
-                dailyPoints: 0
+                telegramId, username: (username || '').toLowerCase(), firstName, points: 0, dailyPoints: 0
             });
             addPoints(user, 1000); 
 
@@ -211,20 +175,14 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
             if (username) user.username = username.toLowerCase();
             if (firstName) user.firstName = firstName;
         }
-        
         await user.save();
         let settings = await Settings.findOne() || await Settings.create({});
         
         res.json({ 
-            success: true, 
-            user, 
-            botUsername: settings.botUsername, 
-            isAdmin: String(telegramId) === String(ADMIN_ID), 
-            announcements: settings.announcements 
+            success: true, user, botUsername: settings.botUsername, 
+            isAdmin: String(telegramId) === String(ADMIN_ID), announcements: settings.announcements 
         });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
 app.post('/api/daily-reward', secureRoute, async (req, res) => {
@@ -236,21 +194,13 @@ app.post('/api/daily-reward', secureRoute, async (req, res) => {
     const lastCheckin = new Date(user.lastCheckin);
     const diffHours = (now - lastCheckin) / (1000 * 60 * 60);
 
-    if (diffHours < 24) {
-        return res.json({ success: false, message: "Ödülünüzü zaten aldınız, 24 saat bekleyin." });
-    }
-
-    if (diffHours >= 48) {
-        user.streak = 1;
-    } else {
-        user.streak = user.streak >= 7 ? 1 : user.streak + 1;
-    }
+    if (diffHours < 24) return res.json({ success: false, message: "Ödülünüzü zaten aldınız, 24 saat bekleyin." });
+    if (diffHours >= 48) user.streak = 1; else user.streak = user.streak >= 7 ? 1 : user.streak + 1;
 
     const reward = 100 * Math.pow(2, user.streak - 1);
     addPoints(user, reward);
     user.lastCheckin = now;
     await user.save();
-    
     res.json({ success: true, points: user.points, streak: user.streak, reward });
 });
 
@@ -284,12 +234,11 @@ app.post('/api/upgrade-mine', secureRoute, async (req, res) => {
     if (!user) return res.json({ success: false });
 
     const upgradeCost = user.miningLevel * 10000;
-
     if (user.points >= upgradeCost) {
         user.points -= upgradeCost; 
         user.miningLevel += 1;
         await user.save();
-        res.json({ success: true, points: user.points, newLevel: user.miningLevel, newReward: 1000 + ((user.miningLevel - 1) * 500) });
+        res.json({ success: true, points: user.points, newLevel: user.miningLevel });
     } else {
         res.json({ success: false, message: `Yetersiz Bakiye! Gerekli: ${upgradeCost.toLocaleString()} GEP` });
     }
@@ -306,22 +255,97 @@ app.post('/api/tasks/complete', secureRoute, async (req, res) => {
     res.json({ success: true, points: user.points });
 });
 
-// GET rotalarına güvenlik kilidi gerekmez, çünkü buralar sadece "okuma" (liste çekme) işlemleridir. Veri manipüle edilemez.
+// ==========================================
+// 🕹️ ARCADE OYUNLARI API (YENİ) 🕹️
+// ==========================================
+
+// Oyun 1: Siber Çark (Rulet)
+app.post('/api/arcade/spin', secureRoute, async (req, res) => {
+    const { telegramId } = req.body;
+    const user = await User.findOne({ telegramId });
+    const cost = 500; // Çark bedeli
+    
+    if (!user || user.points < cost) {
+        return res.json({ success: false, message: "Yetersiz GEP Bakiye!" });
+    }
+
+    user.points -= cost; // Parayı kes
+    
+    // Hile Korumalı RNG (Rastgele Sayı Üretici)
+    const rand = Math.random() * 100;
+    let prize = 0;
+    let msg = "BOŞ";
+
+    if (rand <= 40) { prize = 0; msg = "Şansını Tekrar Dene"; } // %40 ihtimal Boş
+    else if (rand <= 75) { prize = 250; msg = "Yarım Teselli"; } // %35 ihtimal 250
+    else if (rand <= 92) { prize = 500; msg = "Amorti!"; } // %17 ihtimal 500
+    else if (rand <= 99) { prize = 1000; msg = "İKİYE KATLADIN!"; } // %7 ihtimal 1000
+    else { prize = 5000; msg = "💥 JACKPOT! 💥"; } // %1 ihtimal 5000
+
+    if (prize > 0) addPoints(user, prize);
+    await user.save();
+
+    res.json({ success: true, prize, msg, points: user.points });
+});
+
+// Oyun 2: Kripto Kahini (BTC Fiyat Tahmini)
+app.post('/api/arcade/predict', secureRoute, async (req, res) => {
+    const { telegramId, guess } = req.body; // guess: 'UP' veya 'DOWN'
+    const user = await User.findOne({ telegramId });
+    const cost = 1000; // Bahis bedeli
+    
+    if (!user || user.points < cost) {
+        return res.json({ success: false, message: "Yetersiz GEP Bakiye!" });
+    }
+
+    try {
+        // Binance'den Anlık Fiyatı Al
+        const response1 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+        const data1 = await response1.json();
+        const price1 = parseFloat(data1.price);
+
+        user.points -= cost; // Parayı kes ve kaydet (Hacklenmeyi önlemek için)
+        await user.save();
+
+        // Sunucuyu 10 saniye bekletiyoruz (1 Dakika telefonda sıkıcı olur, 10 saniye dopamin için idealdir)
+        await new Promise(resolve => setTimeout(resolve, 10000));
+
+        // 10 saniye sonraki fiyatı al
+        const response2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+        const data2 = await response2.json();
+        const price2 = parseFloat(data2.price);
+
+        let won = false;
+        let reward = 0;
+
+        if ((guess === 'UP' && price2 > price1) || (guess === 'DOWN' && price2 < price1)) {
+            won = true;
+            reward = 2000; // 2x Kazanç
+            addPoints(user, reward);
+            await user.save();
+        }
+
+        res.json({ success: true, won, price1, price2, reward, points: user.points });
+
+    } catch (e) {
+        // Eğer Binance API çökerse parayı iade et
+        user.points += cost;
+        await user.save();
+        res.json({ success: false, message: "Piyasa verisi çekilemedi. Bakiye iade edildi." });
+    }
+});
+// ==========================================
+
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
 
 app.get('/api/leaderboard', async (req, res) => { 
     const allTime = await User.find().sort({ points: -1 }).limit(100); 
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
     const daily = await User.find({ lastPointDate: { $gte: today } }).sort({ dailyPoints: -1 }).limit(100);
-
     const yesterday = await YesterdayWinner.find({ rank: { $gt: 0 } }).sort({ rank: 1 });
-
     res.json({ success: true, leaderboard: allTime, dailyLeaderboard: daily, yesterdayLeaderboard: yesterday }); 
 });
 
-// --- ADMIN API (GÜVENLİK DUVARI EKLENDİ) ---
 app.post('/api/admin/stats', secureRoute, async (req, res) => {
     if (String(req.body.adminId) !== String(ADMIN_ID)) return res.status(403).send("Yetkisiz");
     const settings = await Settings.findOne() || { announcements: [] };
@@ -365,12 +389,8 @@ app.post('/api/admin/user-manage', secureRoute, async (req, res) => {
 bot.onText(/\/start(?:\s+(.*))?/, (msg, match) => {
     const refId = match[1] ? match[1].trim() : '';
     const appUrl = refId ? `${WEBHOOK_URL}?tgWebAppStartParam=${refId}` : WEBHOOK_URL;
-    
-    bot.sendMessage(msg.chat.id, "🌟 **Gelir Evreni'ne Hoş Geldin!**\n\nHemen maden kazmaya ve görevleri tamamlamaya başla.", {
-        parse_mode: 'Markdown',
-        reply_markup: { 
-            inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: appUrl } }]] 
-        } 
+    bot.sendMessage(msg.chat.id, "🌟 **Gelir Evreni'ne Hoş Geldin!**\n\nHemen maden kazmaya ve oyun oynamaya başla.", {
+        parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: appUrl } }]] } 
     });
 });
 
