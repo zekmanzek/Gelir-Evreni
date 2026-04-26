@@ -142,6 +142,7 @@
     </div>
 
     <div id="page-earn" class="page">
+        
         <div class="glass-card" style="border-color: #8b5cf6;">
             <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;"><span style="font-size: 24px; margin-right: 10px; filter: drop-shadow(0 0 5px rgba(139,92,246,0.5));">📢</span><h3 style="color: #8b5cf6; margin:0;" data-i18n="pano_title">SİBER PANO</h3></div>
             <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 15px; text-align:center;" data-i18n="pano_desc">Projelerini paylaş, referans topla. Üste çıkmak için tekrar yayınla.</p>
@@ -155,11 +156,11 @@
         <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">🎯</div><div><h3 style="margin: 0; color: #fff;" data-i18n="tasks_title">GÖREVLER</h3><p style="font-size: 12px; margin: 0; color: var(--text-dim);" data-i18n="tasks_desc">Tamamla ve kazan.</p></div></div>
         <div id="task-list" style="margin-bottom: 20px;"></div>
 
-        <div class="glass-card" style="text-align: center; border-color: var(--danger);">
-            <div style="font-size: 36px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(239,68,68,0.5));">🧧</div>
-            <h3 style="color: var(--danger); margin-bottom: 5px;" data-i18n="promo_title">KIRMIZI ZARF</h3>
-            <input type="text" id="ui-promo-code" class="glass-input" placeholder="KOD GİRİN" style="text-transform: uppercase; border-color:rgba(239,68,68,0.3);">
-            <button id="btn-redeem-promo" class="game-btn btn-danger" onclick="redeemPromo()" data-i18n="btn_redeem">KODU KULLAN</button>
+        <div class="glass-card" style="text-align: center; border-color: #f97316;">
+            <div style="font-size: 36px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(249,115,22,0.5));">🎫</div>
+            <h3 style="color: #f97316;" data-i18n="promo_title">PROMOKOD</h3>
+            <input type="text" id="ui-promo-code" class="glass-input" placeholder="KOD GİRİN" style="text-transform: uppercase; border-color:rgba(249,115,22,0.3); color:#f97316;">
+            <button id="btn-redeem-promo" class="game-btn" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #fff; box-shadow: 0 4px 15px rgba(249,115,22,0.4);" onclick="redeemPromo()" data-i18n="btn_redeem">KODU KULLAN</button>
         </div>
 
         <div class="glass-card" style="text-align: center; background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(15,23,42,0.6) 100%); border-color: rgba(16,185,129,0.3);">
@@ -169,13 +170,13 @@
                 <span style="font-size: 12px; color: var(--text-main); font-weight: bold;" data-i18n="tickets_left">Mevcut Biletin:</span>
                 <span id="ui-ad-tickets" style="font-size: 18px; color: var(--success); font-weight: 900; margin-left: 5px;">0</span>
             </div>
-            <button class="game-btn btn-success" onclick="showAd(event)" data-i18n="start_ad">REKLAM İZLE (+500 GEP)</button>
+            <button class="game-btn btn-success" onclick="showAd(event)" data-i18n="start_ad">REKLAM İZLE (+5000 GEP)</button>
             <div style="margin-top: 25px; text-align: left;">
                 <h4 style="font-size:13px; color:var(--gold); margin-bottom:10px; text-align:center;" data-i18n="buy_tickets">BİLET PAKETLERİ</h4>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#3b82f6; color:#3b82f6;" onclick="buyAdPackage(1)" data-i18n="pkg_1">10 BİLET (1.000 GEP)</button>
-                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#8b5cf6; color:#8b5cf6;" onclick="buyAdPackage(2)" data-i18n="pkg_2">50 BİLET (5.000 GEP)</button>
-                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#ec4899; color:#ec4899;" onclick="buyAdPackage(3)" data-i18n="pkg_3">100 BİLET (10.000 GEP)</button>
+                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#3b82f6; color:#3b82f6;" onclick="buyAdPackage(1)" data-i18n="pkg_1">10 BİLET (10.000 GEP)</button>
+                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#8b5cf6; color:#8b5cf6;" onclick="buyAdPackage(2)" data-i18n="pkg_2">50 BİLET (50.000 GEP)</button>
+                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#ec4899; color:#ec4899;" onclick="buyAdPackage(3)" data-i18n="pkg_3">100 BİLET (100.000 GEP)</button>
                 </div>
             </div>
         </div>
@@ -254,7 +255,7 @@
 
     <div class="dock-container">
         <a href="javascript:void(0)" class="dock-item active" onclick="showPage('hub', this)"><div class="dock-icon">🏠</div><div class="dock-text" data-i18n="nav_hub">MERKEZ</div></a>
-        <a href="javascript:void(0)" class="dock-item" onclick="showPage('earn', this)"><div class="dock-icon">💸</div><div class="dock-text" data-i18n="nav_earn">KAZANÇ</div></a>
+        <a href="javascript:void(0)" class="dock-item" onclick="showPage('earn', this)"><div class="dock-icon">💸</div><div class="dock-text" data-i18n="nav_earn">AKTİVİTE</div></a>
         <a href="javascript:void(0)" class="dock-item" onclick="showPage('arcade', this)"><div class="dock-icon">🕹️</div><div class="dock-text" data-i18n="nav_arcade">OYUNLAR</div></a>
         <a href="javascript:void(0)" class="dock-item" onclick="showPage('network', this)"><div class="dock-icon">🏆</div><div class="dock-text" data-i18n="nav_network">AĞ</div></a>
         <a href="javascript:void(0)" class="dock-item" onclick="showPage('profile', this)"><div class="dock-icon">👤</div><div class="dock-text" data-i18n="nav_profile">PROFİL</div></a>
@@ -267,27 +268,27 @@
 
         const translations = {
             tr: {
-                loading: "GELİR EVRENİ", loading_text: "YÜKLENİYOR...", current_balance: "GÜNCEL BAKİYE", tasks_title: "GÖREVLER", tasks_desc: "Tamamla ve kazan.", champions: "ŞAMPİYONLAR AĞI", top_100: "TOP 100", daily: "GÜNLÜK", yesterday: "DÜN", engine_lvl: "MOTOR SEVİYESİ", capacity: "KAPASİTE (4H)", sys_ready: "SİSTEM HAZIR", start_mine: "ÜRETİMİ BAŞLAT", upgrade_lvl: "SEVİYE YÜKSELT", watch_earn: "İZLE & KAZAN", start_ad: "REKLAM İZLE (+500 GEP)", invited: "DAVET ETTİKLERİN", status: "HESAP DURUMU", active: "AKTİF", daily_streak: "GÜNLÜK SERİ", claim_daily: "GÜNLÜK ÖDÜLÜ AL", grow_net: "AĞI BÜYÜT", copy_link: "LİNKİ KOPYALA", 
-                nav_hub: "MERKEZ", nav_earn: "KAZANÇ", nav_arcade: "OYUNLAR", nav_network: "AĞ", nav_profile: "PROFİL", 
-                btn_done: "BİTTİ", btn_go: "GİT", day: "GÜN", req: "GEREKEN:", lvl: "ÜYE", msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır değil.", msg_ad_done: "Tebrikler! +500 GEP eklendi.", msg_reward: "🎉 Ödül Alındı! Seri:", msg_mine_ok: "ÜRETİM BAŞARILI!", msg_upg_ok: "GÜNCELLEME TAMAM!", msg_task_ok: "GÖREV TAMAM!", msg_wait: "ÜRETİM DEVAM EDİYOR", msg_no_data: "HENÜZ VERİ YOK.", msg_no_yesterday: "DÜN İÇİN KAYIT BULUNAMADI.", ad_desc: "Reklam izleyip GEP kazanmak için bilet paketi almalısan.", invite_desc: "Hem sen hem arkadaşın 10.000 GEP kazanır!", arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar çok yakında.", coming_soon: "YAKINDA", lang_select: "DİL SEÇİMİ",
+                loading: "GELİR EVRENİ", loading_text: "YÜKLENİYOR...", current_balance: "GÜNCEL BAKİYE", tasks_title: "GÖREVLER", tasks_desc: "Tamamla ve kazan.", champions: "ŞAMPİYONLAR AĞI", top_100: "TOP 100", daily: "GÜNLÜK", yesterday: "DÜN", engine_lvl: "MOTOR SEVİYESİ", capacity: "KAPASİTE (4H)", sys_ready: "SİSTEM HAZIR", start_mine: "ÜRETİMİ BAŞLAT", upgrade_lvl: "SEVİYE YÜKSELT", watch_earn: "İZLE & KAZAN", start_ad: "REKLAM İZLE (+5000 GEP)", invited: "DAVET ETTİKLERİN", status: "HESAP DURUMU", active: "AKTİF", daily_streak: "GÜNLÜK SERİ", claim_daily: "GÜNLÜK ÖDÜLÜ AL", grow_net: "AĞI BÜYÜT", copy_link: "LİNKİ KOPYALA", 
+                nav_hub: "MERKEZ", nav_earn: "AKTİVİTE", nav_arcade: "OYUNLAR", nav_network: "AĞ", nav_profile: "PROFİL", 
+                btn_done: "BİTTİ", btn_go: "GİT", day: "GÜN", req: "GEREKEN:", lvl: "ÜYE", msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır değil.", msg_ad_done: "Tebrikler! +5000 GEP eklendi.", msg_reward: "🎉 Ödül Alındı! Seri:", msg_mine_ok: "ÜRETİM BAŞARILI!", msg_upg_ok: "GÜNCELLEME TAMAM!", msg_task_ok: "GÖREV TAMAM!", msg_wait: "ÜRETİM DEVAM EDİYOR", msg_no_data: "HENÜZ VERİ YOK.", msg_no_yesterday: "DÜN İÇİN KAYIT BULUNAMADI.", ad_desc: "Reklam izleyip GEP kazanmak için bilet paketi almalısan.", invite_desc: "Hem sen hem arkadaşın 10.000 GEP kazanır!", arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar çok yakında.", coming_soon: "YAKINDA", lang_select: "DİL SEÇİMİ",
                 g1_t: "Kripto Kahini", g1_d: "BTC fiyatını tahmin et, GEP'lerini katla.", btn_play_predict: "TAHMİN ET (1000 GEP)",
                 g2_t: "Siber Çark", g2_d: "Çarkı çevir, Jackpot şansını yakala.", btn_play_spin: "ÇEVİR (500 GEP)", 
                 g5_t: "Veri Kapsülleri", g5_d: "Sandıkları aç, sürprizleri yakala.", btn_play_lootbox: "KAPSÜLLERİ GÖR",
                 g3_t: "Siber Çöküş", g3_d: "Roket patlamadan çekil, kazancı al.", 
-                tickets_left: "Mevcut Biletin:", buy_tickets: "BİLET PAKETLERİ", pkg_1: "10 BİLET (1.000 GEP)", pkg_2: "50 BİLET (5.000 GEP)", pkg_3: "100 BİLET (10.000 GEP)", msg_no_tickets: "Hiç reklam biletiniz kalmadı!",
-                promo_title: "KIRMIZI ZARF", btn_redeem: "KODU KULLAN", box_limit_info: "⚠️ Her kapsül türü günde sadece 1 kez açılabilir!",
+                tickets_left: "Mevcut Biletin:", buy_tickets: "BİLET PAKETLERİ", pkg_1: "10 BİLET (10.000 GEP)", pkg_2: "50 BİLET (50.000 GEP)", pkg_3: "100 BİLET (100.000 GEP)", msg_no_tickets: "Hiç reklam biletiniz kalmadı!",
+                promo_title: "PROMOKOD", btn_redeem: "KODU KULLAN", box_limit_info: "⚠️ Her kapsül türü günde sadece 1 kez açılabilir!",
                 pano_title: "SİBER PANO", pano_desc: "Projelerini paylaş, referans topla. Üste çıkmak için tekrar yayınla.", pano_btn: "YAYINLA (250K GEP)"
             },
             az: {
-                loading: "GƏLİR KAINATI", loading_text: "YÜKLƏNİR...", current_balance: "CİCARİ BALANS", tasks_title: "TAPŞIRIQLAR", tasks_desc: "Tamamla və qazan.", champions: "ÇEMPİONLAR ŞƏBƏKƏSİ", top_100: "TOP 100", daily: "GÜNLÜK", yesterday: "DÜN", engine_lvl: "MÜHƏRRİK SƏVİYYƏSİ", capacity: "KAPASİTƏ (4S)", sys_ready: "SİSTEM HAZIRDIR", start_mine: "İSTEHSALA BAŞLA", upgrade_lvl: "SƏVİYYƏNİ YÜKSƏLT", watch_earn: "İZLƏ VƏ QAZAN", start_ad: "REKLAM İZLƏ (+500 GEP)", invited: "DƏVƏT EDİLƏNLƏR", status: "HESAB STATUSU", active: "AKTİV", daily_streak: "GÜNLÜK SERİYA", claim_daily: "GÜNLÜK MÜKAFATI AL", grow_net: "ŞƏBƏKƏNİ BÖYÜT", copy_link: "LİNKİ KOPYALA", 
-                nav_hub: "MƏRKƏZ", nav_earn: "QAZANC", nav_arcade: "OYUNLAR", nav_network: "ŞƏBƏKƏ", nav_profile: "PROFİL", 
-                btn_done: "BİTDİ", btn_go: "GİT", day: "GÜN", req: "TƏLƏB OLUNUR:", lvl: "ÜZV", msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır deyil.", msg_ad_done: "Təbrik edirik! +500 GEP əlavə edildi.", msg_reward: "🎉 Mükafat alındı! Seriya:", msg_mine_ok: "İSTEHSAL UĞURLU OLDU!", msg_upg_ok: "YENİLƏNMƏ TAMAMLANDI!", msg_task_ok: "TAPŞIRIQ TAMAMLANDI!", msg_wait: "İSTEHSAL DAVAM EDİR", msg_no_data: "HƏLƏ MƏLUMAT YOXDUR.", msg_no_yesterday: "DÜNƏN ÜÇÜN QEYD YOXDUR.", ad_desc: "Reklam izləyib GEP qazanmaq üçün bilet paketi almalısan.", invite_desc: "Həm sən həm dostun 10.000 GEP qazanır!", arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar tezliklə.", coming_soon: "TEZLİKLƏ", lang_select: "DİL SEÇİMİ",
+                loading: "GƏLİR KAINATI", loading_text: "YÜKLƏNİR...", current_balance: "CİCARİ BALANS", tasks_title: "TAPŞIRIQLAR", tasks_desc: "Tamamla və qazan.", champions: "ÇEMPİONLAR ŞƏBƏKƏSİ", top_100: "TOP 100", daily: "GÜNLÜK", yesterday: "DÜN", engine_lvl: "MÜHƏRRİK SƏVİYYƏSİ", capacity: "KAPASİTƏ (4S)", sys_ready: "SİSTEM HAZIRDIR", start_mine: "İSTEHSALA BAŞLA", upgrade_lvl: "SƏVİYYƏNİ YÜKSƏLT", watch_earn: "İZLƏ VƏ QAZAN", start_ad: "REKLAM İZLƏ (+5000 GEP)", invited: "DƏVƏT EDİLƏNLƏR", status: "HESAB STATUSU", active: "AKTİV", daily_streak: "GÜNLÜK SERİYA", claim_daily: "GÜNLÜK MÜKAFATI AL", grow_net: "ŞƏBƏKƏNİ BÖYÜT", copy_link: "LİNKİ KOPYALA", 
+                nav_hub: "MƏRKƏZ", nav_earn: "AKTİVİTƏ", nav_arcade: "OYUNLAR", nav_network: "ŞƏBƏKƏ", nav_profile: "PROFİL", 
+                btn_done: "BİTDİ", btn_go: "GİT", day: "GÜN", req: "TƏLƏB OLUNUR:", lvl: "ÜZV", msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır deyil.", msg_ad_done: "Təbrik edirik! +5000 GEP əlavə edildi.", msg_reward: "🎉 Mükafat alındı! Seriya:", msg_mine_ok: "İSTEHSAL UĞURLU OLDU!", msg_upg_ok: "YENİLƏNMƏ TAMAMLANDI!", msg_task_ok: "TAPŞIRIQ TAMAMLANDI!", msg_wait: "İSTEHSAL DAVAM EDİR", msg_no_data: "HƏLƏ MƏLUMAT YOXDUR.", msg_no_yesterday: "DÜNƏN ÜÇÜN QEYD YOXDUR.", ad_desc: "Reklam izləyib GEP qazanmaq üçün bilet paketi almalısan.", invite_desc: "Həm sən həm dostun 10.000 GEP qazanır!", arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar tezliklə.", coming_soon: "TEZLİKLƏ", lang_select: "DİL SEÇİMİ",
                 g1_t: "Kripto Kahini", g1_d: "BTC qiymətini təxmin et, GEP-ləri qatla.", btn_play_predict: "TƏXMİN ET (1000 GEP)",
                 g2_t: "Siber Çərx", g2_d: "Çərxi fırlat, Jackpot şansını yaxala.", btn_play_spin: "FIRLAT (500 GEP)",
                 g5_t: "Məlumat Kapsulları", g5_d: "Sandıqları aç, sürprizləri qazan.", btn_play_lootbox: "KAPSULLARI GÖR",
                 g3_t: "Siber Çöküş", g3_d: "Raket partlamadan çıx, qazancı götür.", 
-                tickets_left: "Mövcud Biletin:", buy_tickets: "BİLET PAKETLƏRİ", pkg_1: "10 BİLET (1.000 GEP)", pkg_2: "50 BİLET (5.000 GEP)", pkg_3: "100 BİLET (10.000 GEP)", msg_no_tickets: "Heç reklam biletiniz qalmadı!",
-                promo_title: "QIRMIZI ZƏRF (PROMO)", btn_redeem: "KODU İSTİFADƏ ET", box_limit_info: "⚠️ Hər kapsul növü gündə yalnız 1 dəfə açıla bilər!",
+                tickets_left: "Mövcud Biletin:", buy_tickets: "BİLET PAKETLƏRİ", pkg_1: "10 BİLET (10.000 GEP)", pkg_2: "50 BİLET (50.000 GEP)", pkg_3: "100 BİLET (100.000 GEP)", msg_no_tickets: "Heç reklam biletiniz qalmadı!",
+                promo_title: "PROMOKOD", btn_redeem: "KODU İSTİFADƏ ET", box_limit_info: "⚠️ Hər kapsul növü gündə yalnız 1 dəfə açıla bilər!",
                 pano_title: "SİBER PANO", pano_desc: "Layihələrini paylaş, referans topla. Üstə çıxmaq üçün yenidən yayımla.", pano_btn: "YAYIMLA (250K GEP)"
             }
         };
@@ -381,7 +382,7 @@
         let isBuyingPkg = false;
         async function buyAdPackage(pid) { 
             if (isBuyingPkg) return;
-            triggerHaptic('light'); let cost = pid === 1 ? 1000 : (pid === 2 ? 5000 : 10000); 
+            triggerHaptic('light'); let cost = pid === 1 ? 10000 : (pid === 2 ? 50000 : 100000); 
             if (user.points < cost) return tg.showAlert("Yetersiz GEP Bakiye!"); 
             isBuyingPkg = true;
             try {
@@ -491,7 +492,7 @@
         
         async function upgradeMine(event) { triggerHaptic('light'); const upgradeCost = (user.miningLevel || 1) * 10000; tg.showConfirm(`${t('upgrade_lvl')} ${(user.miningLevel || 1) + 1}?\n\n${t('req')} ${upgradeCost.toLocaleString()} GEP`, async (confirmed) => { if (!confirmed) return; const btn = document.getElementById('btn-upgrade'); btn.disabled = true; const res = await fetch(`${API}/api/upgrade-mine`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if(data.success) { user.points = data.points; user.miningLevel = data.newLevel; updateUI(); triggerHaptic('success'); spawnFloatingText(event, "LVL UP!", "var(--gold)"); tg.showAlert(`${t('msg_upg_ok')} LVL: ${data.newLevel}`); } else { triggerHaptic('error'); tg.showAlert(data.message); } btn.disabled = false; }); }
         
-        async function showAd(event) { triggerHaptic('medium'); if (user.adTickets <= 0) return tg.showAlert(t('msg_no_tickets')); if(!AdController) return tg.showAlert(t('msg_ad_ready')); AdController.show().then(async (result) => { if (result.done) { const res = await fetch(`${API}/api/adsgram-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); if (res.ok) { const data = await res.json(); if(data.success) { user.points = data.points; user.adTickets = data.adTickets; updateUI(); triggerHaptic('success'); spawnFloatingText(event, "+500", "var(--success)"); tg.showAlert(t('msg_ad_done')); } else { tg.showAlert(data.message); } } } }).catch(e => {}); }
+        async function showAd(event) { triggerHaptic('medium'); if (user.adTickets <= 0) return tg.showAlert(t('msg_no_tickets')); if(!AdController) return tg.showAlert(t('msg_ad_ready')); AdController.show().then(async (result) => { if (result.done) { const res = await fetch(`${API}/api/adsgram-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); if (res.ok) { const data = await res.json(); if(data.success) { user.points = data.points; user.adTickets = data.adTickets; updateUI(); triggerHaptic('success'); spawnFloatingText(event, "+5000", "var(--success)"); tg.showAlert(t('msg_ad_done')); } else { tg.showAlert(data.message); } } } }).catch(e => {}); }
         
         async function claimDaily(event) { triggerHaptic('medium'); const res = await fetch(`${API}/api/daily-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if(data.success) { triggerHaptic('success'); spawnFloatingText(event, "+" + data.reward, "var(--gold)"); tg.showAlert(`${t('msg_reward')} ${data.streak}. ${t('day')} (+${data.reward} GEP)`); init(); } else { triggerHaptic('error'); tg.showAlert(data.message); } }
         
