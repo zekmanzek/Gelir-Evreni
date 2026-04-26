@@ -21,7 +21,7 @@ const bot = new TelegramBot(TOKEN);
 bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v5.2 - Günlük Kapsül Sistemi Aktif"))
+    .then(() => console.log("✅ Gelir Evreni v6.0 - Siber Pano Aktif"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -46,7 +46,7 @@ const User = mongoose.model('User', new mongoose.Schema({
     isBanned: { type: Boolean, default: false },
     miningLevel: { type: Number, default: 1 },
     adTickets: { type: Number, default: 0 },
-    lastLootboxOpen: { type: Date, default: new Date(0) } // YENİ: Son Kutu Açma Tarihi
+    lastLootboxOpen: { type: Date, default: new Date(0) }
 }));
 
 const PromoCode = mongoose.model('PromoCode', new mongoose.Schema({
@@ -69,21 +69,29 @@ const Settings = mongoose.model('Settings', new mongoose.Schema({
     mainGroupId: { type: String, default: "" }
 }));
 
+// YENİ: AİRDROP LİNK (SİBER PANO) ŞEMASI
+const AirdropLink = mongoose.model('AirdropLink', new mongoose.Schema({
+    telegramId: { type: String, unique: true }, // Her kullanıcının sadece 1 kaydı olabilir
+    username: String,
+    title: String,
+    description: String,
+    url: String,
+    updatedAt: { type: Date, default: Date.now } // "Üste Taşı" yapıldıkça bu tarih güncellenir
+}));
+
 function addPoints(user, amount) {
     const now = new Date();
     if (user.lastPointDate.toDateString() !== now.toDateString()) { user.dailyPoints = 0; }
     user.points += amount; user.dailyPoints += amount; user.lastPointDate = now;
 }
 
-// Otonom Mesajlar
-const morningMsgs = ["☀️ Günaydın Siber Ağ! Madenleri toplamayı unutmayın.", "🌅 Günaydın! Yeni bir gün, yeni GEP'ler...", "☕ Günaydın Gelir Evreni ailesi!", "🌞 Herkese günaydın. Bugün BTC yönü sizce ne olur?"];
-const nightMsgs = ["🌙 İyi geceler millet! Bırakın sistem uyurken de sizin için çalışsın.", "🌌 Herkese iyi geceler. Yarın daha çok kazanacağız...", "💤 Gece mesaisi bitenlere iyi uykular!", "🦉 İyi geceler Siber Kurtlar!"];
-const randomMsgs = ["🚀 Piyasalar bugün hareketli. Sence BTC ne olacak?", "💎 Unutmayın, panik yapan kaybeder, sabreden GEP kazanır.", "🎁 Buralarda bir yerlerde yakında yeni bir Promo Kod düşebilir...", "⚔️ Cesareti olan yok mu? Düello atacak cengaver aranıyor!"];
+const morningMsgs = ["☀️ Günaydın Siber Ağ! Madenleri toplamayı unutmayın.", "🌅 Günaydın! Yeni bir gün, yeni GEP'ler...", "☕ Günaydın Gelir Evreni ailesi!"];
+const nightMsgs = ["🌙 İyi geceler millet! Bırakın sistem uyurken de sizin için çalışsın.", "🌌 Herkese iyi geceler. Yarın daha çok kazanacağız..."];
+const randomMsgs = ["🚀 Piyasalar bugün hareketli. Sence BTC ne olacak?", "💎 Unutmayın, panik yapan kaybeder, sabreden GEP kazanır.", "🎁 Buralarda bir yerlerde yakında yeni bir Promo Kod düşebilir..."];
 
 setInterval(async () => {
     try {
-        const s = await Settings.findOne();
-        if (!s || !s.mainGroupId) return;
+        const s = await Settings.findOne(); if (!s || !s.mainGroupId) return;
         const now = new Date(); const utcHour = now.getUTCHours(); const utcMin = now.getUTCMinutes();
         if (utcHour === 6 && utcMin === 0) { bot.sendMessage(s.mainGroupId, morningMsgs[Math.floor(Math.random() * morningMsgs.length)]); }
         else if (utcHour === 20 && utcMin === 30) { bot.sendMessage(s.mainGroupId, nightMsgs[Math.floor(Math.random() * nightMsgs.length)]); }
@@ -91,7 +99,41 @@ setInterval(async () => {
     } catch (e) { }
 }, 60000);
 
-// --- API ROTALARI ---
+async function archiveDailyLeaderboard() {
+    try {
+        const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const existing = await YesterdayWinner.findOne({ date: { $gte: today } }); if (existing) return;
+        const winners = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(100);
+        if (winners.length > 0) {
+            await YesterdayWinner.deleteMany({}); 
+            const archiveData = winners.map((u, i) => ({ rank: i + 1, username: u.username, firstName: u.firstName, points: u.dailyPoints, date: new Date() }));
+            await YesterdayWinner.insertMany(archiveData); await User.updateMany({}, { $set: { dailyPoints: 0 } });
+        } else { await YesterdayWinner.create({ rank: 0, username: 'sistem', firstName: 'sistem', points: 0, date: new Date() }); }
+    } catch (err) { }
+}
+setInterval(() => { const now = new Date(); if (now.getHours() === 23 && now.getMinutes() === 58) archiveDailyLeaderboard(); }, 60000);
+
+function verifyTelegramWebAppData(telegramInitData) {
+    try {
+        if (!telegramInitData) return false;
+        const initData = new URLSearchParams(telegramInitData);
+        const hash = initData.get('hash'); const authDate = initData.get('auth_date');
+        if (!hash || !authDate) return false;
+        const now = Math.floor(Date.now() / 1000); if (now - parseInt(authDate) > 86400) return false;
+        initData.delete('hash'); const keys = Array.from(initData.keys()).sort();
+        const dataCheckString = keys.map(key => `${key}=${initData.get(key)}`).join('\n');
+        const secretKey = crypto.createHmac('sha256', 'WebAppData').update(TOKEN).digest();
+        const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+        return calculatedHash === hash;
+    } catch (error) { return false; }
+}
+
+const secureRoute = (req, res, next) => {
+    const initData = req.body.initData; const reqId = req.body.telegramId || req.body.adminId;
+    if (!initData || !verifyTelegramWebAppData(initData)) return res.status(403).json({ success: false, message: "⚠️ Güvenlik Hatası!" });
+    next();
+};
+
 app.post('/api/user/auth', secureRoute, async (req, res) => {
     const { telegramId, username, firstName, referrerId } = req.body;
     try {
@@ -177,41 +219,63 @@ app.post('/api/arcade/predict', secureRoute, async (req, res) => {
     } catch (e) { user.points += cost; await user.save(); res.json({ success: false, message: "Hata. İade edildi." }); }
 });
 
-// GÜNCELLENDİ: GÜNLÜK 1 KUTU AÇMA SINIRI EKLENDİ
 app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
     const { telegramId, boxType } = req.body; const user = await User.findOne({ telegramId }); 
     if (!user) return res.json({ success: false });
-
-    // GÜNLÜK KONTROL (24 SAAT)
-    const now = new Date();
-    const diffHours = (now - new Date(user.lastLootboxOpen || 0)) / (1000 * 60 * 60);
-    if (diffHours < 24) {
-        const remaining = Math.ceil(24 - diffHours);
-        return res.json({ success: false, message: `Bugün zaten bir kapsül açtın! Bir sonraki için ${remaining} saat bekle.` });
-    }
-
+    const now = new Date(); const diffHours = (now - new Date(user.lastLootboxOpen || 0)) / (1000 * 60 * 60);
+    if (diffHours < 24) return res.json({ success: false, message: `Bugün zaten bir kapsül açtın! Bir sonraki için ${Math.ceil(24 - diffHours)} saat bekle.` });
     let cost = 0;
     if (boxType === 1) cost = 1000; else if (boxType === 2) cost = 5000; else if (boxType === 3) cost = 25000; else return res.json({ success: false });
-    
     if (user.points < cost) return res.json({ success: false, message: "Yetersiz GEP!" });
     
-    user.points -= cost; 
-    user.lastLootboxOpen = now; // Saati güncelle
-
+    user.points -= cost; user.lastLootboxOpen = now; 
     const rand = Math.random() * 100; let prize = 0; let msg = "BOŞ KAPSÜL";
-    if (boxType === 1) { 
-        if (rand <= 40) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 70) { prize = 500; msg = "⚙️ Kırık Çip"; } else if (rand <= 90) { prize = 1500; msg = "🔋 Standart Veri"; } else if (rand <= 99) { prize = 5000; msg = "💎 Nadir Kod"; } else { prize = 10000; msg = "🔥 MEGA KAZANÇ 🔥"; } 
-    } 
-    else if (boxType === 2) { 
-        if (rand <= 30) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 65) { prize = 3000; msg = "🔋 Kaliteli Veri"; } else if (rand <= 85) { prize = 7500; msg = "💎 Nadir Çip"; } else if (rand <= 95) { prize = 20000; msg = "🔥 Destansı Çekirdek"; } else { prize = 50000; msg = "👑 EFSANEVİ NODE 👑"; } 
-    } 
-    else if (boxType === 3) { 
-        if (rand <= 20) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 50) { prize = 15000; msg = "💎 Parazitli Node"; } else if (rand <= 80) { prize = 40000; msg = "🔥 Saf Çekirdek"; } else if (rand <= 95) { prize = 100000; msg = "👑 EFSANEVİ KOD 👑"; } else { prize = 250000; msg = "🌌 UZAY BOŞLUĞU 🌌"; }
+    if (boxType === 1) { if (rand <= 40) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 70) { prize = 500; msg = "⚙️ Kırık Çip"; } else if (rand <= 90) { prize = 1500; msg = "🔋 Standart Veri"; } else if (rand <= 99) { prize = 5000; msg = "💎 Nadir Kod"; } else { prize = 10000; msg = "🔥 MEGA KAZANÇ 🔥"; } } 
+    else if (boxType === 2) { if (rand <= 30) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 65) { prize = 3000; msg = "🔋 Kaliteli Veri"; } else if (rand <= 85) { prize = 7500; msg = "💎 Nadir Çip"; } else if (rand <= 95) { prize = 20000; msg = "🔥 Destansı Çekirdek"; } else { prize = 50000; msg = "👑 EFSANEVİ NODE 👑"; } } 
+    else if (boxType === 3) { if (rand <= 20) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 50) { prize = 15000; msg = "💎 Parazitli Node"; } else if (rand <= 80) { prize = 40000; msg = "🔥 Saf Çekirdek"; } else if (rand <= 95) { prize = 100000; msg = "👑 EFSANEVİ KOD 👑"; } else { prize = 250000; msg = "🌌 UZAY BOŞLUĞU 🌌"; } }
+    if (prize > 0) addPoints(user, prize); await user.save(); res.json({ success: true, prize, msg, points: user.points, lastLootboxOpen: user.lastLootboxOpen });
+});
+
+// YENİ: SİBER PANO (AİRDROP LİNKLERİ)
+app.get('/api/airdrop/list', async (req, res) => {
+    // Sadece son 30 linki çek, en son güncellenen en üstte olacak şekilde sırala
+    const links = await AirdropLink.find().sort({ updatedAt: -1 }).limit(30);
+    res.json({ success: true, links });
+});
+
+app.post('/api/airdrop/share', secureRoute, async (req, res) => {
+    const { telegramId, title, description, url } = req.body;
+    const user = await User.findOne({ telegramId });
+    const cost = 250000; 
+
+    if(!user || user.points < cost) return res.json({success: false, message: "Yetersiz Bakiye! 250.000 GEP gerekli."});
+    if(!url.startsWith("http")) return res.json({success: false, message: "Geçerli bir link (https://) girin!"});
+    if(!title || title.length > 25) return res.json({success: false, message: "Başlık çok uzun (Max 25 harf)."});
+    if(!description || description.length > 100) return res.json({success: false, message: "Açıklama çok uzun (Max 100 harf)."});
+
+    user.points -= cost; 
+    await user.save();
+
+    let existing = await AirdropLink.findOne({ telegramId });
+    if (existing) {
+        // Kullanıcının zaten linki varsa güncelle ve "Üste Taşı"
+        existing.title = title;
+        existing.description = description;
+        existing.url = url;
+        existing.updatedAt = new Date(); // Tarihi güncelleyerek en üste çıkmasını sağlarız
+        await existing.save();
+    } else {
+        // İlk defa ekliyorsa
+        await AirdropLink.create({ telegramId, username: user.username || user.firstName, title, description, url });
     }
     
-    if (prize > 0) addPoints(user, prize); 
-    await user.save(); 
-    res.json({ success: true, prize, msg, points: user.points, lastLootboxOpen: user.lastLootboxOpen });
+    res.json({success: true, points: user.points, message: "İlanınız başarıyla panoya asıldı!"});
+});
+
+app.post('/api/admin/delete-airdrop', secureRoute, async (req, res) => {
+    if (String(req.body.adminId) !== String(ADMIN_ID)) return res.status(403).send("Yetkisiz");
+    await AirdropLink.findByIdAndDelete(req.body.id);
+    res.json({ success: true });
 });
 
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
@@ -239,12 +303,7 @@ const secureRoute = (req, res, next) => {
     next();
 };
 
-bot.onText(/\/grububagla/, async (msg) => {
-    if (String(msg.from.id) !== String(ADMIN_ID)) return; if (msg.chat.type === 'private') return;
-    const s = await Settings.findOne() || await Settings.create({}); s.mainGroupId = msg.chat.id.toString(); await s.save();
-    bot.sendMessage(msg.chat.id, "✅ **Sistem Entegre Edildi!**", { parse_mode: 'Markdown' });
-});
-
+bot.onText(/\/grububagla/, async (msg) => { if (String(msg.from.id) !== String(ADMIN_ID)) return; if (msg.chat.type === 'private') return; const s = await Settings.findOne() || await Settings.create({}); s.mainGroupId = msg.chat.id.toString(); await s.save(); bot.sendMessage(msg.chat.id, "✅ **Sistem Entegre Edildi!**", { parse_mode: 'Markdown' }); });
 bot.onText(/\/yardim/, (msg) => { bot.sendMessage(msg.chat.id, `🎮 **Grup Komutları**\n\n👤 \`/profil\`\n💸 \`/bahsis <miktar>\`\n🎲 \`/zar <miktar>\`\n🏆 \`/liderler\`\n⛏️ \`/maden\`\n⚔️ \`/duello <miktar>\``, { parse_mode: 'Markdown' }); });
 bot.onText(/\/profil/, async (msg) => { const user = await User.findOne({ telegramId: msg.from.id.toString() }); if (!user) return; bot.sendMessage(msg.chat.id, `👤 **${msg.from.first_name}**\n💰 Bakiye: **${Math.floor(user.points).toLocaleString()} GEP**`, { parse_mode: 'Markdown' }); });
 bot.onText(/\/zar (\d+)/, async (msg, match) => { const amount = parseInt(match[1]); const user = await User.findOne({ telegramId: msg.from.id.toString() }); if (!user || user.points < amount || amount < 100) return; user.points -= amount; await user.save(); const diceMsg = await bot.sendDice(msg.chat.id); setTimeout(async () => { if (diceMsg.dice.value >= 4) { const win = amount * 2; addPoints(user, win); await user.save(); bot.sendMessage(msg.chat.id, `🎉 **KAZANDIN!** +${win} GEP!`, { reply_to_message_id: diceMsg.message_id }); } else { bot.sendMessage(msg.chat.id, `💀 **KAYBETTİN...**`, { reply_to_message_id: diceMsg.message_id }); } }, 4000); });
