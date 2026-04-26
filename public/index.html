@@ -103,7 +103,6 @@
         .spin-wheel { width: 100%; height: 100%; border-radius: 50%; border: 4px solid var(--gold); background: conic-gradient( #ef4444 0deg 72deg, #f97316 72deg 144deg, #eab308 144deg 216deg, #10b981 216deg 288deg, #8b5cf6 288deg 360deg ); box-shadow: 0 0 20px var(--gold-glow); transition: transform 4s cubic-bezier(0.25, 1, 0.1, 1); position: relative; }
         .wheel-segment-text { position: absolute; top: 15px; left: 50%; transform-origin: 50% 101px; font-weight: 900; font-size: 18px; color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
         
-        /* YENİ KUTU ANİMASYONU */
         .shake-box { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both infinite; }
         @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0) rotate(-5deg); } 20%, 80% { transform: translate3d(4px, 0, 0) rotate(5deg); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0) rotate(-10deg); } 40%, 60% { transform: translate3d(8px, 0, 0) rotate(10deg); } }
     </style>
@@ -155,13 +154,11 @@
         <div class="glass-card arcade-card" style="border-color: var(--cyan);">
             <div class="arcade-icon">📈</div><h3 style="color: var(--cyan); margin-bottom: 5px;" data-i18n="g1_t">Kripto Kahini</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g1_d">BTC fiyatını tahmin et, GEP'lerini katla.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('predict')" data-i18n="btn_play_predict">TAHMİN ET (1000 GEP)</button>
         </div>
-
         <div class="glass-card arcade-card" style="border-color: var(--gold);">
             <div class="arcade-icon">🎰</div><h3 style="color: var(--gold); margin-bottom: 5px;" data-i18n="g2_t">Siber Çark</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g2_d">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')" data-i18n="btn_play_spin">ÇEVİR (500 GEP)</button>
         </div>
-
         <div class="glass-card arcade-card" style="border-color: #10b981;">
-            <div class="arcade-icon">📦</div><h3 style="color: #10b981; margin-bottom: 5px;" data-i18n="g5_t">Veri Kapsülleri</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g5_d">Sandıkları aç, sürprizleri yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #10b981; color:#10b981;" onclick="openGame('lootbox')" data-i18n="btn_play_lootbox">KAPSÜL AÇ (2500 GEP)</button>
+            <div class="arcade-icon">📦</div><h3 style="color: #10b981; margin-bottom: 5px;" data-i18n="g5_t">Veri Kapsülleri</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g5_d">Sandıkları aç, sürprizleri yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #10b981; color:#10b981;" onclick="openGame('lootbox')" data-i18n="btn_play_lootbox">KAPSÜLLERİ GÖR</button>
         </div>
 
         <div class="glass-card arcade-card" style="opacity:0.5;"><div class="badge-soon" data-i18n="coming_soon">YAKINDA</div><div class="arcade-icon">🚀</div><h3 style="color: #f43f5e;" data-i18n="g3_t">Siber Çöküş</h3><p style="font-size: 12px;" data-i18n="g3_d">Roket patlamadan çekil, kazancı al.</p></div>
@@ -179,55 +176,42 @@
             <button class="game-btn btn-success" style="flex:1;" onclick="playPredict('UP')">YÜKSELECEK</button>
             <button class="game-btn btn-danger" style="flex:1;" onclick="playPredict('DOWN')">DÜŞECEK</button>
         </div>
-        <div id="predict-loading" style="display:none; margin-top:10px;">
-            <div class="loader-ring" style="width:40px; height:40px;"></div><p style="color:var(--gold); font-weight:bold; margin-top:10px;">Piyasa Analiz Ediliyor...</p>
-        </div>
+        <div id="predict-loading" style="display:none; margin-top:10px;"><div class="loader-ring" style="width:40px; height:40px;"></div><p style="color:var(--gold); font-weight:bold; margin-top:10px;">Piyasa Analiz Ediliyor...</p></div>
     </div>
 
     <div id="modal-spin" class="game-modal">
         <div class="close-modal" onclick="closeGame('spin')">✖</div>
         <h2 style="color: var(--gold);" data-i18n="g2_t">Siber Çark</h2>
         <p style="color: var(--text-dim); margin-bottom: 30px;">Bedel: 500 GEP</p>
-        <div class="spin-container">
-            <div class="spin-pointer">🔻</div>
-            <div id="spin-wheel" class="spin-wheel">
-                <span class="wheel-segment-text" style="transform:translateX(-50%) rotate(36deg);">BOŞ</span>
-                <span class="wheel-segment-text" style="transform:translateX(-50%) rotate(108deg);">250</span>
-                <span class="wheel-segment-text" style="transform:translateX(-50%) rotate(180deg);">500</span>
-                <span class="wheel-segment-text" style="transform:translateX(-50%) rotate(252deg);">1K</span>
-                <span class="wheel-segment-text" style="transform:translateX(-50%) rotate(324deg);">5K</span>
-            </div>
-        </div>
+        <div class="spin-container"><div class="spin-pointer">🔻</div><div id="spin-wheel" class="spin-wheel"><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(36deg);">BOŞ</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(108deg);">250</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(180deg);">500</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(252deg);">1K</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(324deg);">5K</span></div></div>
         <h3 id="spin-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Şansını Dene!</h3>
         <button id="btn-do-spin" class="game-btn" style="max-width: 300px;" onclick="playSpin()">ÇEVİR (500 GEP)</button>
     </div>
 
     <div id="modal-lootbox" class="game-modal">
         <div class="close-modal" onclick="closeGame('lootbox')">✖</div>
-        <h2 style="color: #10b981;" data-i18n="g5_t">Veri Kapsülleri</h2>
-        <p style="color: var(--text-dim); margin-bottom: 20px;">Bedel: 2500 GEP</p>
+        <h2 style="color: #10b981; margin-bottom:5px;" data-i18n="g5_t">Veri Kapsülleri</h2>
+        <p style="color: var(--text-dim); margin-bottom: 20px;">Risk ne kadar büyükse, ödül de o kadar büyüktür.</p>
         
-        <div id="lootbox-icon" style="font-size: 120px; margin-bottom: 30px; transition: transform 0.2s; filter: drop-shadow(0 0 30px rgba(16, 185, 129, 0.4));">📦</div>
-        
-        <h3 id="lootbox-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Gizemli Kutu</h3>
-        <button id="btn-open-box" class="game-btn btn-success" style="max-width: 300px;" onclick="playLootbox()" data-i18n="btn_play_lootbox">KAPSÜL AÇ (2500 GEP)</button>
+        <div id="lootbox-selection" style="display:flex; flex-direction:column; gap:12px; width:100%; max-width:320px; margin-top:10px;">
+            <button class="game-btn btn-outline" style="padding:16px; font-size:13px; border-color:var(--text-main); color:var(--text-main);" onclick="playLootbox(1)">📦 STANDART KAPSÜL (1K GEP)<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Max Ödül: 10.000 GEP</span></button>
+            <button class="game-btn btn-outline" style="padding:16px; font-size:13px; border-color:#3b82f6; color:#3b82f6;" onclick="playLootbox(2)">🎁 NADİR KAPSÜL (5K GEP)<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Max Ödül: 50.000 GEP</span></button>
+            <button class="game-btn btn-outline" style="padding:16px; font-size:13px; border-color:#f59e0b; color:#f59e0b;" onclick="playLootbox(3)">💎 EFSANEVİ KAPSÜL (25K GEP)<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Max Ödül: 500.000 GEP</span></button>
+        </div>
+
+        <div id="lootbox-animation" style="display:none; flex-direction:column; align-items:center; width:100%;">
+            <div id="lootbox-icon" style="font-size: 130px; margin-bottom: 20px; filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.4));">📦</div>
+            <h3 id="lootbox-result" style="color: #fff; height: 30px;">Açılıyor...</h3>
+            <button id="btn-back-lootbox" class="game-btn btn-outline" style="max-width: 200px; margin-top:30px; display:none;" onclick="resetLootbox()">GERİ DÖN</button>
+        </div>
     </div>
 
     <div id="page-profile" class="page">
         <div class="glass-card" style="text-align: center; background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(15,23,42,0.6) 100%); border-color: rgba(16,185,129,0.3);">
-            <div style="font-size: 36px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(16,185,129,0.5));">📺</div>
-            <h3 style="color: #fff; margin-bottom: 5px;" data-i18n="watch_earn">İZLE & KAZAN</h3>
-            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 10px;" data-i18n="ad_desc">Reklam izleyip GEP kazanmak için bilet paketi almalısın.</p>
+            <div style="font-size: 36px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(16,185,129,0.5));">📺</div><h3 style="color: #fff; margin-bottom: 5px;" data-i18n="watch_earn">İZLE & KAZAN</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 10px;" data-i18n="ad_desc">Reklam izleyip GEP kazanmak için bilet paketi almalısın.</p>
             <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 10px; margin-bottom: 15px; border: 1px solid var(--glass-border);"><span style="font-size: 12px; color: var(--text-main); font-weight: bold;" data-i18n="tickets_left">Mevcut Biletin:</span><span id="ui-ad-tickets" style="font-size: 18px; color: var(--success); font-weight: 900; margin-left: 5px;">0</span></div>
             <button class="game-btn btn-success" onclick="showAd(event)" data-i18n="start_ad">REKLAM İZLE (+500 GEP)</button>
-            <div style="margin-top: 25px; text-align: left;">
-                <h4 style="font-size:13px; color:var(--gold); margin-bottom:10px; text-align:center;" data-i18n="buy_tickets">BİLET PAKETLERİ (YATIRIM)</h4>
-                <div style="display:flex; flex-direction:column; gap:8px;">
-                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#3b82f6; color:#3b82f6;" onclick="buyAdPackage(1)" data-i18n="pkg_1">10 BİLET (1.000 GEP)</button>
-                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#8b5cf6; color:#8b5cf6;" onclick="buyAdPackage(2)" data-i18n="pkg_2">50 BİLET (5.000 GEP)</button>
-                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#ec4899; color:#ec4899;" onclick="buyAdPackage(3)" data-i18n="pkg_3">100 BİLET (10.000 GEP)</button>
-                </div>
-            </div>
+            <div style="margin-top: 25px; text-align: left;"><h4 style="font-size:13px; color:var(--gold); margin-bottom:10px; text-align:center;" data-i18n="buy_tickets">BİLET PAKETLERİ (YATIRIM)</h4><div style="display:flex; flex-direction:column; gap:8px;"><button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#3b82f6; color:#3b82f6;" onclick="buyAdPackage(1)" data-i18n="pkg_1">10 BİLET (1.000 GEP)</button><button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#8b5cf6; color:#8b5cf6;" onclick="buyAdPackage(2)" data-i18n="pkg_2">50 BİLET (5.000 GEP)</button><button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#ec4899; color:#ec4899;" onclick="buyAdPackage(3)" data-i18n="pkg_3">100 BİLET (10.000 GEP)</button></div></div>
         </div>
         <div class="stat-grid"><div class="stat-box"><div class="balance-label" data-i18n="invited">DAVET ETTİKLERİN</div><div id="stat-ref-count" class="stat-val" style="color: var(--gold);">0</div></div><div class="stat-box"><div class="balance-label" data-i18n="status">HESAP DURUMU</div><div id="user-status-text" class="stat-val" style="color: var(--success); font-size: 18px; margin-top: 8px;" data-i18n="active">AKTİF</div></div></div>
         <div class="glass-card"><h3 style="font-size: 16px;" data-i18n="daily_streak">GÜNLÜK SERİ</h3><div class="streak-grid" id="streak-box"></div><button id="btn-checkin" class="game-btn btn-outline" style="margin-top: 10px;" onclick="claimDaily(event)" data-i18n="claim_daily">GÜNLÜK ÖDÜLÜ AL</button></div>
@@ -254,25 +238,22 @@
     <script>
         const tg = window.Telegram.WebApp; tg.expand(); tg.setHeaderColor('#020617'); const API = window.location.origin;
         let user, tasks = [], miningInterval; let lbAllTime = [], lbDaily = [], lbYesterday = []; let currentLbTab = 'all'; 
-        const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "27433" }) : null;
-        let tvWidgetCreated = false;
+        const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "27433" }) : null; let tvWidgetCreated = false;
 
         const translations = {
             tr: {
-                loading: "GELİR EVRENİ", loading_text: "YÜKLENİYOR...", current_balance: "GÜNCEL BAKİYE", tasks_title: "GÖREVLER", tasks_desc: "Tamamla ve kazan.", champions: "ŞAMPİYONLAR AĞI", top_100: "TOP 100", daily: "GÜNLÜK", yesterday: "DÜNÜN KRALLARI", engine_lvl: "MOTOR SEVİYESİ", capacity: "KAPASİTE (4H)", sys_ready: "SİSTEM HAZIR", start_mine: "ÜRETİMİ BAŞLAT", upgrade_lvl: "SEVİYE YÜKSELT", watch_earn: "İZLE & KAZAN", start_ad: "REKLAM İZLE (+500 GEP)", invited: "DAVET ETTİKLERİN", status: "HESAP DURUMU", active: "AKTİF", daily_streak: "GÜNLÜK SERİ", claim_daily: "GÜNLÜK ÖDÜLÜ AL", grow_net: "AĞI BÜYÜT", copy_link: "LİNKİ KOPYALA", nav_task: "GÖREV", nav_lb: "LİDERLİK", nav_mine: "ÜRETİM", nav_arcade: "OYUNLAR", nav_profile: "PROFİL", btn_done: "BİTTİ", btn_go: "GİT", day: "GÜN", req: "GEREKEN:", lvl: "ÜYE", msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır değil.", msg_ad_done: "Tebrikler! +500 GEP eklendi.", msg_reward: "🎉 Ödül Alındı! Seri:", msg_mine_ok: "ÜRETİM BAŞARILI!", msg_upg_ok: "GÜNCELLEME TAMAM!", msg_task_ok: "GÖREV TAMAM!", msg_wait: "ÜRETİM DEVAM EDİYOR", msg_no_data: "HENÜZ VERİ YOK.", msg_no_yesterday: "DÜN İÇİN KAYIT BULUNAMADI.", 
-                ad_desc: "Reklam izleyip GEP kazanmak için bilet paketi almalısın.", invite_desc: "Arkadaşını davet et, 2500 GEP kazan!", arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar çok yakında.", coming_soon: "YAKINDA", system_lock: "SİSTEM KİLİTLİ",
+                loading: "GELİR EVRENİ", loading_text: "YÜKLENİYOR...", current_balance: "GÜNCEL BAKİYE", tasks_title: "GÖREVLER", tasks_desc: "Tamamla ve kazan.", champions: "ŞAMPİYONLAR AĞI", top_100: "TOP 100", daily: "GÜNLÜK", yesterday: "DÜNÜN KRALLARI", engine_lvl: "MOTOR SEVİYESİ", capacity: "KAPASİTE (4H)", sys_ready: "SİSTEM HAZIR", start_mine: "ÜRETİMİ BAŞLAT", upgrade_lvl: "SEVİYE YÜKSELT", watch_earn: "İZLE & KAZAN", start_ad: "REKLAM İZLE (+500 GEP)", invited: "DAVET ETTİKLERİN", status: "HESAP DURUMU", active: "AKTİF", daily_streak: "GÜNLÜK SERİ", claim_daily: "GÜNLÜK ÖDÜLÜ AL", grow_net: "AĞI BÜYÜT", copy_link: "LİNKİ KOPYALA", nav_task: "GÖREV", nav_lb: "LİDERLİK", nav_mine: "ÜRETİM", nav_arcade: "OYUNLAR", nav_profile: "PROFİL", btn_done: "BİTTİ", btn_go: "GİT", day: "GÜN", req: "GEREKEN:", lvl: "ÜYE", msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır değil.", msg_ad_done: "Tebrikler! +500 GEP eklendi.", msg_reward: "🎉 Ödül Alındı! Seri:", msg_mine_ok: "ÜRETİM BAŞARILI!", msg_upg_ok: "GÜNCELLEME TAMAM!", msg_task_ok: "GÖREV TAMAM!", msg_wait: "ÜRETİM DEVAM EDİYOR", msg_no_data: "HENÜZ VERİ YOK.", msg_no_yesterday: "DÜN İÇİN KAYIT BULUNAMADI.", ad_desc: "Reklam izleyip GEP kazanmak için bilet paketi almalısın.", invite_desc: "Arkadaşını davet et, 2500 GEP kazan!", arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar çok yakında.", coming_soon: "YAKINDA", system_lock: "SİSTEM KİLİTLİ",
                 g1_t: "Kripto Kahini", g1_d: "BTC fiyatını tahmin et, GEP'lerini katla.", btn_play_predict: "TAHMİN ET (1000 GEP)",
                 g2_t: "Siber Çark", g2_d: "Çarkı çevir, Jackpot şansını yakala.", btn_play_spin: "ÇEVİR (500 GEP)", 
-                g5_t: "Veri Kapsülleri", g5_d: "Sandıkları aç, sürprizleri yakala.", btn_play_lootbox: "KAPSÜL AÇ (2500 GEP)",
+                g5_t: "Veri Kapsülleri", g5_d: "Sandıkları aç, sürprizleri yakala.", btn_play_lootbox: "KAPSÜLLERİ GÖR",
                 g3_t: "Siber Çöküş", g3_d: "Roket patlamadan çekil, kazancı al.", g4_t: "Sistem Savaşı", g4_d: "Boss'u tüm ağla beraber hackle.", g6_t: "Node Merge", g6_d: "Çipleri birleştir, node'u güçlendir.",
                 tickets_left: "Mevcut Biletin:", buy_tickets: "BİLET PAKETLERİ (YATIRIM)", pkg_1: "10 BİLET (1.000 GEP)", pkg_2: "50 BİLET (5.000 GEP)", pkg_3: "100 BİLET (10.000 GEP)", msg_no_tickets: "Hiç reklam biletiniz kalmadı! Lütfen paket satın alın."
             },
             az: {
-                loading: "GƏLİR KAINATI", loading_text: "YÜKLƏNİR...", current_balance: "CİCARİ BALANS", tasks_title: "TAPŞIRIQLAR", tasks_desc: "Tamamla və qazan.", champions: "ÇEMPİONLAR ŞƏBƏKƏSİ", top_100: "TOP 100", daily: "GÜNLÜK", yesterday: "DÜNƏNİN KRALLARI", engine_lvl: "MÜHƏRRİK SƏVİYYƏSİ", capacity: "KAPASİTƏ (4S)", sys_ready: "SİSTEM HAZIRDIR", start_mine: "İSTEHSALA BAŞLA", upgrade_lvl: "SƏVİYYƏNİ YÜKSƏLT", watch_earn: "İZLƏ VƏ QAZAN", start_ad: "REKLAM İZLƏ (+500 GEP)", invited: "DƏVƏT EDİLƏNLƏR", status: "HESAB STATUSU", active: "AKTİV", daily_streak: "GÜNLÜK SERİYA", claim_daily: "GÜNLÜK MÜKAFATI AL", grow_net: "ŞƏBƏKƏNİ BÖYÜT", copy_link: "LİNKİ KOPYALA", nav_task: "TAPŞIRIQ", nav_lb: "LİDERLİK", nav_mine: "İSTEHSAL", nav_arcade: "OYUNLAR", nav_profile: "PROFİL", btn_done: "BİTDİ", btn_go: "GİT", day: "GÜN", req: "TƏLƏB OLUNUR:", lvl: "ÜZV", msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır deyil.", msg_ad_done: "Təbrik edirik! +500 GEP əlavə edildi.", msg_reward: "🎉 Mükafat alındı! Seriya:", msg_mine_ok: "İSTEHSAL UĞURLU OLDU!", msg_upg_ok: "YENİLƏNMƏ TAMAMLANDI!", msg_task_ok: "TAPŞIRIQ TAMAMLANDI!", msg_wait: "İSTEHSAL DAVAM EDİR", msg_no_data: "HƏLƏ MƏLUMAT YOXDUR.", msg_no_yesterday: "DÜNƏN ÜÇÜN QEYD YOXDUR.", 
-                ad_desc: "Reklam izləyib GEP qazanmaq üçün bilet paketi almalısan.", invite_desc: "Dostunu dəvət et, 2500 GEP qazan!", arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar tezliklə.", coming_soon: "TEZLİKLƏ", system_lock: "SİSTEM KİLİDLİDİR",
+                loading: "GƏLİR KAINATI", loading_text: "YÜKLƏNİR...", current_balance: "CİCARİ BALANS", tasks_title: "TAPŞIRIQLAR", tasks_desc: "Tamamla və qazan.", champions: "ÇEMPİONLAR ŞƏBƏKƏSİ", top_100: "TOP 100", daily: "GÜNLÜK", yesterday: "DÜNƏNİN KRALLARI", engine_lvl: "MÜHƏRRİK SƏVİYYƏSİ", capacity: "KAPASİTƏ (4S)", sys_ready: "SİSTEM HAZIRDIR", start_mine: "İSTEHSALA BAŞLA", upgrade_lvl: "SƏVİYYƏNİ YÜKSƏLT", watch_earn: "İZLƏ VƏ QAZAN", start_ad: "REKLAM İZLƏ (+500 GEP)", invited: "DƏVƏT EDİLƏNLƏR", status: "HESAB STATUSU", active: "AKTİV", daily_streak: "GÜNLÜK SERİYA", claim_daily: "GÜNLÜK MÜKAFATI AL", grow_net: "ŞƏBƏKƏNİ BÖYÜT", copy_link: "LİNKİ KOPYALA", nav_task: "TAPŞIRIQ", nav_lb: "LİDERLİK", nav_mine: "İSTEHSAL", nav_arcade: "OYUNLAR", nav_profile: "PROFİL", btn_done: "BİTDİ", btn_go: "GİT", day: "GÜN", req: "TƏLƏB OLUNUR:", lvl: "ÜZV", msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır deyil.", msg_ad_done: "Təbrik edirik! +500 GEP əlavə edildi.", msg_reward: "🎉 Mükafat alındı! Seriya:", msg_mine_ok: "İSTEHSAL UĞURLU OLDU!", msg_upg_ok: "YENİLƏNMƏ TAMAMLANDI!", msg_task_ok: "TAPŞIRIQ TAMAMLANDI!", msg_wait: "İSTEHSAL DAVAM EDİR", msg_no_data: "HƏLƏ MƏLUMAT YOXDUR.", msg_no_yesterday: "DÜNƏN ÜÇÜN QEYD YOXDUR.", ad_desc: "Reklam izləyib GEP qazanmaq üçün bilet paketi almalısan.", invite_desc: "Dostunu dəvət et, 2500 GEP qazan!", arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar tezliklə.", coming_soon: "TEZLİKLƏ", system_lock: "SİSTEM KİLİDLİDİR",
                 g1_t: "Kripto Kahini", g1_d: "BTC qiymətini təxmin et, GEP-ləri qatla.", btn_play_predict: "TƏXMİN ET (1000 GEP)",
                 g2_t: "Siber Çərx", g2_d: "Çərxi fırlat, Jackpot şansını yaxala.", btn_play_spin: "FIRLAT (500 GEP)",
-                g5_t: "Məlumat Kapsulları", g5_d: "Sandıqları aç, sürprizləri qazan.", btn_play_lootbox: "AÇ (2500 GEP)",
+                g5_t: "Məlumat Kapsulları", g5_d: "Sandıqları aç, sürprizləri qazan.", btn_play_lootbox: "KAPSULLARI GÖR",
                 g3_t: "Siber Çöküş", g3_d: "Raket partlamadan çıx, qazancı götür.", g4_t: "Sistem Müharibəsi", g4_d: "Boss-u bütün şəbəkə ilə hack-lə.", g6_t: "Node Merge", g6_d: "Çipləri birləşdir, node-u gücləndir.",
                 tickets_left: "Mövcud Biletin:", buy_tickets: "BİLET PAKETLƏRİ (YATIRIM)", pkg_1: "10 BİLET (1.000 GEP)", pkg_2: "50 BİLET (5.000 GEP)", pkg_3: "100 BİLET (10.000 GEP)", msg_no_tickets: "Heç reklam biletiniz qalmadı! Lütfən paket alın."
             }
@@ -281,13 +262,7 @@
         let savedLang = localStorage.getItem('appLang'); let currentLang = translations[savedLang] ? savedLang : 'tr';
         function t(key) { return translations[currentLang][key] || translations['tr'][key]; }
 
-        function changeLanguage(langCode) {
-            currentLang = langCode; localStorage.setItem('appLang', langCode); document.getElementById('lang-select').value = langCode;
-            document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if(translations[langCode][key]) el.innerText = translations[langCode][key]; });
-            document.getElementById('invite_desc').innerHTML = t('invite_desc').replace('2500 GEP', '<strong style="color:var(--gold);">2500 GEP</strong>');
-            if (user) { updateUI(); if(tasks.length > 0) renderTasks(); if(lbAllTime.length > 0) renderLB(); renderStreak(); }
-        }
-
+        function changeLanguage(langCode) { currentLang = langCode; localStorage.setItem('appLang', langCode); document.getElementById('lang-select').value = langCode; document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if(translations[langCode][key]) el.innerText = translations[langCode][key]; }); document.getElementById('invite_desc').innerHTML = t('invite_desc').replace('2500 GEP', '<strong style="color:var(--gold);">2500 GEP</strong>'); if (user) { updateUI(); if(tasks.length > 0) renderTasks(); if(lbAllTime.length > 0) renderLB(); renderStreak(); } }
         function triggerHaptic(type = 'light') { if(tg.HapticFeedback) { if(type === 'success') tg.HapticFeedback.notificationOccurred('success'); else if(type === 'error') tg.HapticFeedback.notificationOccurred('error'); else tg.HapticFeedback.impactOccurred(type); } }
         function spawnFloatingText(e, text, color) { let x = window.innerWidth / 2; let y = window.innerHeight / 2; if(e && e.touches && e.touches.length > 0) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else if (e && e.clientX) { x = e.clientX; y = e.clientY; } const el = document.createElement("div"); el.className = "floating-text"; el.innerText = text; el.style.left = (x - 40) + "px"; el.style.top = (y - 20) + "px"; el.style.color = color || "var(--gold)"; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 
@@ -310,38 +285,25 @@
         }
 
         function updateUI() {
-            if (!user) return; 
-            document.getElementById('balance').innerText = Math.floor(user.points).toLocaleString(); 
-            document.getElementById('usd').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`; 
-            document.getElementById('user-level').innerText = `${user.level} ${t('lvl')}`; 
-            if (document.getElementById('stat-ref-count')) document.getElementById('stat-ref-count').innerText = user.referralCount || 0; 
-            document.getElementById('ui-mine-level').innerText = user.miningLevel || 1; 
-            document.getElementById('ui-mine-reward').innerText = `${(1000 + (((user.miningLevel || 1) - 1) * 500)).toLocaleString()}`; 
-            document.getElementById('ui-upgrade-cost').innerText = `${t('req')} ${((user.miningLevel || 1) * 10000).toLocaleString()} GEP`; 
-            document.getElementById('ui-ad-tickets').innerText = user.adTickets || 0;
-            renderStreak();
+            if (!user) return; document.getElementById('balance').innerText = Math.floor(user.points).toLocaleString(); document.getElementById('usd').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`; document.getElementById('user-level').innerText = `${user.level} ${t('lvl')}`; if (document.getElementById('stat-ref-count')) document.getElementById('stat-ref-count').innerText = user.referralCount || 0; document.getElementById('ui-mine-level').innerText = user.miningLevel || 1; document.getElementById('ui-mine-reward').innerText = `${(1000 + (((user.miningLevel || 1) - 1) * 500)).toLocaleString()}`; document.getElementById('ui-upgrade-cost').innerText = `${t('req')} ${((user.miningLevel || 1) * 10000).toLocaleString()} GEP`; document.getElementById('ui-ad-tickets').innerText = user.adTickets || 0; renderStreak();
         }
 
         async function buyAdPackage(pid) {
-            triggerHaptic('light');
-            let cost = pid === 1 ? 1000 : (pid === 2 ? 5000 : 10000);
-            if (user.points < cost) return tg.showAlert("Yetersiz GEP Bakiye!");
+            triggerHaptic('light'); let cost = pid === 1 ? 1000 : (pid === 2 ? 5000 : 10000); if (user.points < cost) return tg.showAlert("Yetersiz GEP Bakiye!");
             const res = await fetch(`${API}/api/buy-ad-package`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegramId: user.telegramId, packageId: pid, initData: tg.initData }) });
             const data = await res.json();
             if(data.success) { user.points = data.points; user.adTickets = data.adTickets; updateUI(); triggerHaptic('success'); tg.showAlert("Bilet Paketi Satın Alındı! Artık reklam izleyebilirsin."); } else { triggerHaptic('error'); tg.showAlert(data.message); }
         }
 
         function openGame(game) {
-            triggerHaptic('light');
-            document.getElementById(`modal-${game}`).style.display = 'flex';
+            triggerHaptic('light'); document.getElementById(`modal-${game}`).style.display = 'flex';
             if(game === 'predict') {
                 if(!tvWidgetCreated) { new TradingView.widget({ "autosize": true, "symbol": "BINANCE:BTCUSDT", "interval": "1", "timezone": "Etc/UTC", "theme": "dark", "style": "2", "locale": "tr", "enable_publishing": false, "backgroundColor": "rgba(2, 6, 23, 0)", "gridColor": "rgba(255, 255, 255, 0.05)", "hide_top_toolbar": true, "hide_legend": true, "save_image": false, "container_id": "tv_chart_container" }); tvWidgetCreated = true; }
-                document.getElementById('predict-price').innerHTML = '<div class="loader-ring" style="width:25px;height:25px;border-width:2px;display:inline-block;"></div> Çekiliyor...';
-                document.getElementById('predict-buttons').style.display = 'none';
+                document.getElementById('predict-price').innerHTML = '<div class="loader-ring" style="width:25px;height:25px;border-width:2px;display:inline-block;"></div> Çekiliyor...'; document.getElementById('predict-buttons').style.display = 'none';
                 fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT').then(r => r.json()).then(d => { document.getElementById('predict-price').innerText = `Anlık: $${parseFloat(d.price).toFixed(2)}`; document.getElementById('predict-buttons').style.display = 'flex'; }).catch(e => { document.getElementById('predict-price').innerText = "Bağlantı Hatası"; });
             }
             if(game === 'spin') { document.getElementById('spin-result').innerText = "Şansını Dene!"; }
-            if(game === 'lootbox') { document.getElementById('lootbox-result').innerText = "Gizemli Kutu"; document.getElementById('lootbox-icon').innerText = "📦"; }
+            if(game === 'lootbox') { resetLootbox(); }
         }
 
         function closeGame(game) { triggerHaptic('light'); document.getElementById(`modal-${game}`).style.display = 'none'; }
@@ -350,12 +312,10 @@
             if (user.points < 500) return tg.showAlert("Yetersiz GEP!");
             const btn = document.getElementById('btn-do-spin'); const wheel = document.getElementById('spin-wheel'); const resText = document.getElementById('spin-result');
             btn.disabled = true; resText.style.color = "#fff"; resText.innerText = "Dönüyor..."; triggerHaptic('heavy'); wheel.style.transform = `rotate(1080deg)`; 
-            const res = await fetch(`${API}/api/arcade/spin`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) });
-            const data = await res.json();
+            const res = await fetch(`${API}/api/arcade/spin`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) }); const data = await res.json();
             if(!data.success) { resText.innerText = "Hata oluştu."; tg.showAlert(data.message); btn.disabled = false; return; }
             const prizeAngles = { 0: 36, 250: 108, 500: 180, 1000: 252, 5000: 324 }; const targetAngle = prizeAngles[data.prize]; const rotateDeg = (360 * 5) + (360 - targetAngle); wheel.style.transform = `rotate(${rotateDeg}deg)`;
-            setTimeout(() => {
-                user.points = data.points; updateUI(); resText.innerText = data.msg;
+            setTimeout(() => { user.points = data.points; updateUI(); resText.innerText = data.msg;
                 if(data.prize > 0) { resText.style.color = "var(--success)"; triggerHaptic('success'); spawnFloatingText(null, `+${data.prize} GEP`, "var(--success)"); } else { resText.style.color = "var(--danger)"; triggerHaptic('error'); }
                 btn.disabled = false; setTimeout(() => { wheel.style.transition = 'none'; wheel.style.transform = `rotate(${360 - targetAngle}deg)`; setTimeout(() => { wheel.style.transition = 'transform 4s cubic-bezier(0.25, 1, 0.1, 1)'; }, 50); }, 2000);
             }, 4000);
@@ -364,81 +324,68 @@
         async function playPredict(guess) {
             if (user.points < 1000) return tg.showAlert("Yetersiz GEP!");
             document.getElementById('predict-buttons').style.display = 'none'; document.getElementById('predict-loading').style.display = 'flex'; document.getElementById('predict-price').innerText = "Sonuç Bekleniyor..."; triggerHaptic('medium');
-            const res = await fetch(`${API}/api/arcade/predict`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegramId: user.telegramId, guess, initData: tg.initData }) });
-            const data = await res.json();
+            const res = await fetch(`${API}/api/arcade/predict`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegramId: user.telegramId, guess, initData: tg.initData }) }); const data = await res.json();
             document.getElementById('predict-loading').style.display = 'none';
-            if(data.success) {
-                user.points = data.points; updateUI();
-                const emoji = data.won ? '🎉' : '💀'; const color = data.won ? 'var(--success)' : 'var(--danger)';
-                document.getElementById('predict-price').innerHTML = `<span style="color:${color}; font-size:24px;">Giriş: $${data.price1}<br>Kapanış: $${data.price2}</span><br>${emoji}`;
-                if(data.won) { triggerHaptic('success'); spawnFloatingText(null, "+2000 GEP", "var(--success)"); } else { triggerHaptic('error'); }
+            if(data.success) { user.points = data.points; updateUI(); const emoji = data.won ? '🎉' : '💀'; const color = data.won ? 'var(--success)' : 'var(--danger)'; document.getElementById('predict-price').innerHTML = `<span style="color:${color}; font-size:24px;">Giriş: $${data.price1}<br>Kapanış: $${data.price2}</span><br>${emoji}`; if(data.won) { triggerHaptic('success'); spawnFloatingText(null, "+2000 GEP", "var(--success)"); } else { triggerHaptic('error'); }
             } else { document.getElementById('predict-price').innerText = "HATA!"; tg.showAlert(data.message); }
             setTimeout(() => { document.getElementById('predict-buttons').style.display = 'flex'; document.getElementById('predict-price').innerText = "Tekrar Dene"; }, 4000);
         }
 
-        // YENİ: KAPSÜL (LOOTBOX) MANTIĞI
-        async function playLootbox() {
-            if (user.points < 2500) return tg.showAlert("Yetersiz GEP!");
-            const btn = document.getElementById('btn-open-box'); 
-            const box = document.getElementById('lootbox-icon'); 
+        // YENİ: KUTU AÇMA (TIER SİSTEMİ)
+        function resetLootbox() {
+            document.getElementById('lootbox-selection').style.display = 'flex';
+            document.getElementById('lootbox-animation').style.display = 'none';
+            document.getElementById('btn-back-lootbox').style.display = 'none';
+        }
+
+        async function playLootbox(boxType) {
+            const costs = { 1: 1000, 2: 5000, 3: 25000 };
+            const icons = { 1: "📦", 2: "🎁", 3: "💎" };
+            const colors = { 1: "var(--text-main)", 2: "#3b82f6", 3: "#f59e0b" };
+            
+            if (user.points < costs[boxType]) return tg.showAlert("Yetersiz GEP!");
+
+            document.getElementById('lootbox-selection').style.display = 'none';
+            const animDiv = document.getElementById('lootbox-animation');
+            const boxIcon = document.getElementById('lootbox-icon');
             const resText = document.getElementById('lootbox-result');
+            const backBtn = document.getElementById('btn-back-lootbox');
             
-            btn.disabled = true; 
-            resText.style.color = "var(--gold)"; 
-            resText.innerText = "Açılıyor..."; 
+            animDiv.style.display = 'flex';
+            boxIcon.innerText = icons[boxType];
+            boxIcon.style.filter = `drop-shadow(0 0 20px ${colors[boxType]})`;
+            resText.style.color = colors[boxType];
+            resText.innerText = "Kilit Çözülüyor...";
             
-            // Titreme efekti başlat
-            box.classList.add('shake-box');
+            boxIcon.classList.add('shake-box');
             triggerHaptic('heavy');
             
-            const res = await fetch(`${API}/api/arcade/lootbox`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) });
+            const res = await fetch(`${API}/api/arcade/lootbox`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegramId: user.telegramId, boxType, initData: tg.initData }) });
             const data = await res.json();
             
             setTimeout(() => {
-                box.classList.remove('shake-box');
+                boxIcon.classList.remove('shake-box');
                 if(data.success) {
                     user.points = data.points; updateUI();
                     resText.innerText = data.msg;
-                    box.innerText = "✨"; // Kutu açılınca parıltı olsun
+                    boxIcon.innerText = "✨"; 
                     
-                    if(data.prize > 0) { 
-                        resText.style.color = "var(--success)"; 
-                        triggerHaptic('success'); 
-                        spawnFloatingText(null, `+${data.prize} GEP`, "var(--success)"); 
-                    } else { 
-                        resText.style.color = "var(--text-dim)"; 
-                        box.innerText = "🗑️"; 
-                        triggerHaptic('error'); 
-                    }
+                    if(data.prize > 0) { resText.style.color = "var(--success)"; triggerHaptic('success'); spawnFloatingText(null, `+${data.prize} GEP`, "var(--success)"); } 
+                    else { resText.style.color = "var(--danger)"; boxIcon.innerText = "🗑️"; triggerHaptic('error'); }
                 } else {
-                    resText.innerText = "HATA!";
-                    tg.showAlert(data.message);
+                    resText.innerText = "HATA!"; tg.showAlert(data.message);
                 }
-                
-                setTimeout(() => { btn.disabled = false; box.innerText = "📦"; resText.innerText = "Gizemli Kutu"; resText.style.color = "#fff"; }, 3000);
+                backBtn.style.display = 'block';
             }, 1500); // 1.5 saniye kutu titrer
         }
 
+        // DİĞER FONKSİYONLAR...
         async function startMining(event) { triggerHaptic('heavy'); const btn = document.getElementById('btn-mine'); if(btn.disabled) return; btn.disabled = true; const res = await fetch(`${API}/api/mine`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) }); const data = await res.json(); if(data.success) { user.points = data.points; user.lastMining = new Date().toISOString(); updateUI(); triggerHaptic('success'); spawnFloatingText(event, "+" + data.reward, "var(--cyan)"); runTimer(4 * 60 * 60 * 1000); } else { triggerHaptic('error'); if(event.target.id === 'btn-mine') tg.showAlert(data.message); btn.disabled = false; } }
         function checkMiningTimer() { if (!user.lastMining || new Date(user.lastMining).getTime() === 0) return; const diff = new Date().getTime() - new Date(user.lastMining).getTime(); if (diff < 4*60*60*1000) runTimer(4*60*60*1000 - diff); }
         function runTimer(timeLeft) { const btn = document.getElementById('btn-mine'); const timerDiv = document.getElementById('mining-timer'); const statusText = document.getElementById('mine-status-text'); const glow = document.getElementById('core-glow'); const icon = document.getElementById('mine-icon'); btn.disabled = true; timerDiv.style.display = "block"; statusText.innerText = t('msg_wait'); statusText.style.color = "var(--text-dim)"; glow.style.animation = "none"; icon.style.filter = "grayscale(100%) opacity(0.5)"; clearInterval(miningInterval); miningInterval = setInterval(() => { timeLeft -= 1000; if (timeLeft <= 0) { clearInterval(miningInterval); btn.disabled = false; timerDiv.style.display = "none"; statusText.innerText = t('sys_ready'); statusText.style.color = "#fff"; glow.style.animation = "pulse 3s infinite"; icon.style.filter = "drop-shadow(0 10px 20px rgba(0,0,0,0.5))"; triggerHaptic('notification'); return; } const h = Math.floor(timeLeft / 3600000); const m = Math.floor((timeLeft % 3600000) / 60000); const s = Math.floor((timeLeft % 60000) / 1000); timerDiv.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }, 1000); }
         async function upgradeMine(event) { triggerHaptic('light'); const upgradeCost = (user.miningLevel || 1) * 10000; tg.showConfirm(`${t('upgrade_lvl')} ${(user.miningLevel || 1) + 1}?\n\n${t('req')} ${upgradeCost.toLocaleString()} GEP`, async (confirmed) => { if (!confirmed) return; const btn = document.getElementById('btn-upgrade'); btn.disabled = true; const res = await fetch(`${API}/api/upgrade-mine`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) }); const data = await res.json(); if(data.success) { user.points = data.points; user.miningLevel = data.newLevel; updateUI(); triggerHaptic('success'); spawnFloatingText(event, "LVL UP!", "var(--gold)"); tg.showAlert(`${t('msg_upg_ok')} LVL: ${data.newLevel}`); } else { triggerHaptic('error'); tg.showAlert(data.message); } btn.disabled = false; }); }
         
-        async function showAd(event) { 
-            triggerHaptic('medium'); 
-            if (user.adTickets <= 0) return tg.showAlert(t('msg_no_tickets')); 
-            if(!AdController) return tg.showAlert(t('msg_ad_ready')); 
-            AdController.show().then(async (result) => { 
-                if (result.done) { 
-                    const res = await fetch(`${API}/api/adsgram-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) }); 
-                    if (res.ok) { 
-                        const data = await res.json(); 
-                        if(data.success) { user.points = data.points; user.adTickets = data.adTickets; updateUI(); triggerHaptic('success'); spawnFloatingText(event, "+500", "var(--success)"); tg.showAlert(t('msg_ad_done')); } 
-                        else { tg.showAlert(data.message); }
-                    } 
-                } 
-            }).catch(e => {}); 
-        }
+        async function showAd(event) { triggerHaptic('medium'); if (user.adTickets <= 0) return tg.showAlert(t('msg_no_tickets')); if(!AdController) return tg.showAlert(t('msg_ad_ready')); AdController.show().then(async (result) => { if (result.done) { const res = await fetch(`${API}/api/adsgram-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) }); if (res.ok) { const data = await res.json(); if(data.success) { user.points = data.points; user.adTickets = data.adTickets; updateUI(); triggerHaptic('success'); spawnFloatingText(event, "+500", "var(--success)"); tg.showAlert(t('msg_ad_done')); } else { tg.showAlert(data.message); } } } }).catch(e => {}); }
 
         async function claimDaily(event) { triggerHaptic('medium'); const res = await fetch(`${API}/api/daily-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ telegramId: user.telegramId, initData: tg.initData }) }); const data = await res.json(); if(data.success) { triggerHaptic('success'); spawnFloatingText(event, "+" + data.reward, "var(--gold)"); tg.showAlert(`${t('msg_reward')} ${data.streak}. ${t('day')} (+${data.reward} GEP)`); init(); } else { triggerHaptic('error'); tg.showAlert(data.message); } }
         function renderAnnouncements(annList) { const annContainer = document.getElementById('ann-container'); const annScroll = document.getElementById('ann-scroll'); if (annList && annList.length > 0) { annScroll.innerText = annList.join(" 🔔 ") + " 🔔 "; annContainer.style.display = 'flex'; } else { annContainer.style.display = 'none'; } }
