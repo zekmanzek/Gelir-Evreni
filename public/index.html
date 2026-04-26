@@ -34,8 +34,16 @@
             padding-bottom: 120px; 
             min-height: 100vh; 
             overflow-x: hidden; 
+            transition: direction 0.3s;
         }
 
+        body[dir="rtl"] { text-align: right; }
+        body[dir="rtl"] .header-panel, body[dir="rtl"] .glass-card { text-align: right; }
+        body[dir="rtl"] .list-row, body[dir="rtl"] .task-card { flex-direction: row-reverse; text-align: right; }
+        body[dir="rtl"] .list-row span:first-child { border-left: none; border-right: 3px solid var(--gold); }
+        body[dir="rtl"] .points-row { flex-direction: row-reverse; justify-content: center; }
+        body[dir="rtl"] .stat-grid { direction: rtl; }
+        
         h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; margin: 0 0 15px 0; letter-spacing: -0.5px; }
 
         .lang-selector {
@@ -56,6 +64,7 @@
             cursor: pointer;
         }
         .lang-selector option { background: var(--bg-dark); color: var(--text-main); }
+        body[dir="rtl"] .lang-selector { right: auto; left: 15px; }
 
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease-out; }
         .loader-ring { width: 80px; height: 80px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; filter: drop-shadow(0 0 10px var(--gold-glow)); margin-bottom: 20px;}
@@ -103,13 +112,13 @@
 
         .dock-container {
             position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
-            width: 92%; max-width: 400px;
+            width: 95%; max-width: 450px;
             background: rgba(15, 23, 42, 0.85); 
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
             border-radius: 30px; 
             display: flex; justify-content: space-between; align-items: center;
-            padding: 8px 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            padding: 8px 10px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
             z-index: 1000;
         }
         .dock-item {
@@ -117,8 +126,8 @@
             color: var(--text-dim); text-decoration: none; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             height: 54px; border-radius: 20px; position: relative;
         }
-        .dock-icon { font-size: 22px; margin-bottom: 4px; transition: transform 0.3s; filter: grayscale(100%) opacity(0.7); }
-        .dock-text { font-size: 10px; font-weight: 800; letter-spacing: 0.5px; opacity: 0; transform: translateY(5px); transition: all 0.3s; position: absolute; bottom: 6px; }
+        .dock-icon { font-size: 20px; margin-bottom: 4px; transition: transform 0.3s; filter: grayscale(100%) opacity(0.7); }
+        .dock-text { font-size: 9px; font-weight: 800; letter-spacing: 0.5px; opacity: 0; transform: translateY(5px); transition: all 0.3s; position: absolute; bottom: 6px; }
         
         .dock-item.active { background: rgba(255,255,255,0.05); color: var(--gold); }
         .dock-item.active .dock-icon { transform: translateY(-8px) scale(1.1); filter: grayscale(0%) drop-shadow(0 0 8px var(--gold-glow)); }
@@ -256,6 +265,32 @@
         </div>
     </div>
 
+    <div id="page-arcade" class="page">
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">🕹️</div>
+            <div>
+                <h3 style="margin: 0; color: #fff;" data-i18n="arcade_title">SİBER ARCADE</h3>
+                <p style="font-size: 12px; margin: 0; color: var(--text-dim);" data-i18n="arcade_desc">Yeni oyunlar çok yakında.</p>
+            </div>
+        </div>
+
+        <div class="glass-card" style="opacity: 0.6; position: relative; overflow: hidden; padding-top: 30px;">
+            <div style="position: absolute; top:12px; right:15px; background:var(--danger); color:#fff; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:800; letter-spacing:1px;" data-i18n="coming_soon">YAKINDA</div>
+            <div style="font-size: 40px; margin-bottom: 10px;">📈</div>
+            <h3 style="color: var(--cyan); margin-bottom: 5px;" data-i18n="game1_title">Kripto Kahini</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="game1_desc">BTC fiyatı 1 dakika sonra nerede olacak? Tahmin et, GEP'lerini katla.</p>
+            <button class="game-btn btn-outline" disabled style="padding: 12px; font-size: 12px;" data-i18n="system_lock">SİSTEM KİLİTLİ</button>
+        </div>
+
+        <div class="glass-card" style="opacity: 0.6; position: relative; overflow: hidden; padding-top: 30px;">
+            <div style="position: absolute; top:12px; right:15px; background:var(--danger); color:#fff; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:800; letter-spacing:1px;" data-i18n="coming_soon">YAKINDA</div>
+            <div style="font-size: 40px; margin-bottom: 10px;">🎰</div>
+            <h3 style="color: var(--gold); margin-bottom: 5px;" data-i18n="game2_title">Siber Çark</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="game2_desc">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p>
+            <button class="game-btn btn-outline" disabled style="padding: 12px; font-size: 12px; border-color:var(--text-dim); color:var(--text-dim);" data-i18n="system_lock">SİSTEM KİLİTLİ</button>
+        </div>
+    </div>
+
     <div id="page-profile" class="page">
         <div class="glass-card" style="text-align: center; background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(15,23,42,0.6) 100%); border-color: rgba(16,185,129,0.3);">
             <div style="font-size: 36px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(16,185,129,0.5));">📺</div>
@@ -342,6 +377,9 @@
         <a href="javascript:void(0)" class="dock-item" onclick="showPage('mine', this)">
             <div class="dock-icon">⛏️</div><div class="dock-text" data-i18n="nav_mine">ÜRETİM</div>
         </a>
+        <a href="javascript:void(0)" class="dock-item" onclick="showPage('arcade', this)">
+            <div class="dock-icon">🕹️</div><div class="dock-text" data-i18n="nav_arcade">OYUNLAR</div>
+        </a>
         <a href="javascript:void(0)" class="dock-item" onclick="showPage('profile', this)">
             <div class="dock-icon">👤</div><div class="dock-text" data-i18n="nav_profile">PROFİL</div>
         </a>
@@ -370,12 +408,15 @@
                 upgrade_lvl: "SEVİYE YÜKSELT", watch_earn: "İZLE & KAZAN", start_ad: "REKLAM BAŞLAT",
                 invited: "DAVET ETTİKLERİN", status: "HESAP DURUMU", active: "AKTİF", daily_streak: "GÜNLÜK SERİ",
                 claim_daily: "GÜNLÜK ÖDÜLÜ AL", grow_net: "AĞI BÜYÜT", copy_link: "LİNKİ KOPYALA",
-                nav_task: "GÖREV", nav_lb: "LİDERLİK", nav_mine: "ÜRETİM", nav_profile: "PROFİL",
+                nav_task: "GÖREV", nav_lb: "LİDERLİK", nav_mine: "ÜRETİM", nav_arcade: "OYUNLAR", nav_profile: "PROFİL",
                 btn_done: "BİTTİ", btn_go: "GİT", day: "GÜN", req: "GEREKEN:", lvl: "ÜYE",
                 msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır değil.", msg_ad_done: "Tebrikler! +500 GEP eklendi.",
                 msg_reward: "🎉 Ödül Alındı! Seri:", msg_mine_ok: "ÜRETİM BAŞARILI!", msg_upg_ok: "GÜNCELLEME TAMAM!",
                 msg_task_ok: "GÖREV TAMAM!", msg_wait: "ÜRETİM DEVAM EDİYOR", msg_no_data: "HENÜZ VERİ YOK.", msg_no_yesterday: "DÜN İÇİN KAYIT BULUNAMADI.",
-                ad_desc: "Her reklam onayı +500 GEP kazandırır.", invite_desc: "Arkadaşını davet et, 2500 GEP kazan!"
+                ad_desc: "Her reklam onayı +500 GEP kazandırır.", invite_desc: "Arkadaşını davet et, 2500 GEP kazan!",
+                arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar çok yakında.", coming_soon: "YAKINDA",
+                game1_title: "Kripto Kahini", game1_desc: "BTC fiyatı 1 dakika sonra nerede olacak? Tahmin et, GEP'lerini katla.",
+                game2_title: "Siber Çark", game2_desc: "Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.", system_lock: "SİSTEM KİLİTLİ"
             },
             az: {
                 loading: "GƏLİR KAINATI", loading_text: "YÜKLƏNİR...", current_balance: "CİCARİ BALANS",
@@ -385,19 +426,20 @@
                 upgrade_lvl: "SƏVİYYƏNİ YÜKSƏLT", watch_earn: "İZLƏ VƏ QAZAN", start_ad: "REKLAMA BAŞLA",
                 invited: "DƏVƏT EDİLƏNLƏR", status: "HESAB STATUSU", active: "AKTİV", daily_streak: "GÜNLÜK SERİYA",
                 claim_daily: "GÜNLÜK MÜKAFATI AL", grow_net: "ŞƏBƏKƏNİ BÖYÜT", copy_link: "LİNKİ KOPYALA",
-                nav_task: "TAPŞIRIQ", nav_lb: "LİDERLİK", nav_mine: "İSTEHSAL", nav_profile: "PROFİL",
+                nav_task: "TAPŞIRIQ", nav_lb: "LİDERLİK", nav_mine: "İSTEHSAL", nav_arcade: "OYUNLAR", nav_profile: "PROFİL",
                 btn_done: "BİTDİ", btn_go: "GİT", day: "GÜN", req: "TƏLƏB OLUNUR:", lvl: "ÜZV",
                 msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır deyil.", msg_ad_done: "Təbrik edirik! +500 GEP əlavə edildi.",
                 msg_reward: "🎉 Mükafat alındı! Seriya:", msg_mine_ok: "İSTEHSAL UĞURLU OLDU!", msg_upg_ok: "YENİLƏNMƏ TAMAMLANDI!",
                 msg_task_ok: "TAPŞIRIQ TAMAMLANDI!", msg_wait: "İSTEHSAL DAVAM EDİR", msg_no_data: "HƏLƏ MƏLUMAT YOXDUR.", msg_no_yesterday: "DÜNƏN ÜÇÜN QEYD YOXDUR.",
-                ad_desc: "Hər reklam təsdiqi +500 GEP qazandırır.", invite_desc: "Dostunu dəvət et, 2500 GEP qazan!"
+                ad_desc: "Hər reklam təsdiqi +500 GEP qazandırır.", invite_desc: "Dostunu dəvət et, 2500 GEP qazan!",
+                arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar tezliklə.", coming_soon: "TEZLİKLƏ",
+                game1_title: "Kripto Kahini", game1_desc: "BTC qiyməti 1 dəqiqə sonra harada olacaq? Təxmin et, GEP-lərini qatla.",
+                game2_title: "Siber Çərx", game2_desc: "Çərxi fırlat, nəhəng Jackpot qazanma şansını yaxala.", system_lock: "SİSTEM KİLİDLİDİR"
             }
         };
 
-        // --- GÜVENLİK KİLİDİ: ESKİ DİLLERİ TEMİZLE ---
         let savedLang = localStorage.getItem('appLang');
         let currentLang = translations[savedLang] ? savedLang : 'tr';
-        // ----------------------------------------------
         
         function t(key) { return translations[currentLang][key] || translations['tr'][key]; }
 
