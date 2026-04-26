@@ -148,7 +148,7 @@
             <input type="text" id="ad-title" class="glass-input" placeholder="Proje Adı (Max 20)" maxlength="20">
             <input type="text" id="ad-desc" class="glass-input" placeholder="Açıklama (Max 100)" maxlength="100">
             <input type="text" id="ad-link" class="glass-input" placeholder="Referans Linki (https://...)">
-            <button id="btn-post-ad" class="game-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color:#fff; padding: 14px; font-size:13px;" onclick="postAirdrop()" data-i18n="pano_btn">YAYINLA (250K GEP)</button>
+            <button id="btn-post-ad" class="game-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color:#fff; padding: 14px; font-size:13px;" onclick="postAirdrop()" data-i18n="pano_btn">YAYINLA (1M GEP)</button>
             <div id="airdrop-list" style="margin-top:20px; max-height:350px; overflow-y:auto;"></div>
         </div>
 
@@ -276,7 +276,7 @@
                 g3_t: "Siber Çöküş", g3_d: "Roket patlamadan çekil, kazancı al.", 
                 tickets_left: "Mevcut Biletin:", buy_tickets: "BİLET PAKETLERİ", pkg_1: "10 BİLET (10.000 GEP)", pkg_2: "50 BİLET (50.000 GEP)", pkg_3: "100 BİLET (100.000 GEP)", msg_no_tickets: "Hiç reklam biletiniz kalmadı!",
                 promo_title: "PROMOKOD", btn_redeem: "KODU KULLAN", box_limit_info: "⚠️ Her kapsül türü günde sadece 1 kez açılabilir!",
-                pano_title: "BENİM PROJEM", pano_desc: "Projelerini paylaş, referans topla. Üste çıkmak için tekrar yayınla.", pano_btn: "YAYINLA (250K GEP)"
+                pano_title: "BENİM PROJEM", pano_desc: "Projelerini paylaş, referans topla. Üste çıkmak için tekrar yayınla.", pano_btn: "YAYINLA (1M GEP)"
             },
             az: {
                 loading: "GƏLİR KAINATI", loading_text: "YÜKLƏNİR...", current_balance: "CİCARİ BALANS", tasks_title: "TAPŞIRIQLAR", tasks_desc: "Tamamla və qazan.", champions: "ÇEMPİONLAR ŞƏBƏKƏSİ", top_100: "TOP 100", daily: "GÜNLÜK", yesterday: "DÜN", engine_lvl: "MÜHƏRRİK SƏVİYYƏSİ", capacity: "KAPASİTƏ (4S)", sys_ready: "SİSTEM HAZIRDIR", start_mine: "İSTEHSALA BAŞLA", upgrade_lvl: "SƏVİYYƏNİ YÜKSƏLT", watch_earn: "İZLƏ VƏ QAZAN", start_ad: "REKLAM İZLƏ (+5000 GEP)", invited: "DƏVƏT EDİLƏNLƏR", status: "HESAB STATUSU", active: "AKTİV", daily_streak: "GÜNLÜK SERİYA", claim_daily: "GÜNLÜK MÜKAFATI AL", grow_net: "ŞƏBƏKƏNİ BÖYÜT", copy_link: "LİNKİ KOPYALA", 
@@ -288,7 +288,7 @@
                 g3_t: "Siber Çöküş", g3_d: "Raket partlamadan çıx, qazancı götür.", 
                 tickets_left: "Mövcud Biletin:", buy_tickets: "BİLET PAKETLƏRİ", pkg_1: "10 BİLET (10.000 GEP)", pkg_2: "50 BİLET (50.000 GEP)", pkg_3: "100 BİLET (100.000 GEP)", msg_no_tickets: "Heç reklam biletiniz qalmadı!",
                 promo_title: "PROMOKOD", btn_redeem: "KODU İSTİFADƏ ET", box_limit_info: "⚠️ Hər kapsul növü gündə yalnız 1 dəfə açıla bilər!",
-                pano_title: "MƏNİM LAYİHƏM", pano_desc: "Layihələrini paylaş, referans topla. Üstə çıxmaq üçün yenidən yayımla.", pano_btn: "YAYIMLA (250K GEP)"
+                pano_title: "MƏNİM LAYİHƏM", pano_desc: "Layihələrini paylaş, referans topla. Üstə çıxmaq üçün yenidən yayımla.", pano_btn: "YAYIMLA (1M GEP)"
             }
         };
 
@@ -346,11 +346,19 @@
             if(p === 'admin') loadAdminStats(); 
         }
 
-        // YENİ EKLENEN FONKSİYON: Projeye katılıp +5000 GEP alma
+        // YENİ: Akıllı Buton ile Projeye Katılma Fonksiyonu
         async function joinProject(projectId, url) {
             triggerHaptic('light');
             tg.openLink(url);
-            // Linke gittikten 3 saniye sonra arka planda ödülü ver (API isteği)
+            
+            const btn = document.querySelector(`#ad-${projectId} .btn-join`);
+            if(btn) {
+                btn.disabled = true;
+                btn.style.background = "#10b981";
+                btn.style.opacity = "0.6";
+                btn.innerText = "⏳ BEKLENİYOR...";
+            }
+
             setTimeout(async () => {
                 try {
                     const res = await fetch(`${API}/api/airdrop/join`, { 
@@ -363,26 +371,61 @@
                         user.points = data.points;
                         updateUI();
                         triggerHaptic('success');
-                        spawnFloatingText(null, "+5000 GEP", "var(--success)");
-                        tg.showAlert("Tebrikler! Projeye katıldığın için 5.000 GEP kazandın.");
+                        spawnFloatingText(null, "+10000 GEP", "var(--success)");
+                        tg.showAlert("Tebrikler! 10.000 GEP kazandın.");
+                        if(btn) { btn.innerText = "✅ KATILINDI"; }
+                    } else {
+                        if(btn) { btn.innerText = "❌ HATA"; }
+                        tg.showAlert(data.message);
+                        loadAirdrops(); 
                     }
-                } catch(e) { console.error(e); }
+                } catch(e) { console.error(e); if(btn) { btn.innerText = "🚀 KATIL (+10K)"; btn.disabled = false; btn.style.background = "#8b5cf6"; btn.style.opacity = "1"; } }
             }, 3000);
         }
 
+        // GÜNCELLENDİ: backend'den gelen listeyi işleme şekli (secureRoute kullanmak için POST'a çevrildi)
         async function loadAirdrops() {
-            const res = await fetch(`${API}/api/airdrop/list`); const data = await res.json(); const listDiv = document.getElementById('airdrop-list');
-            if(data.success && data.links.length > 0) {
-                // KATIL butonu joinProject fonksiyonunu çağıracak şekilde güncellendi
-                listDiv.innerHTML = data.links.map(l => `<div class="airdrop-item" id="ad-${l._id}"><div style="flex:1;"><div class="ad-user">@${l.username}</div><div class="ad-title">${l.title}</div><div class="ad-desc">${l.description}</div><button class="btn-join" onclick="joinProject('${l._id}', '${l.url}')">🚀 KATIL (+5K)</button></div>${user.isAdmin ? `<button class="btn-delete-ad" onclick="deleteAirdrop('${l._id}')">SİL</button>` : ''}</div>`).join('');
-            } else { listDiv.innerHTML = "<div style='text-align:center; color:var(--text-dim); font-size:12px; padding:10px;'>Henüz hiç proje eklenmemiş. İlk sen ol!</div>"; }
+            try {
+                const res = await fetch(`${API}/api/airdrop/list`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ initData: tg.initData })
+                }); 
+                const data = await res.json(); 
+                const listDiv = document.getElementById('airdrop-list');
+                
+                if(data.success && data.links.length > 0) {
+                    listDiv.innerHTML = data.links.map(l => {
+                        let btnHtml = '';
+                        if (l.isOwner) {
+                            btnHtml = `<button class="btn-join" style="background:#475569; cursor:not-allowed;" disabled>SENİN PROJEN</button>`;
+                        } else if (l.hasJoined) {
+                            btnHtml = `<button class="btn-join" style="background:#10b981; cursor:not-allowed; opacity:0.6;" disabled>✅ KATILINDI</button>`;
+                        } else {
+                            btnHtml = `<button class="btn-join" onclick="joinProject('${l._id}', '${l.url}')">🚀 KATIL (+10K)</button>`;
+                        }
+
+                        return `<div class="airdrop-item" id="ad-${l._id}">
+                                    <div style="flex:1;">
+                                        <div class="ad-user">@${l.username}</div>
+                                        <div class="ad-title">${l.title}</div>
+                                        <div class="ad-desc">${l.description}</div>
+                                        ${btnHtml}
+                                    </div>
+                                    ${user.isAdmin ? `<button class="btn-delete-ad" onclick="deleteAirdrop('${l._id}')">SİL</button>` : ''}
+                                </div>`;
+                    }).join('');
+                } else { 
+                    listDiv.innerHTML = "<div style='text-align:center; color:var(--text-dim); font-size:12px; padding:10px;'>Henüz hiç proje eklenmemiş. İlk sen ol!</div>"; 
+                }
+            } catch(e) {}
         }
 
         async function postAirdrop() {
             const btn = document.getElementById('btn-post-ad');
             if(btn && btn.disabled) return;
             triggerHaptic('medium'); 
-            if (user.points < 250000) return tg.showAlert("Yetersiz GEP! 250.000 GEP gerekli.");
+            if (user.points < 1000000) return tg.showAlert("Yetersiz GEP! 1.000.000 GEP gerekli.");
             const title = document.getElementById('ad-title').value.trim(); const desc = document.getElementById('ad-desc').value.trim(); const url = document.getElementById('ad-link').value.trim();
             
             if(!title || !desc || !url) return tg.showAlert("Tüm alanları doldurmalısın.");
