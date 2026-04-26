@@ -21,7 +21,7 @@ const bot = new TelegramBot(TOKEN);
 bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v6.2 - Güvenlik, Düello ve Fiyat Güncellemesi Aktif"))
+    .then(() => console.log("✅ Gelir Evreni v6.3 - Siber Pano Tıklama Ödülleri Aktif"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -66,17 +66,19 @@ const YesterdayWinner = mongoose.model('YesterdayWinner', new mongoose.Schema({
 const Settings = mongoose.model('Settings', new mongoose.Schema({
     announcements: [String],
     miningMultiplier: { type: Number, default: 1 },
-    adsgramReward: { type: Number, default: 5000 }, // GÜNCELLENDİ: Reklam ödülü 5000 GEP
+    adsgramReward: { type: Number, default: 5000 }, 
     botUsername: { type: String, default: 'gelirevreni_bot' },
     mainGroupId: { type: String, default: "" }
 }));
 
+// GÜNCELLENDİ: joinedUsers dizisi eklendi (Hile koruması için)
 const AirdropLink = mongoose.model('AirdropLink', new mongoose.Schema({
     telegramId: { type: String, unique: true }, 
     username: String,
     title: String,
     description: String,
     url: String,
+    joinedUsers: { type: [String], default: [] }, // Kimlerin bu linke tıkladığını tutar
     updatedAt: { type: Date, default: Date.now } 
 }));
 
@@ -114,7 +116,7 @@ async function archiveDailyLeaderboard() {
 }
 setInterval(() => { const now = new Date(); if (now.getHours() === 23 && now.getMinutes() === 58) archiveDailyLeaderboard(); }, 60000);
 
-// GÜVENLİK YAMASI: InitData'dan Gerçek ID'yi Çıkarma
+// InitData'dan Gerçek ID'yi Çıkarma
 function getTelegramUserFromInitData(telegramInitData) {
     try {
         if (!telegramInitData) return null;
@@ -129,7 +131,7 @@ function getTelegramUserFromInitData(telegramInitData) {
         if (calculatedHash !== hash) return null;
         
         const userObj = JSON.parse(initData.get('user'));
-        return userObj.id.toString(); // GERÇEK KULLANICI ID'Sİ
+        return userObj.id.toString(); 
     } catch (error) { return null; }
 }
 
@@ -137,7 +139,7 @@ const secureRoute = (req, res, next) => {
     const initData = req.body.initData;
     const realId = getTelegramUserFromInitData(initData);
     if (!realId) return res.status(403).json({ success: false, message: "⚠️ Güvenlik Hatası: Kimlik doğrulanamadı!" });
-    req.realTelegramId = realId; // İsteği yapanın tartışmasız gerçek ID'si
+    req.realTelegramId = realId; 
     next();
 };
 
@@ -151,7 +153,7 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
             user = new User({ telegramId, username: (username || '').toLowerCase(), firstName, points: 1000 });
             if (referrerId && String(referrerId) !== String(telegramId)) {
                 const referrer = await User.findOne({ telegramId: referrerId });
-                if (referrer) { addPoints(referrer, 10000); referrer.referralCount += 1; await referrer.save(); addPoints(user, 10000); } // GÜNCELLENDİ: Hem davet eden hem davet edilen 10k GEP alır
+                if (referrer) { addPoints(referrer, 10000); referrer.referralCount += 1; await referrer.save(); addPoints(user, 10000); }
             }
         } else { if (username) user.username = username.toLowerCase(); if (firstName) user.firstName = firstName; }
         await user.save(); let settings = await Settings.findOne() || await Settings.create({});
@@ -171,13 +173,11 @@ app.post('/api/daily-reward', secureRoute, async (req, res) => {
 app.post('/api/buy-ad-package', secureRoute, async (req, res) => {
     const { packageId } = req.body; 
     let cost = 0; let tickets = 0;
-    // GÜNCELLENDİ: Fiyatlar 10k, 50k, 100k olarak ayarlandı
     if (packageId === 1) { cost = 10000; tickets = 10; } 
     else if (packageId === 2) { cost = 50000; tickets = 50; } 
     else if (packageId === 3) { cost = 100000; tickets = 100; } 
     else return res.json({ success: false });
     
-    // Eşzamanlılık (Race Condition) Koruması
     const user = await User.findOneAndUpdate(
         { telegramId: req.realTelegramId, points: { $gte: cost } },
         { $inc: { points: -cost, adTickets: tickets } },
@@ -258,14 +258,13 @@ app.post('/api/arcade/predict', secureRoute, async (req, res) => {
 
     try {
         const r1 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); const d1 = await r1.json(); const p1 = parseFloat(d1.price);
-        await new Promise(resolve => setTimeout(resolve, 10000)); // 10 Saniye Bekleme
+        await new Promise(resolve => setTimeout(resolve, 10000));
         const r2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); const d2 = await r2.json(); const p2 = parseFloat(d2.price);
         
         let won = false; let reward = 0; 
         if ((guess === 'UP' && p2 > p1) || (guess === 'DOWN' && p2 < p1)) { won = true; reward = 2000; addPoints(user, reward); await user.save(); }
         res.json({ success: true, won, price1: p1, price2: p2, reward, points: user.points });
     } catch (e) { 
-        // Hata olursa puanı iade et
         await User.updateOne({ telegramId: req.realTelegramId }, { $inc: { points: cost } });
         res.json({ success: false, message: "Borsa Bağlantı Hatası. Puan İade Edildi." }); 
     }
@@ -287,7 +286,6 @@ app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
     let cost = 0;
     if (boxType === 1) cost = 1000; else if (boxType === 2) cost = 5000; else if (boxType === 3) cost = 25000;
     
-    // Bakiye kontrolü ve düşme (Race Condition korumalı)
     const updatedUser = await User.findOneAndUpdate(
         { telegramId: req.realTelegramId, points: { $gte: cost } },
         { $inc: { points: -cost } },
@@ -339,6 +337,39 @@ app.post('/api/airdrop/share', secureRoute, async (req, res) => {
     if (existing) { existing.title = title; existing.description = description; existing.url = url; existing.updatedAt = new Date(); await existing.save(); } 
     else { await AirdropLink.create({ telegramId: req.realTelegramId, username: user.username || user.firstName, title, description, url }); }
     res.json({success: true, points: user.points, message: "İlanınız başarıyla panoya asıldı!"});
+});
+
+// YENİ ROTA: SİBER PANO KATILIM ÖDÜLÜ
+app.post('/api/airdrop/join', secureRoute, async (req, res) => {
+    const { projectId } = req.body;
+    
+    try {
+        const project = await AirdropLink.findById(projectId);
+        if (!project) return res.json({ success: false, message: "Proje bulunamadı." });
+
+        // Kullanıcı bu projeye önceden tıklamış mı kontrol et
+        if (project.joinedUsers.includes(req.realTelegramId)) {
+            return res.json({ success: false, message: "Bu projeden zaten ödül aldın." });
+        }
+
+        // Kendi projesine tıklamayı engelle
+        if (project.telegramId === req.realTelegramId) {
+             return res.json({ success: false, message: "Kendi projene tıklayamazsın." });
+        }
+
+        // Listeye ekle ve kaydet
+        project.joinedUsers.push(req.realTelegramId);
+        await project.save();
+
+        // Ödülü Ver (5000 GEP)
+        const user = await User.findOne({ telegramId: req.realTelegramId });
+        addPoints(user, 5000);
+        await user.save();
+
+        res.json({ success: true, points: user.points, message: "Katılım onaylandı!" });
+    } catch (e) {
+        res.json({ success: false, message: "Sistem hatası." });
+    }
 });
 
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
