@@ -17,11 +17,8 @@
             --text-main: #f8fafc; --text-dim: #94a3b8;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Outfit', sans-serif; background: var(--bg-dark); background-image: var(--bg-glow); background-attachment: fixed; color: var(--text-main); margin: 0; padding-bottom: 120px; min-height: 100vh; overflow-x: hidden; transition: direction 0.3s; }
+        body { font-family: 'Outfit', sans-serif; background: var(--bg-dark); background-image: var(--bg-glow); background-attachment: fixed; color: var(--text-main); margin: 0; padding-bottom: 120px; min-height: 100vh; overflow-x: hidden; }
         h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; margin: 0 0 15px 0; letter-spacing: -0.5px; }
-
-        .lang-selector { background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: var(--gold); padding: 12px; border-radius: 12px; font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; outline: none; width: 100%; cursor: pointer; text-align: center; margin-bottom: 15px;}
-        .lang-selector option { background: var(--bg-dark); color: var(--text-main); }
 
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease-out; }
         .loader-ring { width: 80px; height: 80px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; filter: drop-shadow(0 0 10px var(--gold-glow)); margin-bottom: 20px;}
@@ -109,12 +106,12 @@
 </head>
 <body>
     <div id="ann-container" class="announcement-container"><div id="ann-scroll" class="announcement-scroll"></div></div>
-    <div id="loader"><div class="loader-ring"></div><div class="loader-text" data-i18n="loading">GELİR EVRENİ</div></div>
+    <div id="loader"><div class="loader-ring"></div><div class="loader-text">GELİR EVRENİ</div></div>
 
     <div class="header-panel">
-        <div id="user-level" class="level-badge" data-i18n="loading_text">YÜKLENİYOR...</div>
+        <div id="user-level" class="level-badge">YÜKLENİYOR...</div>
         <div class="balance-wrapper">
-            <div class="balance-label" data-i18n="current_balance">GÜNCEL BAKİYE</div>
+            <div class="balance-label">GÜNCEL BAKİYE</div>
             <div class="points-row"><div class="points" id="balance">0</div><div class="currency">GEP</div></div>
             <div class="usd-val" id="usd">≈ 0.00 USDT</div>
             <div style="font-size: 12px; color: var(--text-dim); margin-top: 10px;" id="header-name">@KULLANICI</div>
@@ -123,106 +120,98 @@
 
     <div id="page-hub" class="page active">
         <div class="glass-card">
-            <h3 style="font-size: 16px; display:flex; align-items:center;"><span style="margin-right:8px;">🔥</span> <span data-i18n="daily_streak">GÜNLÜK SERİ</span></h3>
+            <h3 style="font-size: 16px; display:flex; align-items:center;"><span style="margin-right:8px;">🔥</span> GÜNLÜK SERİ</h3>
             <div class="streak-grid" id="streak-box"></div>
-            <button id="btn-checkin" class="game-btn btn-outline" style="margin-top: 5px; padding: 12px; font-size: 13px;" onclick="claimDaily(event)" data-i18n="claim_daily">GÜNLÜK ÖDÜLÜ AL</button>
+            <button id="btn-checkin" class="game-btn btn-outline" style="margin-top: 5px; padding: 12px; font-size: 13px;" onclick="claimDaily(event)">GÜNLÜK ÖDÜLÜ AL</button>
         </div>
 
         <div class="stat-grid">
-            <div class="stat-box"><div class="balance-label" data-i18n="engine_lvl">MOTOR SEVİYESİ</div><div id="ui-mine-level" class="stat-val" style="color: var(--gold);">1</div></div>
-            <div class="stat-box"><div class="balance-label" data-i18n="capacity">KAPASİTE (4H)</div><div id="ui-mine-reward" class="stat-val" style="color: var(--cyan);">1,000</div></div>
+            <div class="stat-box"><div class="balance-label">MOTOR SEVİYESİ</div><div id="ui-mine-level" class="stat-val" style="color: var(--gold);">1</div></div>
+            <div class="stat-box"><div class="balance-label">KAPASİTE (4H)</div><div id="ui-mine-reward" class="stat-val" style="color: var(--cyan);">1,000</div></div>
         </div>
         <div class="glass-card" style="text-align: center; padding: 30px 20px;">
             <div class="core-container" onclick="startMining(event)"><div class="core-glow" id="core-glow"></div><div class="core-button" id="mine-icon">⛏️</div></div>
-            <h3 id="mine-status-text" style="color: #fff; letter-spacing: 1px;" data-i18n="sys_ready">SİSTEM HAZIR</h3>
+            <h3 id="mine-status-text" style="color: #fff; letter-spacing: 1px;">SİSTEM HAZIR</h3>
             <div id="mining-timer" style="font-family: 'Space Grotesk'; font-size: 40px; font-weight: 700; color: var(--gold); margin: 10px 0; display: none;">00:00:00</div>
-            <button id="btn-mine" class="game-btn" style="margin-top: 10px;" onclick="startMining(event)" data-i18n="start_mine">ÜRETİMİ BAŞLAT</button>
-            <button id="btn-upgrade" class="game-btn btn-outline" style="margin-top: 15px; padding: 14px;" onclick="upgradeMine(event)"><span style="font-size: 11px; display: block; color: var(--text-main); font-weight: 600;" data-i18n="upgrade_lvl">SEVİYE YÜKSELT</span><span id="ui-upgrade-cost" style="font-size: 14px; font-weight: 800;">10,000 GEP</span></button>
+            <button id="btn-mine" class="game-btn" style="margin-top: 10px;" onclick="startMining(event)">ÜRETİMİ BAŞLAT</button>
+            <button id="btn-upgrade" class="game-btn btn-outline" style="margin-top: 15px; padding: 14px;" onclick="upgradeMine(event)"><span style="font-size: 11px; display: block; color: var(--text-main); font-weight: 600;">SEVİYE YÜKSELT</span><span id="ui-upgrade-cost" style="font-size: 14px; font-weight: 800;">10,000 GEP</span></button>
         </div>
     </div>
 
     <div id="page-earn" class="page">
         <div class="glass-card" style="border-color: #8b5cf6;">
-            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;"><span style="font-size: 24px; margin-right: 10px; filter: drop-shadow(0 0 5px rgba(139,92,246,0.5));">📢</span><h3 style="color: #8b5cf6; margin:0;" data-i18n="pano_title">BENİM PROJEM</h3></div>
-            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 15px; text-align:center;" data-i18n="pano_desc">Projelerini paylaş, referans topla. Üste çıkmak için tekrar yayınla.</p>
+            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;"><span style="font-size: 24px; margin-right: 10px; filter: drop-shadow(0 0 5px rgba(139,92,246,0.5));">📢</span><h3 style="color: #8b5cf6; margin:0;">BENİM PROJEM</h3></div>
+            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 15px; text-align:center;">Projelerini paylaş, referans topla. Üste çıkmak için tekrar yayınla.</p>
             <input type="text" id="ad-title" class="glass-input" placeholder="Proje Adı (Max 20)" maxlength="20">
             <input type="text" id="ad-desc" class="glass-input" placeholder="Açıklama (Max 100)" maxlength="100">
             <input type="text" id="ad-link" class="glass-input" placeholder="Referans Linki (https://...)">
-            <button id="btn-post-ad" class="game-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color:#fff; padding: 14px; font-size:13px;" onclick="postAirdrop()" data-i18n="pano_btn">YAYINLA (1M GEP)</button>
+            <button id="btn-post-ad" class="game-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color:#fff; padding: 14px; font-size:13px;" onclick="postAirdrop()">YAYINLA (1M GEP)</button>
             <div id="airdrop-list" style="margin-top:20px; max-height:350px; overflow-y:auto;"></div>
         </div>
 
-        <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">🎯</div><div><h3 style="margin: 0; color: #fff;" data-i18n="tasks_title">GÖREVLER</h3><p style="font-size: 12px; margin: 0; color: var(--text-dim);" data-i18n="tasks_desc">Tamamla ve kazan.</p></div></div>
+        <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">🎯</div><div><h3 style="margin: 0; color: #fff;">GÖREVLER</h3><p style="font-size: 12px; margin: 0; color: var(--text-dim);">Tamamla ve kazan.</p></div></div>
         <div id="task-list" style="margin-bottom: 20px;"></div>
 
         <div class="glass-card" style="text-align: center; border-color: #f97316;">
             <div style="font-size: 36px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(249,115,22,0.5));">🎫</div>
-            <h3 style="color: #f97316;" data-i18n="promo_title">PROMOKOD</h3>
+            <h3 style="color: #f97316;">PROMOKOD</h3>
             <input type="text" id="ui-promo-code" class="glass-input" placeholder="KOD GİRİN" style="text-transform: uppercase; border-color:rgba(249,115,22,0.3); color:#f97316;">
-            <button id="btn-redeem-promo" class="game-btn" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #fff; box-shadow: 0 4px 15px rgba(249,115,22,0.4);" onclick="redeemPromo()" data-i18n="btn_redeem">KODU KULLAN</button>
+            <button id="btn-redeem-promo" class="game-btn" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #fff; box-shadow: 0 4px 15px rgba(249,115,22,0.4);" onclick="redeemPromo()">KODU KULLAN</button>
         </div>
 
         <div class="glass-card" style="text-align: center; background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(15,23,42,0.6) 100%); border-color: rgba(16,185,129,0.3);">
             <div style="font-size: 36px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(16,185,129,0.5));">📺</div>
-            <h3 style="color: #fff; margin-bottom: 5px;" data-i18n="watch_earn">İZLE & KAZAN</h3>
+            <h3 style="color: #fff; margin-bottom: 5px;">İZLE & KAZAN</h3>
             <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 10px; margin-bottom: 15px; border: 1px solid var(--glass-border);">
-                <span style="font-size: 12px; color: var(--text-main); font-weight: bold;" data-i18n="tickets_left">Mevcut Biletin:</span>
+                <span style="font-size: 12px; color: var(--text-main); font-weight: bold;">Mevcut Biletin:</span>
                 <span id="ui-ad-tickets" style="font-size: 18px; color: var(--success); font-weight: 900; margin-left: 5px;">0</span>
             </div>
-            <button class="game-btn btn-success" onclick="showAd(event)" data-i18n="start_ad">REKLAM İZLE (+5000 GEP)</button>
+            <button class="game-btn btn-success" onclick="showAd(event)">REKLAM İZLE (+5000 GEP)</button>
             <div style="margin-top: 25px; text-align: left;">
-                <h4 style="font-size:13px; color:var(--gold); margin-bottom:10px; text-align:center;" data-i18n="buy_tickets">BİLET PAKETLERİ</h4>
+                <h4 style="font-size:13px; color:var(--gold); margin-bottom:10px; text-align:center;">BİLET PAKETLERİ</h4>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#3b82f6; color:#3b82f6;" onclick="buyAdPackage(1)" data-i18n="pkg_1">10 BİLET (10.000 GEP)</button>
-                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#8b5cf6; color:#8b5cf6;" onclick="buyAdPackage(2)" data-i18n="pkg_2">50 BİLET (50.000 GEP)</button>
-                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#ec4899; color:#ec4899;" onclick="buyAdPackage(3)" data-i18n="pkg_3">100 BİLET (100.000 GEP)</button>
+                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#3b82f6; color:#3b82f6;" onclick="buyAdPackage(1)">10 BİLET (10.000 GEP)</button>
+                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#8b5cf6; color:#8b5cf6;" onclick="buyAdPackage(2)">50 BİLET (50.000 GEP)</button>
+                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#ec4899; color:#ec4899;" onclick="buyAdPackage(3)">100 BİLET (100.000 GEP)</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="page-arcade" class="page">
-        <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">🕹️</div><div><h3 style="margin: 0; color: #fff;" data-i18n="arcade_title">SİBER ARCADE</h3><p style="font-size: 12px; margin: 0; color: var(--text-dim);" data-i18n="arcade_desc">Yeni oyunlar çok yakında.</p></div></div>
+        <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">🕹️</div><div><h3 style="margin: 0; color: #fff;">SİBER ARCADE</h3><p style="font-size: 12px; margin: 0; color: var(--text-dim);">Yeni oyunlar çok yakında.</p></div></div>
         <style>.arcade-card { position: relative; overflow: hidden; padding-top: 35px; border-color: rgba(255,255,255,0.05); } .badge-soon { position: absolute; top:12px; right:15px; background:var(--danger); color:#fff; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:800; letter-spacing:1px; } .arcade-icon { font-size: 40px; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }</style>
 
-        <div class="glass-card arcade-card" style="border-color: var(--cyan);"><div class="arcade-icon">📈</div><h3 style="color: var(--cyan); margin-bottom: 5px;" data-i18n="g1_t">Kripto Kahini</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g1_d">BTC fiyatını tahmin et, GEP'lerini katla.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('predict')" data-i18n="btn_play_predict">TAHMİN ET (1000 GEP)</button></div>
-        <div class="glass-card arcade-card" style="border-color: var(--gold);"><div class="arcade-icon">🎰</div><h3 style="color: var(--gold); margin-bottom: 5px;" data-i18n="g2_t">Siber Çark</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g2_d">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')" data-i18n="btn_play_spin">ÇEVİR (500 GEP)</button></div>
-        <div class="glass-card arcade-card" style="border-color: #10b981;"><div class="arcade-icon">📦</div><h3 style="color: #10b981; margin-bottom: 5px;" data-i18n="g5_t">Veri Kapsülleri</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;" data-i18n="g5_d">Sandıkları aç, sürprizleri yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #10b981; color:#10b981;" onclick="openGame('lootbox')" data-i18n="btn_play_lootbox">KAPSÜLLERİ GÖR</button></div>
+        <div class="glass-card arcade-card" style="border-color: var(--cyan);"><div class="arcade-icon">📈</div><h3 style="color: var(--cyan); margin-bottom: 5px;">Kripto Kahini</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">BTC fiyatını tahmin et, GEP'lerini katla.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('predict')">TAHMİN ET (1000 GEP)</button></div>
+        <div class="glass-card arcade-card" style="border-color: var(--gold);"><div class="arcade-icon">🎰</div><h3 style="color: var(--gold); margin-bottom: 5px;">Siber Çark</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')">ÇEVİR (500 GEP)</button></div>
+        <div class="glass-card arcade-card" style="border-color: #10b981;"><div class="arcade-icon">📦</div><h3 style="color: #10b981; margin-bottom: 5px;">Veri Kapsülleri</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Sandıkları aç, sürprizleri yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #10b981; color:#10b981;" onclick="openGame('lootbox')">KAPSÜLLERİ GÖR</button></div>
 
-        <div class="glass-card arcade-card" style="opacity:0.5;"><div class="badge-soon" data-i18n="coming_soon">YAKINDA</div><div class="arcade-icon">🚀</div><h3 style="color: #f43f5e;" data-i18n="g3_t">Siber Çöküş</h3><p style="font-size: 12px;" data-i18n="g3_d">Roket patlamadan çekil, kazancı al.</p></div>
+        <div class="glass-card arcade-card" style="opacity:0.5;"><div class="badge-soon">YAKINDA</div><div class="arcade-icon">🚀</div><h3 style="color: #f43f5e;">Siber Çöküş</h3><p style="font-size: 12px;">Roket patlamadan çekil, kazancı al.</p></div>
     </div>
 
     <div id="page-network" class="page">
-        <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">🏆</div><h3 style="margin: 0; color: #fff;" data-i18n="champions">ŞAMPİYONLAR</h3></div>
+        <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">🏆</div><h3 style="margin: 0; color: #fff;">ŞAMPİYONLAR</h3></div>
         <div class="tab-container" style="margin-bottom: 10px;">
-            <button id="tab-lb-all" class="tab-btn active" onclick="switchLB('all')" data-i18n="top_100">TOP 100</button>
-            <button id="tab-lb-daily" class="tab-btn" onclick="switchLB('daily')" data-i18n="daily">GÜNLÜK</button>
-            <button id="tab-lb-yesterday" class="tab-btn" onclick="switchLB('yesterday')" data-i18n="yesterday">DÜN</button>
+            <button id="tab-lb-all" class="tab-btn active" onclick="switchLB('all')">TOP 100</button>
+            <button id="tab-lb-daily" class="tab-btn" onclick="switchLB('daily')">GÜNLÜK</button>
+            <button id="tab-lb-yesterday" class="tab-btn" onclick="switchLB('yesterday')">DÜN</button>
         </div>
         <div class="glass-card" style="padding: 0; overflow: hidden;"><div id="leader-list" style="width: 100%;"></div></div>
     </div>
 
     <div id="page-profile" class="page">
-        <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">👤</div><div><h3 style="margin: 0; color: #fff;" data-i18n="nav_profile">PROFİL & AYARLAR</h3></div></div>
+        <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">👤</div><div><h3 style="margin: 0; color: #fff;">PROFİL & AYARLAR</h3></div></div>
         
         <div class="glass-card" style="text-align: center;">
-            <h3 style="color: #fff;" data-i18n="grow_net">AĞI BÜYÜT</h3>
-            <p style="font-size: 12px; color: var(--gold); margin-bottom: 10px;" data-i18n="invite_desc">Hem sen hem arkadaşın 10.000 GEP kazanır!</p>
+            <h3 style="color: #fff;">AĞI BÜYÜT</h3>
+            <p style="font-size: 12px; color: var(--gold); margin-bottom: 10px;">Hem sen hem arkadaşın 10.000 GEP kazanır!</p>
             <input type="text" id="ref-link" class="glass-input" style="direction: ltr;" readonly onclick="this.select()">
-            <button class="game-btn" onclick="copyRef(event)" data-i18n="copy_link">LİNKİ KOPYALA</button>
+            <button class="game-btn" onclick="copyRef(event)">LİNKİ KOPYALA</button>
         </div>
 
         <div class="stat-grid" style="margin-bottom: 15px;">
-            <div class="stat-box"><div class="balance-label" data-i18n="invited">DAVET ETTİKLERİN</div><div id="stat-ref-count" class="stat-val" style="color: var(--gold);">0</div></div>
-            <div class="stat-box"><div class="balance-label" data-i18n="status">HESAP DURUMU</div><div id="user-status-text" class="stat-val" style="color: var(--success); font-size: 18px; margin-top: 8px;" data-i18n="active">AKTİF</div></div>
-        </div>
-
-        <div class="glass-card">
-            <div class="balance-label" style="margin-bottom: 10px;" data-i18n="lang_select">DİL SEÇİMİ</div>
-            <select class="lang-selector" id="lang-select" onchange="changeLanguage(this.value)">
-                <option value="tr">🇹🇷 TÜRKÇE</option>
-                <option value="az">🇦🇿 AZƏRBAYCAN</option>
-            </select>
+            <div class="stat-box"><div class="balance-label">DAVET ETTİKLERİN</div><div id="stat-ref-count" class="stat-val" style="color: var(--gold);">0</div></div>
+            <div class="stat-box"><div class="balance-label">HESAP DURUMU</div><div id="user-status-text" class="stat-val" style="color: var(--success); font-size: 18px; margin-top: 8px;">AKTİF</div></div>
         </div>
 
         <div id="admin-panel-btn" class="glass-card" style="display:none; text-align:center; border-color:var(--danger); cursor:pointer;" onclick="showPage('admin', null)">
@@ -240,10 +229,10 @@
         <div class="glass-card"><h4>Kullanıcı Yönetimi</h4><input type="text" id="adm-target-id" class="glass-input" placeholder="ID veya @Username"><input type="number" id="adm-amount" class="glass-input" placeholder="Miktar"><div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"><button class="game-btn btn-success" style="padding: 12px; font-size: 12px;" onclick="manageUser('add')">EKLE</button><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="manageUser('set')">EŞİTLE</button><button class="game-btn btn-danger" style="padding: 12px; font-size: 12px;" onclick="manageUser('ban')">BAN</button><button class="game-btn" style="padding: 12px; font-size: 12px; background: #334155; color:#fff;" onclick="manageUser('unban')">KALDIR</button></div></div>
     </div>
 
-    <div id="modal-predict" class="game-modal"><div class="close-modal" onclick="closeGame('predict')">✖</div><h2 style="color: var(--cyan); margin-bottom:10px;" data-i18n="g1_t">Kripto Kahini</h2><div id="tv_chart_container" style="width: 100%; max-width:400px; height: 220px; border-radius: 12px; margin-bottom: 15px; border:1px solid var(--glass-border);"></div><p style="color: var(--text-dim); margin-bottom: 15px;">10 saniye sonra BTC fiyatı ne olacak?</p><h1 id="predict-price" style="font-size: 30px; color: #fff; margin-bottom: 10px;">Bekleniyor...</h1><div id="predict-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-top: 10px;"><button class="game-btn btn-success" style="flex:1;" onclick="playPredict('UP')">YÜKSELECEK</button><button class="game-btn btn-danger" style="flex:1;" onclick="playPredict('DOWN')">DÜŞECEK</button></div><div id="predict-loading" style="display:none; margin-top:10px;"><div class="loader-ring" style="width:40px; height:40px;"></div><p style="color:var(--gold); font-weight:bold; margin-top:10px;">Piyasa Analiz Ediliyor...</p></div></div>
-    <div id="modal-spin" class="game-modal"><div class="close-modal" onclick="closeGame('spin')">✖</div><h2 style="color: var(--gold);" data-i18n="g2_t">Siber Çark</h2><p style="color: var(--text-dim); margin-bottom: 30px;">Bedel: 500 GEP</p><div class="spin-container"><div class="spin-pointer">🔻</div><div id="spin-wheel" class="spin-wheel"><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(36deg);">BOŞ</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(108deg);">250</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(180deg);">500</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(252deg);">1K</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(324deg);">5K</span></div></div><h3 id="spin-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Şansını Dene!</h3><button id="btn-do-spin" class="game-btn" style="max-width: 300px;" onclick="playSpin()">ÇEVİR (500 GEP)</button></div>
+    <div id="modal-predict" class="game-modal"><div class="close-modal" onclick="closeGame('predict')">✖</div><h2 style="color: var(--cyan); margin-bottom:10px;">Kripto Kahini</h2><div id="tv_chart_container" style="width: 100%; max-width:400px; height: 220px; border-radius: 12px; margin-bottom: 15px; border:1px solid var(--glass-border);"></div><p style="color: var(--text-dim); margin-bottom: 15px;">10 saniye sonra BTC fiyatı ne olacak?</p><h1 id="predict-price" style="font-size: 30px; color: #fff; margin-bottom: 10px;">Bekleniyor...</h1><div id="predict-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-top: 10px;"><button class="game-btn btn-success" style="flex:1;" onclick="playPredict('UP')">YÜKSELECEK</button><button class="game-btn btn-danger" style="flex:1;" onclick="playPredict('DOWN')">DÜŞECEK</button></div><div id="predict-loading" style="display:none; margin-top:10px;"><div class="loader-ring" style="width:40px; height:40px;"></div><p style="color:var(--gold); font-weight:bold; margin-top:10px;">Piyasa Analiz Ediliyor...</p></div></div>
+    <div id="modal-spin" class="game-modal"><div class="close-modal" onclick="closeGame('spin')">✖</div><h2 style="color: var(--gold);">Siber Çark</h2><p style="color: var(--text-dim); margin-bottom: 30px;">Bedel: 500 GEP</p><div class="spin-container"><div class="spin-pointer">🔻</div><div id="spin-wheel" class="spin-wheel"><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(36deg);">BOŞ</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(108deg);">250</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(180deg);">500</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(252deg);">1K</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(324deg);">5K</span></div></div><h3 id="spin-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Şansını Dene!</h3><button id="btn-do-spin" class="game-btn" style="max-width: 300px;" onclick="playSpin()">ÇEVİR (500 GEP)</button></div>
     <div id="modal-lootbox" class="game-modal">
-        <div class="close-modal" onclick="closeGame('lootbox')">✖</div><h2 style="color: #10b981; margin-bottom:5px;" data-i18n="g5_t">Veri Kapsülleri</h2><p style="color: var(--danger); font-weight:bold; font-size:12px; margin-bottom: 20px;" data-i18n="box_limit_info">⚠️ Her kapsül türü günde sadece 1 kez açılabilir!</p>
+        <div class="close-modal" onclick="closeGame('lootbox')">✖</div><h2 style="color: #10b981; margin-bottom:5px;">Veri Kapsülleri</h2><p style="color: var(--danger); font-weight:bold; font-size:12px; margin-bottom: 20px;">⚠️ Her kapsül türü günde sadece 1 kez açılabilir!</p>
         <div id="lootbox-selection" style="display:flex; flex-direction:column; gap:12px; width:100%; max-width:320px; margin-top:10px;">
             <button id="lb-btn-1" class="game-btn btn-outline lb-box-btn" style="padding:16px; font-size:13px; border-color:var(--text-main); color:var(--text-main);" onclick="playLootbox(1)">📦 STANDART KAPSÜL (1K GEP)<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Max Ödül: 10.000 GEP</span></button>
             <button id="lb-btn-2" class="game-btn btn-outline lb-box-btn" style="padding:16px; font-size:13px; border-color:#3b82f6; color:#3b82f6;" onclick="playLootbox(2)">🎁 NADİR KAPSÜL (5K GEP)<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Max Ödül: 50.000 GEP</span></button>
@@ -253,11 +242,11 @@
     </div>
 
     <div class="dock-container">
-        <a href="javascript:void(0)" class="dock-item active" onclick="showPage('hub', this)"><div class="dock-icon">🏠</div><div class="dock-text" data-i18n="nav_hub">MERKEZ</div></a>
-        <a href="javascript:void(0)" class="dock-item" onclick="showPage('earn', this)"><div class="dock-icon">💸</div><div class="dock-text" data-i18n="nav_earn">AKTİVİTE</div></a>
-        <a href="javascript:void(0)" class="dock-item" onclick="showPage('arcade', this)"><div class="dock-icon">🕹️</div><div class="dock-text" data-i18n="nav_arcade">OYUNLAR</div></a>
-        <a href="javascript:void(0)" class="dock-item" onclick="showPage('network', this)"><div class="dock-icon">🏆</div><div class="dock-text" data-i18n="nav_network">AĞ</div></a>
-        <a href="javascript:void(0)" class="dock-item" onclick="showPage('profile', this)"><div class="dock-icon">👤</div><div class="dock-text" data-i18n="nav_profile">PROFİL</div></a>
+        <a href="javascript:void(0)" class="dock-item active" onclick="showPage('hub', this)"><div class="dock-icon">🏠</div><div class="dock-text">MERKEZ</div></a>
+        <a href="javascript:void(0)" class="dock-item" onclick="showPage('earn', this)"><div class="dock-icon">💸</div><div class="dock-text">AKTİVİTE</div></a>
+        <a href="javascript:void(0)" class="dock-item" onclick="showPage('arcade', this)"><div class="dock-icon">🕹️</div><div class="dock-text">OYUNLAR</div></a>
+        <a href="javascript:void(0)" class="dock-item" onclick="showPage('network', this)"><div class="dock-icon">🏆</div><div class="dock-text">AĞ</div></a>
+        <a href="javascript:void(0)" class="dock-item" onclick="showPage('profile', this)"><div class="dock-icon">👤</div><div class="dock-text">PROFİL</div></a>
     </div>
 
     <script>
@@ -265,43 +254,12 @@
         let user, tasks = [], miningInterval; let lbAllTime = [], lbDaily = [], lbYesterday = []; let currentLbTab = 'all'; 
         const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "27433" }) : null; let tvWidgetCreated = false;
 
-        const translations = {
-            tr: {
-                loading: "GELİR EVRENİ", loading_text: "YÜKLENİYOR...", current_balance: "GÜNCEL BAKİYE", tasks_title: "GÖREVLER", tasks_desc: "Tamamla ve kazan.", champions: "ŞAMPİYONLAR AĞI", top_100: "TOP 100", daily: "GÜNLÜK", yesterday: "DÜN", engine_lvl: "MOTOR SEVİYESİ", capacity: "KAPASİTE (4H)", sys_ready: "SİSTEM HAZIR", start_mine: "ÜRETİMİ BAŞLAT", upgrade_lvl: "SEVİYE YÜKSELT", watch_earn: "İZLE & KAZAN", start_ad: "REKLAM İZLE (+5000 GEP)", invited: "DAVET ETTİKLERİN", status: "HESAP DURUMU", active: "AKTİF", daily_streak: "GÜNLÜK SERİ", claim_daily: "GÜNLÜK ÖDÜLÜ AL", grow_net: "AĞI BÜYÜT", copy_link: "LİNKİ KOPYALA", 
-                nav_hub: "MERKEZ", nav_earn: "AKTİVİTE", nav_arcade: "OYUNLAR", nav_network: "AĞ", nav_profile: "PROFİL", 
-                btn_done: "BİTTİ", btn_go: "GİT", day: "GÜN", req: "GEREKEN:", lvl: "ÜYE", msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır değil.", msg_ad_done: "Tebrikler! +5000 GEP eklendi.", msg_reward: "🎉 Ödül Alındı! Seri:", msg_mine_ok: "ÜRETİM BAŞARILI!", msg_upg_ok: "GÜNCELLEME TAMAM!", msg_task_ok: "GÖREV TAMAM!", msg_wait: "ÜRETİM DEVAM EDİYOR", msg_no_data: "HENÜZ VERİ YOK.", msg_no_yesterday: "DÜN İÇİN KAYIT BULUNAMADI.", ad_desc: "Reklam izleyip GEP kazanmak için bilet paketi almalısan.", invite_desc: "Hem sen hem arkadaşın 10.000 GEP kazanır!", arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar çok yakında.", coming_soon: "YAKINDA", lang_select: "DİL SEÇİMİ",
-                g1_t: "Kripto Kahini", g1_d: "BTC fiyatını tahmin et, GEP'lerini katla.", btn_play_predict: "TAHMİN ET (1000 GEP)",
-                g2_t: "Siber Çark", g2_d: "Çarkı çevir, Jackpot şansını yakala.", btn_play_spin: "ÇEVİR (500 GEP)", 
-                g5_t: "Veri Kapsülleri", g5_d: "Sandıkları aç, sürprizleri yakala.", btn_play_lootbox: "KAPSÜLLERİ GÖR",
-                g3_t: "Siber Çöküş", g3_d: "Roket patlamadan çekil, kazancı al.", 
-                tickets_left: "Mevcut Biletin:", buy_tickets: "BİLET PAKETLERİ", pkg_1: "10 BİLET (10.000 GEP)", pkg_2: "50 BİLET (50.000 GEP)", pkg_3: "100 BİLET (100.000 GEP)", msg_no_tickets: "Hiç reklam biletiniz kalmadı!",
-                promo_title: "PROMOKOD", btn_redeem: "KODU KULLAN", box_limit_info: "⚠️ Her kapsül türü günde sadece 1 kez açılabilir!",
-                pano_title: "BENİM PROJEM", pano_desc: "Projelerini paylaş, referans topla. Üste çıkmak için tekrar yayınla.", pano_btn: "YAYINLA (1M GEP)"
-            },
-            az: {
-                loading: "GƏLİR KAINATI", loading_text: "YÜKLƏNİR...", current_balance: "CİCARİ BALANS", tasks_title: "TAPŞIRIQLAR", tasks_desc: "Tamamla və qazan.", champions: "ÇEMPİONLAR ŞƏBƏKƏSİ", top_100: "TOP 100", daily: "GÜNLÜK", yesterday: "DÜN", engine_lvl: "MÜHƏRRİK SƏVİYYƏSİ", capacity: "KAPASİTƏ (4S)", sys_ready: "SİSTEM HAZIRDIR", start_mine: "İSTEHSALA BAŞLA", upgrade_lvl: "SƏVİYYƏNİ YÜKSƏLT", watch_earn: "İZLƏ VƏ QAZAN", start_ad: "REKLAM İZLƏ (+5000 GEP)", invited: "DƏVƏT EDİLƏNLƏR", status: "HESAB STATUSU", active: "AKTİV", daily_streak: "GÜNLÜK SERİYA", claim_daily: "GÜNLÜK MÜKAFATI AL", grow_net: "ŞƏBƏKƏNİ BÖYÜT", copy_link: "LİNKİ KOPYALA", 
-                nav_hub: "MƏRKƏZ", nav_earn: "AKTİVİTƏ", nav_arcade: "OYUNLAR", nav_network: "ŞƏBƏKƏ", nav_profile: "PROFİL", 
-                btn_done: "BİTDİ", btn_go: "GİT", day: "GÜN", req: "TƏLƏB OLUNUR:", lvl: "ÜZV", msg_copied: "KOPYALANDI!", msg_ad_ready: "Reklam hazır deyil.", msg_ad_done: "Təbrik edirik! +5000 GEP əlavə edildi.", msg_reward: "🎉 Mükafat alındı! Seriya:", msg_mine_ok: "İSTEHSAL UĞURLU OLDU!", msg_upg_ok: "YENİLƏNMƏ TAMAMLANDI!", msg_task_ok: "TAPŞIRIQ TAMAMLANDI!", msg_wait: "İSTEHSAL DAVAM EDİR", msg_no_data: "HƏLƏ MƏLUMAT YOXDUR.", msg_no_yesterday: "DÜNƏN ÜÇÜN QEYD YOXDUR.", ad_desc: "Reklam izləyib GEP qazanmaq üçün bilet paketi almalısan.", invite_desc: "Həm sən həm dostun 10.000 GEP qazanır!", arcade_title: "SİBER ARCADE", arcade_desc: "Yeni oyunlar tezliklə.", coming_soon: "TEZLİKLƏ", lang_select: "DİL SEÇİMİ",
-                g1_t: "Kripto Kahini", g1_d: "BTC qiymətini təxmin et, GEP-ləri qatla.", btn_play_predict: "TƏXMİN ET (1000 GEP)",
-                g2_t: "Siber Çərx", g2_d: "Çərxi fırlat, Jackpot şansını yaxala.", btn_play_spin: "FIRLAT (500 GEP)",
-                g5_t: "Məlumat Kapsulları", g5_d: "Sandıqları aç, sürprizləri qazan.", btn_play_lootbox: "KAPSULLARI GÖR",
-                g3_t: "Siber Çöküş", g3_d: "Raket partlamadan çıx, qazancı götür.", 
-                tickets_left: "Mövcud Biletin:", buy_tickets: "BİLET PAKETLƏRİ", pkg_1: "10 BİLET (10.000 GEP)", pkg_2: "50 BİLET (50.000 GEP)", pkg_3: "100 BİLET (100.000 GEP)", msg_no_tickets: "Heç reklam biletiniz qalmadı!",
-                promo_title: "PROMOKOD", btn_redeem: "KODU İSTİFADƏ ET", box_limit_info: "⚠️ Hər kapsul növü gündə yalnız 1 dəfə açıla bilər!",
-                pano_title: "MƏNİM LAYİHƏM", pano_desc: "Layihələrini paylaş, referans topla. Üstə çıxmaq üçün yenidən yayımla.", pano_btn: "YAYIMLA (1M GEP)"
-            }
-        };
-
-        let savedLang = localStorage.getItem('appLang'); let currentLang = translations[savedLang] ? savedLang : 'tr';
-        function t(key) { return translations[currentLang][key] || translations['tr'][key]; }
-
-        function changeLanguage(langCode) { currentLang = langCode; localStorage.setItem('appLang', langCode); document.getElementById('lang-select').value = langCode; document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if(translations[langCode][key]) el.innerText = translations[langCode][key]; }); if (user) { updateUI(); if(tasks.length > 0) renderTasks(); if(lbAllTime.length > 0) renderLB(); renderStreak(); } }
         function triggerHaptic(type = 'light') { if(tg.HapticFeedback) { if(type === 'success') tg.HapticFeedback.notificationOccurred('success'); else if(type === 'error') tg.HapticFeedback.notificationOccurred('error'); else tg.HapticFeedback.impactOccurred(type); } }
         function spawnFloatingText(e, text, color) { let x = window.innerWidth / 2; let y = window.innerHeight / 2; if(e && e.touches && e.touches.length > 0) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else if (e && e.clientX) { x = e.clientX; y = e.clientY; } const el = document.createElement("div"); el.className = "floating-text"; el.innerText = text; el.style.left = (x - 40) + "px"; el.style.top = (y - 20) + "px"; el.style.color = color || "var(--gold)"; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 
         async function init() {
             try {
-                changeLanguage(currentLang); const tgUser = tg.initDataUnsafe?.user;
+                const tgUser = tg.initDataUnsafe?.user;
                 if (!tgUser) { document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--danger); font-family:Outfit;'><h2 style='text-align:center;'>SİSTEME ERİŞİM REDDEDİLDİ.</h2></div>"; return; }
                 let refId = tg.initDataUnsafe?.start_param || new URLSearchParams(window.location.search).get('tgWebAppStartParam') || "";
                 const res = await fetch(`${API}/api/user/auth`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ username: tgUser.username || "", firstName: tgUser.first_name || "Kullanıcı", referrerId: refId, initData: tg.initData }) });
@@ -318,7 +276,7 @@
         }
 
         function updateUI() {
-            if (!user) return; document.getElementById('balance').innerText = Math.floor(user.points).toLocaleString(); document.getElementById('usd').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`; document.getElementById('user-level').innerText = `${user.level} ${t('lvl')}`; if (document.getElementById('stat-ref-count')) document.getElementById('stat-ref-count').innerText = user.referralCount || 0; document.getElementById('ui-mine-level').innerText = user.miningLevel || 1; document.getElementById('ui-mine-reward').innerText = `${(1000 + (((user.miningLevel || 1) - 1) * 500)).toLocaleString()}`; document.getElementById('ui-upgrade-cost').innerText = `${t('req')} ${((user.miningLevel || 1) * 10000).toLocaleString()} GEP`; document.getElementById('ui-ad-tickets').innerText = user.adTickets || 0;
+            if (!user) return; document.getElementById('balance').innerText = Math.floor(user.points).toLocaleString(); document.getElementById('usd').innerText = `≈ ${(user.points / 100000).toFixed(2)} USDT`; document.getElementById('user-level').innerText = `${user.level} ÜYE`; if (document.getElementById('stat-ref-count')) document.getElementById('stat-ref-count').innerText = user.referralCount || 0; document.getElementById('ui-mine-level').innerText = user.miningLevel || 1; document.getElementById('ui-mine-reward').innerText = `${(1000 + (((user.miningLevel || 1) - 1) * 500)).toLocaleString()}`; document.getElementById('ui-upgrade-cost').innerText = `GEREKEN: ${((user.miningLevel || 1) * 10000).toLocaleString()} GEP`; document.getElementById('ui-ad-tickets').innerText = user.adTickets || 0;
             
             const now = new Date();
             const diff1 = (now - new Date(user.lastLootbox1 || 0)) / (1000 * 60 * 60);
@@ -346,7 +304,6 @@
             if(p === 'admin') loadAdminStats(); 
         }
 
-        // YENİ: Akıllı Buton ile Projeye Katılma Fonksiyonu
         async function joinProject(projectId, url) {
             triggerHaptic('light');
             tg.openLink(url);
@@ -371,19 +328,18 @@
                         user.points = data.points;
                         updateUI();
                         triggerHaptic('success');
-                        spawnFloatingText(null, "+10000 GEP", "var(--success)");
-                        tg.showAlert("Tebrikler! 10.000 GEP kazandın.");
+                        spawnFloatingText(null, "+10.000 GEP", "var(--success)");
+                        tg.showAlert("Tebrikler! Projeye katıldığın için 10.000 GEP kazandın.");
                         if(btn) { btn.innerText = "✅ KATILINDI"; }
                     } else {
                         if(btn) { btn.innerText = "❌ HATA"; }
                         tg.showAlert(data.message);
                         loadAirdrops(); 
                     }
-                } catch(e) { console.error(e); if(btn) { btn.innerText = "🚀 KATIL (+10K)"; btn.disabled = false; btn.style.background = "#8b5cf6"; btn.style.opacity = "1"; } }
+                } catch(e) { console.error(e); if(btn) { btn.innerText = "🚀 KATIL (+10.000 GEP)"; btn.disabled = false; btn.style.background = "#8b5cf6"; btn.style.opacity = "1"; } }
             }, 3000);
         }
 
-        // GÜNCELLENDİ: backend'den gelen listeyi işleme şekli (secureRoute kullanmak için POST'a çevrildi)
         async function loadAirdrops() {
             try {
                 const res = await fetch(`${API}/api/airdrop/list`, {
@@ -402,7 +358,7 @@
                         } else if (l.hasJoined) {
                             btnHtml = `<button class="btn-join" style="background:#10b981; cursor:not-allowed; opacity:0.6;" disabled>✅ KATILINDI</button>`;
                         } else {
-                            btnHtml = `<button class="btn-join" onclick="joinProject('${l._id}', '${l.url}')">🚀 KATIL (+10K)</button>`;
+                            btnHtml = `<button class="btn-join" onclick="joinProject('${l._id}', '${l.url}')">🚀 KATIL (+10.000 GEP)</button>`;
                         }
 
                         return `<div class="airdrop-item" id="ad-${l._id}">
@@ -441,7 +397,7 @@
                     document.getElementById('ad-title').value = ''; document.getElementById('ad-desc').value = ''; document.getElementById('ad-link').value = ''; 
                     loadAirdrops(); 
                 } else { triggerHaptic('error'); tg.showAlert(data.message); }
-            } catch(e) { tg.showAlert("Bağlantı hatası oluştu!"); } finally { if(btn) { btn.disabled = false; btn.style.opacity = "1"; btn.innerText = t('pano_btn'); } }
+            } catch(e) { tg.showAlert("Bağlantı hatası oluştu!"); } finally { if(btn) { btn.disabled = false; btn.style.opacity = "1"; btn.innerText = "YAYINLA (1M GEP)"; } }
         }
 
         async function deleteAirdrop(id) { if(!user.isAdmin) return; await fetch(`${API}/api/admin/delete-airdrop`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, initData: tg.initData }) }); document.getElementById(`ad-${id}`).remove(); }
@@ -555,31 +511,31 @@
         
         function checkMiningTimer() { if (!user.lastMining || new Date(user.lastMining).getTime() === 0) return; const diff = new Date().getTime() - new Date(user.lastMining).getTime(); if (diff < 4*60*60*1000) runTimer(4*60*60*1000 - diff); }
         
-        function runTimer(timeLeft) { const btn = document.getElementById('btn-mine'); const timerDiv = document.getElementById('mining-timer'); const statusText = document.getElementById('mine-status-text'); const glow = document.getElementById('core-glow'); const icon = document.getElementById('mine-icon'); btn.disabled = true; timerDiv.style.display = "block"; statusText.innerText = t('msg_wait'); statusText.style.color = "var(--text-dim)"; glow.style.animation = "none"; icon.style.filter = "grayscale(100%) opacity(0.5)"; clearInterval(miningInterval); miningInterval = setInterval(() => { timeLeft -= 1000; if (timeLeft <= 0) { clearInterval(miningInterval); btn.disabled = false; timerDiv.style.display = "none"; statusText.innerText = t('sys_ready'); statusText.style.color = "#fff"; glow.style.animation = "pulse 3s infinite"; icon.style.filter = "drop-shadow(0 10px 20px rgba(0,0,0,0.5))"; triggerHaptic('notification'); return; } const h = Math.floor(timeLeft / 3600000); const m = Math.floor((timeLeft % 3600000) / 60000); const s = Math.floor((timeLeft % 60000) / 1000); timerDiv.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }, 1000); }
+        function runTimer(timeLeft) { const btn = document.getElementById('btn-mine'); const timerDiv = document.getElementById('mining-timer'); const statusText = document.getElementById('mine-status-text'); const glow = document.getElementById('core-glow'); const icon = document.getElementById('mine-icon'); btn.disabled = true; timerDiv.style.display = "block"; statusText.innerText = "ÜRETİM DEVAM EDİYOR"; statusText.style.color = "var(--text-dim)"; glow.style.animation = "none"; icon.style.filter = "grayscale(100%) opacity(0.5)"; clearInterval(miningInterval); miningInterval = setInterval(() => { timeLeft -= 1000; if (timeLeft <= 0) { clearInterval(miningInterval); btn.disabled = false; timerDiv.style.display = "none"; statusText.innerText = "SİSTEM HAZIR"; statusText.style.color = "#fff"; glow.style.animation = "pulse 3s infinite"; icon.style.filter = "drop-shadow(0 10px 20px rgba(0,0,0,0.5))"; triggerHaptic('notification'); return; } const h = Math.floor(timeLeft / 3600000); const m = Math.floor((timeLeft % 3600000) / 60000); const s = Math.floor((timeLeft % 60000) / 1000); timerDiv.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }, 1000); }
         
-        async function upgradeMine(event) { triggerHaptic('light'); const upgradeCost = (user.miningLevel || 1) * 10000; tg.showConfirm(`${t('upgrade_lvl')} ${(user.miningLevel || 1) + 1}?\n\n${t('req')} ${upgradeCost.toLocaleString()} GEP`, async (confirmed) => { if (!confirmed) return; const btn = document.getElementById('btn-upgrade'); btn.disabled = true; const res = await fetch(`${API}/api/upgrade-mine`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if(data.success) { user.points = data.points; user.miningLevel = data.newLevel; updateUI(); triggerHaptic('success'); spawnFloatingText(event, "LVL UP!", "var(--gold)"); tg.showAlert(`${t('msg_upg_ok')} LVL: ${data.newLevel}`); } else { triggerHaptic('error'); tg.showAlert(data.message); } btn.disabled = false; }); }
+        async function upgradeMine(event) { triggerHaptic('light'); const upgradeCost = (user.miningLevel || 1) * 10000; tg.showConfirm(`SEVİYE YÜKSELT ${(user.miningLevel || 1) + 1}?\n\nGEREKEN: ${upgradeCost.toLocaleString()} GEP`, async (confirmed) => { if (!confirmed) return; const btn = document.getElementById('btn-upgrade'); btn.disabled = true; const res = await fetch(`${API}/api/upgrade-mine`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if(data.success) { user.points = data.points; user.miningLevel = data.newLevel; updateUI(); triggerHaptic('success'); spawnFloatingText(event, "LVL UP!", "var(--gold)"); tg.showAlert(`GÜNCELLEME TAMAM! LVL: ${data.newLevel}`); } else { triggerHaptic('error'); tg.showAlert(data.message); } btn.disabled = false; }); }
         
-        async function showAd(event) { triggerHaptic('medium'); if (user.adTickets <= 0) return tg.showAlert(t('msg_no_tickets')); if(!AdController) return tg.showAlert(t('msg_ad_ready')); AdController.show().then(async (result) => { if (result.done) { const res = await fetch(`${API}/api/adsgram-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); if (res.ok) { const data = await res.json(); if(data.success) { user.points = data.points; user.adTickets = data.adTickets; updateUI(); triggerHaptic('success'); spawnFloatingText(event, "+5000", "var(--success)"); tg.showAlert(t('msg_ad_done')); } else { tg.showAlert(data.message); } } } }).catch(e => {}); }
+        async function showAd(event) { triggerHaptic('medium'); if (user.adTickets <= 0) return tg.showAlert("Hiç reklam biletiniz kalmadı!"); if(!AdController) return tg.showAlert("Reklam hazır değil."); AdController.show().then(async (result) => { if (result.done) { const res = await fetch(`${API}/api/adsgram-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); if (res.ok) { const data = await res.json(); if(data.success) { user.points = data.points; user.adTickets = data.adTickets; updateUI(); triggerHaptic('success'); spawnFloatingText(event, "+5000", "var(--success)"); tg.showAlert("Tebrikler! +5000 GEP eklendi."); } else { tg.showAlert(data.message); } } } }).catch(e => {}); }
         
-        async function claimDaily(event) { triggerHaptic('medium'); const res = await fetch(`${API}/api/daily-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if(data.success) { triggerHaptic('success'); spawnFloatingText(event, "+" + data.reward, "var(--gold)"); tg.showAlert(`${t('msg_reward')} ${data.streak}. ${t('day')} (+${data.reward} GEP)`); init(); } else { triggerHaptic('error'); tg.showAlert(data.message); } }
+        async function claimDaily(event) { triggerHaptic('medium'); const res = await fetch(`${API}/api/daily-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if(data.success) { triggerHaptic('success'); spawnFloatingText(event, "+" + data.reward, "var(--gold)"); tg.showAlert(`🎉 Ödül Alındı! Seri: ${data.streak}. GÜN (+${data.reward} GEP)`); init(); } else { triggerHaptic('error'); tg.showAlert(data.message); } }
         
         function renderAnnouncements(annList) { const annContainer = document.getElementById('ann-container'); const annScroll = document.getElementById('ann-scroll'); if (annList && annList.length > 0) { annScroll.innerText = annList.join(" 🔔 ") + " 🔔 "; annContainer.style.display = 'flex'; } else { annContainer.style.display = 'none'; } }
         
         async function refreshTasks() { const tRes = await fetch(`${API}/api/tasks`); const tData = await tRes.json(); tasks = tData.tasks || []; renderTasks(); }
         
-        function renderTasks() { const cont = document.getElementById('task-list'); if(!cont) return; cont.innerHTML = tasks.map(tData => { const isDone = user.completedTasks.includes(tData.taskId); return `<div class="task-card" style="${isDone ? 'opacity:0.5;' : ''}"><div><div style="font-weight: 800; font-size:14px; margin-bottom: 4px;">${tData.title}</div><div style="font-family: 'Space Grotesk'; color: ${isDone ? 'var(--text-dim)' : 'var(--gold)'}; font-weight: 700;">+${tData.reward} GEP</div></div><button class="game-btn ${isDone ? '' : 'btn-outline'}" style="${isDone ? 'background:#1e293b; color:#64748b; padding:10px 20px; width:auto; font-size:12px; box-shadow:none;' : 'padding:10px 20px; width:auto; font-size:12px;'}" ${isDone ? 'disabled' : ''} onclick="completeTask(event, '${tData.taskId}','${tData.target}')">${isDone ? t('btn_done') : t('btn_go')}</button></div>`; }).join(''); }
+        function renderTasks() { const cont = document.getElementById('task-list'); if(!cont) return; cont.innerHTML = tasks.map(tData => { const isDone = user.completedTasks.includes(tData.taskId); return `<div class="task-card" style="${isDone ? 'opacity:0.5;' : ''}"><div><div style="font-weight: 800; font-size:14px; margin-bottom: 4px;">${tData.title}</div><div style="font-family: 'Space Grotesk'; color: ${isDone ? 'var(--text-dim)' : 'var(--gold)'}; font-weight: 700;">+${tData.reward} GEP</div></div><button class="game-btn ${isDone ? '' : 'btn-outline'}" style="${isDone ? 'background:#1e293b; color:#64748b; padding:10px 20px; width:auto; font-size:12px; box-shadow:none;' : 'padding:10px 20px; width:auto; font-size:12px;'}" ${isDone ? 'disabled' : ''} onclick="completeTask(event, '${tData.taskId}','${tData.target}')">${isDone ? 'BİTTİ' : 'GİT'}</button></div>`; }).join(''); }
         
-        async function completeTask(e, tid, link) { triggerHaptic('light'); tg.openLink(link); setTimeout(async () => { const res = await fetch(`${API}/api/tasks/complete`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ taskId: tid, initData: tg.initData }) }); const data = await res.json(); if(data.success) { triggerHaptic('success'); spawnFloatingText(e, t('msg_task_ok'), "var(--success)"); init(); } }, 3000); }
+        async function completeTask(e, tid, link) { triggerHaptic('light'); tg.openLink(link); setTimeout(async () => { const res = await fetch(`${API}/api/tasks/complete`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ taskId: tid, initData: tg.initData }) }); const data = await res.json(); if(data.success) { triggerHaptic('success'); spawnFloatingText(e, "GÖREV TAMAM!", "var(--success)"); init(); } }, 3000); }
         
-        async function loadLeaderboard() { const list = document.getElementById('leader-list'); list.innerHTML = `<p style='text-align:center; padding: 30px; font-weight:600; color:var(--text-dim);'>${t('loading_text')}</p>`; const res = await fetch(`${API}/api/leaderboard`); const data = await res.json(); if(data.success) { lbAllTime = data.leaderboard || []; lbDaily = data.dailyLeaderboard || []; lbYesterday = data.yesterdayLeaderboard || []; renderLB(); } }
+        async function loadLeaderboard() { const list = document.getElementById('leader-list'); list.innerHTML = `<p style='text-align:center; padding: 30px; font-weight:600; color:var(--text-dim);'>YÜKLENİYOR...</p>`; const res = await fetch(`${API}/api/leaderboard`); const data = await res.json(); if(data.success) { lbAllTime = data.leaderboard || []; lbDaily = data.dailyLeaderboard || []; lbYesterday = data.yesterdayLeaderboard || []; renderLB(); } }
         
         function switchLB(tab) { triggerHaptic('light'); currentLbTab = tab; const tabs = ['all', 'daily', 'yesterday']; tabs.forEach(tName => { const btn = document.getElementById(`tab-lb-${tName}`); if (tName === tab) { btn.classList.add('active'); } else { btn.classList.remove('active'); } }); renderLB(); }
         
-        function renderLB() { const list = document.getElementById('leader-list'); let dataToRender = []; if(currentLbTab === 'all') dataToRender = lbAllTime; else if(currentLbTab === 'daily') dataToRender = lbDaily; else dataToRender = lbYesterday; if(dataToRender.length === 0) { list.innerHTML = `<p style='text-align:center; padding: 30px; color: var(--text-dim); font-weight:600;'>${currentLbTab === 'yesterday' ? t('msg_no_yesterday') : t('msg_no_data')}</p>`; return; } list.innerHTML = dataToRender.map((u, i) => { const rank = currentLbTab === 'yesterday' && u.rank ? u.rank : (i + 1); let displayPoints = u.points; if(currentLbTab === 'daily') displayPoints = u.dailyPoints || 0; return `<div class="list-row ${i < 3 ? 'rank-top' : ''}"><span style="color: ${i < 3 ? 'var(--gold)' : 'var(--text-main)'}; font-weight: ${i < 3 ? 800 : 600}; font-size:15px;">${rank}. ${u.username || u.firstName}</span><span style="font-family:'Space Grotesk'; color: ${i < 3 ? 'var(--gold)' : 'var(--cyan)'}; font-weight:700;">${displayPoints.toLocaleString()}</span></div>`; }).join(''); }
+        function renderLB() { const list = document.getElementById('leader-list'); let dataToRender = []; if(currentLbTab === 'all') dataToRender = lbAllTime; else if(currentLbTab === 'daily') dataToRender = lbDaily; else dataToRender = lbYesterday; if(dataToRender.length === 0) { list.innerHTML = `<p style='text-align:center; padding: 30px; color: var(--text-dim); font-weight:600;'>KAYIT BULUNAMADI.</p>`; return; } list.innerHTML = dataToRender.map((u, i) => { const rank = currentLbTab === 'yesterday' && u.rank ? u.rank : (i + 1); let displayPoints = u.points; if(currentLbTab === 'daily') displayPoints = u.dailyPoints || 0; return `<div class="list-row ${i < 3 ? 'rank-top' : ''}"><span style="color: ${i < 3 ? 'var(--gold)' : 'var(--text-main)'}; font-weight: ${i < 3 ? 800 : 600}; font-size:15px;">${rank}. ${u.username || u.firstName}</span><span style="font-family:'Space Grotesk'; color: ${i < 3 ? 'var(--gold)' : 'var(--cyan)'}; font-weight:700;">${displayPoints.toLocaleString()}</span></div>`; }).join(''); }
         
-        function renderStreak() { const streakBox = document.getElementById('streak-box'); if(!streakBox) return; streakBox.innerHTML = ''; const currentStreak = user.streak || 0; for (let i = 1; i <= 7; i++) { const rewardVal = 100 * Math.pow(2, i - 1); const dayDiv = document.createElement('div'); dayDiv.className = `streak-day ${i <= currentStreak ? 'completed' : ''}`; dayDiv.innerHTML = `<div style="font-weight:800; font-size:11px; margin-bottom:4px; opacity:0.8">${t('day')} ${i}</div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:11px; color:var(--gold);">${rewardVal}</div>`; streakBox.appendChild(dayDiv); } }
+        function renderStreak() { const streakBox = document.getElementById('streak-box'); if(!streakBox) return; streakBox.innerHTML = ''; const currentStreak = user.streak || 0; for (let i = 1; i <= 7; i++) { const rewardVal = 100 * Math.pow(2, i - 1); const dayDiv = document.createElement('div'); dayDiv.className = `streak-day ${i <= currentStreak ? 'completed' : ''}`; dayDiv.innerHTML = `<div style="font-weight:800; font-size:11px; margin-bottom:4px; opacity:0.8">GÜN ${i}</div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:11px; color:var(--gold);">${rewardVal}</div>`; streakBox.appendChild(dayDiv); } }
         
-        function copyRef(e) { triggerHaptic('success'); document.getElementById('ref-link').select(); document.execCommand('copy'); spawnFloatingText(e, t('msg_copied'), "var(--success)"); }
+        function copyRef(e) { triggerHaptic('success'); document.getElementById('ref-link').select(); document.execCommand('copy'); spawnFloatingText(e, "KOPYALANDI!", "var(--success)"); }
         
         // ADMIN FONKSİYONLARI
         async function loadAdminStats() { const res = await fetch(`${API}/api/admin/stats`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); document.getElementById('adm-stat-users').innerText = data.totalUsers; document.getElementById('adm-stat-points').innerText = data.totalPoints.toLocaleString(); document.getElementById('adm-task-list').innerHTML = data.tasks.map(t => `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass-border); padding:12px 0;"><span style="font-size:13px; font-weight:600;">${t.title}</span><button class="game-btn btn-danger" style="padding:6px 12px; width:auto; font-size:10px; border-radius:8px;" onclick="deleteTask('${t.taskId}')">SİL</button></div>`).join('') || "<div style='padding:10px; color:var(--text-dim)'>Görev yok.</div>"; document.getElementById('adm-ann-list').innerHTML = data.announcements.map((a, i) => `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass-border); padding:12px 0;"><span style="font-size:12px; color:var(--text-dim);">${a.substring(0,30)}...</span><button class="game-btn btn-danger" style="padding:6px 12px; width:auto; font-size:10px; border-radius:8px;" onclick="deleteAnnouncement(${i})">SİL</button></div>`).join('') || "<div style='padding:10px; color:var(--text-dim)'>Duyuru yok.</div>"; }
@@ -593,4 +549,4 @@
         window.onload = init;
     </script>
 </body>
-</html>
+</html>        
