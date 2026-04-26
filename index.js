@@ -21,7 +21,7 @@ const bot = new TelegramBot(TOKEN);
 bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v6.0 - Siber Pano Aktif (Hatasız Sürüm)"))
+    .then(() => console.log("✅ Gelir Evreni v6.1 - Ayrı Kapsül Zamanlayıcıları Aktif"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -46,7 +46,10 @@ const User = mongoose.model('User', new mongoose.Schema({
     isBanned: { type: Boolean, default: false },
     miningLevel: { type: Number, default: 1 },
     adTickets: { type: Number, default: 0 },
-    lastLootboxOpen: { type: Date, default: new Date(0) }
+    // YENİ: Her kutu için ayrı zamanlayıcı
+    lastLootbox1: { type: Date, default: new Date(0) },
+    lastLootbox2: { type: Date, default: new Date(0) },
+    lastLootbox3: { type: Date, default: new Date(0) }
 }));
 
 const PromoCode = mongoose.model('PromoCode', new mongoose.Schema({
@@ -84,7 +87,6 @@ function addPoints(user, amount) {
     user.points += amount; user.dailyPoints += amount; user.lastPointDate = now;
 }
 
-// OTONOM MESAJ SİSTEMİ
 const morningMsgs = ["☀️ Günaydın Siber Ağ! Madenleri toplamayı unutmayın.", "🌅 Günaydın! Yeni bir gün, yeni GEP'ler...", "☕ Günaydın Gelir Evreni ailesi!"];
 const nightMsgs = ["🌙 İyi geceler millet! Bırakın sistem uyurken de sizin için çalışsın.", "🌌 Herkese iyi geceler. Yarın daha çok kazanacağız..."];
 const randomMsgs = ["🚀 Piyasalar bugün hareketli. Sence BTC ne olacak?", "💎 Unutmayın, panik yapan kaybeder, sabreden GEP kazanır.", "🎁 Buralarda bir yerlerde yakında yeni bir Promo Kod düşebilir..."];
@@ -113,9 +115,6 @@ async function archiveDailyLeaderboard() {
 }
 setInterval(() => { const now = new Date(); if (now.getHours() === 23 && now.getMinutes() === 58) archiveDailyLeaderboard(); }, 60000);
 
-// ==========================================
-// 🛡️ KRİPTOGRAFİK GÜVENLİK SİSTEMİ 
-// ==========================================
 function verifyTelegramWebAppData(telegramInitData) {
     try {
         if (!telegramInitData) return false;
@@ -136,8 +135,6 @@ const secureRoute = (req, res, next) => {
     if (!initData || !verifyTelegramWebAppData(initData)) return res.status(403).json({ success: false, message: "⚠️ Güvenlik Hatası!" });
     next();
 };
-
-// --- MİNİ APP API ROTALARI ---
 
 app.post('/api/user/auth', secureRoute, async (req, res) => {
     const { telegramId, username, firstName, referrerId } = req.body;
@@ -224,24 +221,57 @@ app.post('/api/arcade/predict', secureRoute, async (req, res) => {
     } catch (e) { user.points += cost; await user.save(); res.json({ success: false, message: "Hata. İade edildi." }); }
 });
 
+// GÜNCELLENDİ: HER KUTU İÇİN AYRI ZAMANLAYICI EKLENDİ
 app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
     const { telegramId, boxType } = req.body; const user = await User.findOne({ telegramId }); 
     if (!user) return res.json({ success: false });
-    const now = new Date(); const diffHours = (now - new Date(user.lastLootboxOpen || 0)) / (1000 * 60 * 60);
-    if (diffHours < 24) return res.json({ success: false, message: `Bugün zaten bir kapsül açtın! Bir sonraki için ${Math.ceil(24 - diffHours)} saat bekle.` });
+
+    const now = new Date();
+    let lastOpenDate;
+
+    if (boxType === 1) lastOpenDate = user.lastLootbox1 || new Date(0);
+    else if (boxType === 2) lastOpenDate = user.lastLootbox2 || new Date(0);
+    else if (boxType === 3) lastOpenDate = user.lastLootbox3 || new Date(0);
+    else return res.json({ success: false });
+
+    const diffHours = (now - new Date(lastOpenDate)) / (1000 * 60 * 60);
+    if (diffHours < 24) {
+        return res.json({ success: false, message: `Bu kapsülü bugün zaten açtın! Bir sonraki için ${Math.ceil(24 - diffHours)} saat bekle.` });
+    }
+
     let cost = 0;
-    if (boxType === 1) cost = 1000; else if (boxType === 2) cost = 5000; else if (boxType === 3) cost = 25000; else return res.json({ success: false });
+    if (boxType === 1) cost = 1000; else if (boxType === 2) cost = 5000; else if (boxType === 3) cost = 25000;
+    
     if (user.points < cost) return res.json({ success: false, message: "Yetersiz GEP!" });
     
-    user.points -= cost; user.lastLootboxOpen = now; 
+    user.points -= cost; 
+
+    // Tarihi sadece açılan kutu için güncelle
+    if (boxType === 1) user.lastLootbox1 = now;
+    else if (boxType === 2) user.lastLootbox2 = now;
+    else if (boxType === 3) user.lastLootbox3 = now;
+
     const rand = Math.random() * 100; let prize = 0; let msg = "BOŞ KAPSÜL";
-    if (boxType === 1) { if (rand <= 40) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 70) { prize = 500; msg = "⚙️ Kırık Çip"; } else if (rand <= 90) { prize = 1500; msg = "🔋 Standart Veri"; } else if (rand <= 99) { prize = 5000; msg = "💎 Nadir Kod"; } else { prize = 10000; msg = "🔥 MEGA KAZANÇ 🔥"; } } 
-    else if (boxType === 2) { if (rand <= 30) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 65) { prize = 3000; msg = "🔋 Kaliteli Veri"; } else if (rand <= 85) { prize = 7500; msg = "💎 Nadir Çip"; } else if (rand <= 95) { prize = 20000; msg = "🔥 Destansı Çekirdek"; } else { prize = 50000; msg = "👑 EFSANEVİ NODE 👑"; } } 
-    else if (boxType === 3) { if (rand <= 20) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 50) { prize = 15000; msg = "💎 Parazitli Node"; } else if (rand <= 80) { prize = 40000; msg = "🔥 Saf Çekirdek"; } else if (rand <= 95) { prize = 100000; msg = "👑 EFSANEVİ KOD 👑"; } else { prize = 250000; msg = "🌌 UZAY BOŞLUĞU 🌌"; } }
-    if (prize > 0) addPoints(user, prize); await user.save(); res.json({ success: true, prize, msg, points: user.points, lastLootboxOpen: user.lastLootboxOpen });
+    if (boxType === 1) { 
+        if (rand <= 40) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 70) { prize = 500; msg = "⚙️ Kırık Çip"; } else if (rand <= 90) { prize = 1500; msg = "🔋 Standart Veri"; } else if (rand <= 99) { prize = 5000; msg = "💎 Nadir Kod"; } else { prize = 10000; msg = "🔥 MEGA KAZANÇ 🔥"; } 
+    } 
+    else if (boxType === 2) { 
+        if (rand <= 30) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 65) { prize = 3000; msg = "🔋 Kaliteli Veri"; } else if (rand <= 85) { prize = 7500; msg = "💎 Nadir Çip"; } else if (rand <= 95) { prize = 20000; msg = "🔥 Destansı Çekirdek"; } else { prize = 50000; msg = "👑 EFSANEVİ NODE 👑"; } 
+    } 
+    else if (boxType === 3) { 
+        if (rand <= 20) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 50) { prize = 15000; msg = "💎 Parazitli Node"; } else if (rand <= 80) { prize = 40000; msg = "🔥 Saf Çekirdek"; } else if (rand <= 95) { prize = 100000; msg = "👑 EFSANEVİ KOD 👑"; } else { prize = 250000; msg = "🌌 UZAY BOŞLUĞU 🌌"; }
+    }
+    
+    if (prize > 0) addPoints(user, prize); 
+    await user.save(); 
+    res.json({ 
+        success: true, prize, msg, points: user.points, 
+        lastLootbox1: user.lastLootbox1, 
+        lastLootbox2: user.lastLootbox2, 
+        lastLootbox3: user.lastLootbox3 
+    });
 });
 
-// AİRDROP (SİBER PANO) ROTALARI
 app.get('/api/airdrop/list', async (req, res) => {
     const links = await AirdropLink.find().sort({ updatedAt: -1 }).limit(30);
     res.json({ success: true, links });
@@ -251,7 +281,6 @@ app.post('/api/airdrop/share', secureRoute, async (req, res) => {
     const { telegramId, title, description, url } = req.body;
     const user = await User.findOne({ telegramId });
     const cost = 250000; 
-
     if(!user || user.points < cost) return res.json({success: false, message: "Yetersiz Bakiye! 250.000 GEP gerekli."});
     if(!url.startsWith("http")) return res.json({success: false, message: "Geçerli bir link (https://) girin!"});
     if(!title || title.length > 25) return res.json({success: false, message: "Başlık çok uzun (Max 25 harf)."});
@@ -259,17 +288,9 @@ app.post('/api/airdrop/share', secureRoute, async (req, res) => {
 
     user.points -= cost; 
     await user.save();
-
     let existing = await AirdropLink.findOne({ telegramId });
-    if (existing) {
-        existing.title = title;
-        existing.description = description;
-        existing.url = url;
-        existing.updatedAt = new Date(); 
-        await existing.save();
-    } else {
-        await AirdropLink.create({ telegramId, username: user.username || user.firstName, title, description, url });
-    }
+    if (existing) { existing.title = title; existing.description = description; existing.url = url; existing.updatedAt = new Date(); await existing.save(); } 
+    else { await AirdropLink.create({ telegramId, username: user.username || user.firstName, title, description, url }); }
     res.json({success: true, points: user.points, message: "İlanınız başarıyla panoya asıldı!"});
 });
 
