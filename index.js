@@ -64,6 +64,15 @@ const YesterdayWinner = mongoose.model('YesterdayWinner', new mongoose.Schema({
     rank: Number, username: String, firstName: String, points: Number, date: { type: Date, default: Date.now }
 }));
 
+// YENİ: PROMO KOD ŞEMASI
+const PromoCode = mongoose.model('PromoCode', new mongoose.Schema({
+    code: { type: String, unique: true },
+    reward: Number,
+    maxUsage: Number,
+    usedBy: { type: [String], default: [] },
+    isActive: { type: Boolean, default: true }
+}));
+
 function addPoints(user, amount) {
     const now = new Date();
     if (user.lastPointDate.toDateString() !== now.toDateString()) { user.dailyPoints = 0; }
@@ -106,14 +115,11 @@ function verifyTelegramWebAppData(telegramInitData) {
         const initData = new URLSearchParams(telegramInitData);
         const hash = initData.get('hash'); const authDate = initData.get('auth_date');
         if (!hash || !authDate) return false;
-
         const now = Math.floor(Date.now() / 1000);
         if (now - parseInt(authDate) > 86400) return false;
-
         initData.delete('hash');
         const keys = Array.from(initData.keys()).sort();
         const dataCheckString = keys.map(key => `${key}=${initData.get(key)}`).join('\n');
-        
         const secretKey = crypto.createHmac('sha256', 'WebAppData').update(TOKEN).digest();
         const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
         return calculatedHash === hash;
@@ -183,10 +189,7 @@ app.post('/api/buy-ad-package', secureRoute, async (req, res) => {
 
     if (user.points < cost) return res.json({ success: false, message: "Yetersiz GEP bakiye!" });
 
-    user.points -= cost;
-    user.adTickets += tickets;
-    await user.save();
-
+    user.points -= cost; user.adTickets += tickets; await user.save();
     res.json({ success: true, points: user.points, adTickets: user.adTickets });
 });
 
@@ -198,10 +201,7 @@ app.post('/api/adsgram-reward', secureRoute, async (req, res) => {
     if (user.adTickets <= 0) return res.json({ success: false, message: "Hiç reklam biletiniz kalmadı! Önce mağazadan bilet paketi satın alın." });
     
     const settings = await Settings.findOne() || { adsgramReward: 500 };
-    user.adTickets -= 1; 
-    addPoints(user, settings.adsgramReward); 
-    await user.save();
-    
+    user.adTickets -= 1; addPoints(user, settings.adsgramReward); await user.save();
     res.json({ success: true, points: user.points, adTickets: user.adTickets });
 });
 
@@ -240,29 +240,47 @@ app.post('/api/tasks/complete', secureRoute, async (req, res) => {
     res.json({ success: true, points: user.points });
 });
 
-// ==========================================
-// 🕹️ ARCADE OYUNLARI API 
-// ==========================================
+// YENİ: PROMO KOD KULLANMA
+app.post('/api/redeem-promo', secureRoute, async (req, res) => {
+    const { telegramId, code } = req.body;
+    const user = await User.findOne({ telegramId });
+    if (!user || !code) return res.json({ success: false });
+
+    const promo = await PromoCode.findOne({ code: code.toUpperCase(), isActive: true });
+    if (!promo) return res.json({ success: false, message: "Geçersiz veya süresi dolmuş kod!" });
+
+    if (promo.usedBy.includes(telegramId)) return res.json({ success: false, message: "Bu kodu zaten kullandın!" });
+    
+    if (promo.usedBy.length >= promo.maxUsage) {
+        promo.isActive = false; await promo.save();
+        return res.json({ success: false, message: "Bu kodun kullanım sınırı doldu, yetiştiremedin!" });
+    }
+
+    promo.usedBy.push(telegramId);
+    if (promo.usedBy.length >= promo.maxUsage) promo.isActive = false;
+    await promo.save();
+
+    addPoints(user, promo.reward);
+    await user.save();
+
+    res.json({ success: true, reward: promo.reward, points: user.points });
+});
+
+// ARCADE OYUNLARI API 
 app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
     const cost = 500; 
     if (!user || user.points < cost) return res.json({ success: false, message: "Yetersiz GEP Bakiye!" });
-
     user.points -= cost; 
-    
-    const rand = Math.random() * 100;
-    let prize = 0; let msg = "BOŞ";
-
+    const rand = Math.random() * 100; let prize = 0; let msg = "BOŞ";
     if (rand <= 40) { prize = 0; msg = "Şansını Tekrar Dene"; } 
     else if (rand <= 75) { prize = 250; msg = "Yarım Teselli"; } 
     else if (rand <= 92) { prize = 500; msg = "Amorti!"; } 
     else if (rand <= 99) { prize = 1000; msg = "İKİYE KATLADIN!"; } 
     else { prize = 5000; msg = "💥 JACKPOT! 💥"; } 
-
     if (prize > 0) addPoints(user, prize);
-    await user.save();
-    res.json({ success: true, prize, msg, points: user.points });
+    await user.save(); res.json({ success: true, prize, msg, points: user.points });
 });
 
 app.post('/api/arcade/predict', secureRoute, async (req, res) => {
@@ -270,17 +288,13 @@ app.post('/api/arcade/predict', secureRoute, async (req, res) => {
     const user = await User.findOne({ telegramId });
     const cost = 1000; 
     if (!user || user.points < cost) return res.json({ success: false, message: "Yetersiz GEP Bakiye!" });
-
     try {
         const response1 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
         const data1 = await response1.json(); const price1 = parseFloat(data1.price);
-
         user.points -= cost; await user.save();
         await new Promise(resolve => setTimeout(resolve, 10000));
-
         const response2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
         const data2 = await response2.json(); const price2 = parseFloat(data2.price);
-
         let won = false; let reward = 0;
         if ((guess === 'UP' && price2 > price1) || (guess === 'DOWN' && price2 < price1)) {
             won = true; reward = 2000; addPoints(user, reward); await user.save();
@@ -292,48 +306,25 @@ app.post('/api/arcade/predict', secureRoute, async (req, res) => {
     }
 });
 
-// GÜNCELLENDİ: 3 SEVİYELİ KAPSÜL SİSTEMİ (TIER 1, 2, 3)
 app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
     const { telegramId, boxType } = req.body;
     const user = await User.findOne({ telegramId });
-    
     let cost = 0;
-    if (boxType === 1) cost = 1000;
-    else if (boxType === 2) cost = 5000;
-    else if (boxType === 3) cost = 25000;
+    if (boxType === 1) cost = 1000; else if (boxType === 2) cost = 5000; else if (boxType === 3) cost = 25000;
     else return res.json({ success: false, message: "Geçersiz Kapsül Türü." });
-
     if (!user || user.points < cost) return res.json({ success: false, message: "Yetersiz GEP Bakiye!" });
 
     user.points -= cost; 
-    
-    // İhtimal Motoru
-    const rand = Math.random() * 100;
-    let prize = 0; let msg = "BOŞ KAPSÜL";
+    const rand = Math.random() * 100; let prize = 0; let msg = "BOŞ KAPSÜL";
 
-    if (boxType === 1) { // 1.000 GEP'lik Kutu
-        if (rand <= 40) { prize = 0; msg = "🗑️ Çöp Veri (0 GEP)"; }
-        else if (rand <= 70) { prize = 500; msg = "⚙️ Kırık Çip (500 GEP)"; }
-        else if (rand <= 90) { prize = 1500; msg = "🔋 Standart Veri (1.5K GEP)"; }
-        else if (rand <= 99) { prize = 5000; msg = "💎 Nadir Kod (5K GEP)"; }
-        else { prize = 10000; msg = "🔥 MEGA KAZANÇ (10K GEP) 🔥"; }
-    } else if (boxType === 2) { // 5.000 GEP'lik Kutu
-        if (rand <= 30) { prize = 0; msg = "🗑️ Çöp Veri (0 GEP)"; }
-        else if (rand <= 65) { prize = 3000; msg = "🔋 Kaliteli Veri (3K GEP)"; }
-        else if (rand <= 85) { prize = 7500; msg = "💎 Nadir Çip (7.5K GEP)"; }
-        else if (rand <= 95) { prize = 20000; msg = "🔥 Destansı Çekirdek (20K GEP)"; }
-        else { prize = 50000; msg = "👑 EFSANEVİ NODE (50K GEP) 👑"; }
-    } else if (boxType === 3) { // 25.000 GEP'lik Kutu
-        if (rand <= 20) { prize = 0; msg = "🗑️ Çöp Veri (0 GEP)"; }
-        else if (rand <= 50) { prize = 15000; msg = "💎 Parazitli Node (15K GEP)"; }
-        else if (rand <= 80) { prize = 40000; msg = "🔥 Saf Çekirdek (40K GEP)"; }
-        else if (rand <= 95) { prize = 100000; msg = "👑 EFSANEVİ KOD (100K GEP) 👑"; }
-        else { prize = 500000; msg = "🌌 UZAY BOŞLUĞU (500K GEP) 🌌"; }
+    if (boxType === 1) { 
+        if (rand <= 40) { prize = 0; msg = "🗑️ Çöp Veri (0 GEP)"; } else if (rand <= 70) { prize = 500; msg = "⚙️ Kırık Çip (500 GEP)"; } else if (rand <= 90) { prize = 1500; msg = "🔋 Standart Veri (1.5K GEP)"; } else if (rand <= 99) { prize = 5000; msg = "💎 Nadir Kod (5K GEP)"; } else { prize = 10000; msg = "🔥 MEGA KAZANÇ (10K GEP) 🔥"; }
+    } else if (boxType === 2) { 
+        if (rand <= 30) { prize = 0; msg = "🗑️ Çöp Veri (0 GEP)"; } else if (rand <= 65) { prize = 3000; msg = "🔋 Kaliteli Veri (3K GEP)"; } else if (rand <= 85) { prize = 7500; msg = "💎 Nadir Çip (7.5K GEP)"; } else if (rand <= 95) { prize = 20000; msg = "🔥 Destansı Çekirdek (20K GEP)"; } else { prize = 50000; msg = "👑 EFSANEVİ NODE (50K GEP) 👑"; }
+    } else if (boxType === 3) { 
+        if (rand <= 20) { prize = 0; msg = "🗑️ Çöp Veri (0 GEP)"; } else if (rand <= 50) { prize = 15000; msg = "💎 Parazitli Node (15K GEP)"; } else if (rand <= 80) { prize = 40000; msg = "🔥 Saf Çekirdek (40K GEP)"; } else if (rand <= 95) { prize = 100000; msg = "👑 EFSANEVİ KOD (100K GEP) 👑"; } else { prize = 500000; msg = "🌌 UZAY BOŞLUĞU (500K GEP) 🌌"; }
     }
-
-    if (prize > 0) addPoints(user, prize);
-    await user.save();
-    
+    if (prize > 0) addPoints(user, prize); await user.save();
     res.json({ success: true, prize, msg, points: user.points });
 });
 
@@ -363,6 +354,16 @@ app.post('/api/admin/delete-task', secureRoute, async (req, res) => {
     if (String(req.body.adminId) !== String(ADMIN_ID)) return res.status(403).send("Yetkisiz");
     await Task.deleteOne({ taskId: req.body.taskId });
     res.json({ success: true });
+});
+
+// YENİ: ADMİN PROMO KOD OLUŞTURMA
+app.post('/api/admin/create-promo', secureRoute, async (req, res) => {
+    if (String(req.body.adminId) !== String(ADMIN_ID)) return res.status(403).send("Yetkisiz");
+    const { code, reward, maxUsage } = req.body;
+    try {
+        await PromoCode.create({ code: code.toUpperCase(), reward, maxUsage });
+        res.json({ success: true });
+    } catch(e) { res.json({ success: false, message: "Bu kod zaten mevcut veya bir hata oluştu." }); }
 });
 
 app.post('/api/admin/announcement', secureRoute, async (req, res) => {
