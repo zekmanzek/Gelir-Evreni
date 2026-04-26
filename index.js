@@ -45,7 +45,7 @@ const User = mongoose.model('User', new mongoose.Schema({
     level: { type: String, default: 'Bronz' },
     isBanned: { type: Boolean, default: false },
     miningLevel: { type: Number, default: 1 },
-    adTickets: { type: Number, default: 0 } // YENİ: Reklam İzleme Bileti
+    adTickets: { type: Number, default: 0 }
 }));
 
 const Task = mongoose.model('Task', new mongoose.Schema({
@@ -170,14 +170,12 @@ app.post('/api/daily-reward', secureRoute, async (req, res) => {
     res.json({ success: true, points: user.points, streak: user.streak, reward });
 });
 
-// YENİ: REKLAM BİLETİ SATIN ALMA
 app.post('/api/buy-ad-package', secureRoute, async (req, res) => {
     const { telegramId, packageId } = req.body;
     const user = await User.findOne({ telegramId });
     if (!user) return res.json({ success: false });
 
     let cost = 0; let tickets = 0;
-
     if (packageId === 1) { cost = 1000; tickets = 10; }
     else if (packageId === 2) { cost = 5000; tickets = 50; }
     else if (packageId === 3) { cost = 10000; tickets = 100; }
@@ -186,27 +184,22 @@ app.post('/api/buy-ad-package', secureRoute, async (req, res) => {
     if (user.points < cost) return res.json({ success: false, message: "Yetersiz GEP bakiye!" });
 
     user.points -= cost;
-    user.adTickets += tickets; // Biletleri hesaba ekle
+    user.adTickets += tickets;
     await user.save();
 
     res.json({ success: true, points: user.points, adTickets: user.adTickets });
 });
 
-// GÜNCELLENDİ: REKLAM İZLEME (BİLET KONTROLÜ)
 app.post('/api/adsgram-reward', secureRoute, async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
     if (!user) return res.json({ success: false });
     
-    // Bilet kontrolü
-    if (user.adTickets <= 0) {
-        return res.json({ success: false, message: "Hiç reklam biletiniz kalmadı! Önce mağazadan bilet paketi satın alın." });
-    }
+    if (user.adTickets <= 0) return res.json({ success: false, message: "Hiç reklam biletiniz kalmadı! Önce mağazadan bilet paketi satın alın." });
     
     const settings = await Settings.findOne() || { adsgramReward: 500 };
-    
-    user.adTickets -= 1; // 1 bilet harca
-    addPoints(user, settings.adsgramReward); // 500 GEP ver
+    user.adTickets -= 1; 
+    addPoints(user, settings.adsgramReward); 
     await user.save();
     
     res.json({ success: true, points: user.points, adTickets: user.adTickets });
@@ -247,6 +240,9 @@ app.post('/api/tasks/complete', secureRoute, async (req, res) => {
     res.json({ success: true, points: user.points });
 });
 
+// ==========================================
+// 🕹️ ARCADE OYUNLARI API 
+// ==========================================
 app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     const { telegramId } = req.body;
     const user = await User.findOne({ telegramId });
@@ -294,6 +290,31 @@ app.post('/api/arcade/predict', secureRoute, async (req, res) => {
         user.points += cost; await user.save();
         res.json({ success: false, message: "Piyasa verisi çekilemedi. Bakiye iade edildi." });
     }
+});
+
+// YENİ OYUN 3: VERİ KAPSÜLLERİ (LOOTBOX)
+app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
+    const { telegramId } = req.body;
+    const user = await User.findOne({ telegramId });
+    const cost = 2500; 
+    if (!user || user.points < cost) return res.json({ success: false, message: "Yetersiz GEP Bakiye!" });
+
+    user.points -= cost; 
+    
+    // Kutu İhtimal Motoru (RNG)
+    const rand = Math.random() * 100;
+    let prize = 0; let msg = "BOŞ KAPSÜL";
+
+    if (rand <= 35) { prize = 0; msg = "🗑️ Çöp Veri (0 GEP)"; } // %35 ihtimal
+    else if (rand <= 70) { prize = 1500; msg = "⚙️ Sıradan Çip (1.500 GEP)"; } // %35 ihtimal
+    else if (rand <= 90) { prize = 3500; msg = "💎 Nadir Veri (3.500 GEP)"; } // %20 ihtimal
+    else if (rand <= 98) { prize = 10000; msg = "🔥 Destansı Çekirdek (10.000 GEP)"; } // %8 ihtimal
+    else { prize = 50000; msg = "👑 EFSANEVİ NODE (50.000 GEP) 👑"; } // %2 ihtimal
+
+    if (prize > 0) addPoints(user, prize);
+    await user.save();
+    
+    res.json({ success: true, prize, msg, points: user.points });
 });
 
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
