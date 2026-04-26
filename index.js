@@ -21,7 +21,7 @@ const bot = new TelegramBot(TOKEN);
 bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v6.2 - Güvenlik ve Düello Yaması Aktif"))
+    .then(() => console.log("✅ Gelir Evreni v6.2 - Güvenlik, Düello ve Fiyat Güncellemesi Aktif"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -66,7 +66,7 @@ const YesterdayWinner = mongoose.model('YesterdayWinner', new mongoose.Schema({
 const Settings = mongoose.model('Settings', new mongoose.Schema({
     announcements: [String],
     miningMultiplier: { type: Number, default: 1 },
-    adsgramReward: { type: Number, default: 500 }, 
+    adsgramReward: { type: Number, default: 5000 }, // GÜNCELLENDİ: Reklam ödülü 5000 GEP
     botUsername: { type: String, default: 'gelirevreni_bot' },
     mainGroupId: { type: String, default: "" }
 }));
@@ -141,7 +141,7 @@ const secureRoute = (req, res, next) => {
     next();
 };
 
-// API ROTALARI (req.body.telegramId yerine req.realTelegramId kullanıldı)
+// API ROTALARI
 app.post('/api/user/auth', secureRoute, async (req, res) => {
     const { username, firstName, referrerId } = req.body;
     const telegramId = req.realTelegramId;
@@ -151,7 +151,7 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
             user = new User({ telegramId, username: (username || '').toLowerCase(), firstName, points: 1000 });
             if (referrerId && String(referrerId) !== String(telegramId)) {
                 const referrer = await User.findOne({ telegramId: referrerId });
-                if (referrer) { addPoints(referrer, 2500); referrer.referralCount += 1; await referrer.save(); addPoints(user, 1000); }
+                if (referrer) { addPoints(referrer, 10000); referrer.referralCount += 1; await referrer.save(); addPoints(user, 10000); } // GÜNCELLENDİ: Hem davet eden hem davet edilen 10k GEP alır
             }
         } else { if (username) user.username = username.toLowerCase(); if (firstName) user.firstName = firstName; }
         await user.save(); let settings = await Settings.findOne() || await Settings.create({});
@@ -171,7 +171,11 @@ app.post('/api/daily-reward', secureRoute, async (req, res) => {
 app.post('/api/buy-ad-package', secureRoute, async (req, res) => {
     const { packageId } = req.body; 
     let cost = 0; let tickets = 0;
-    if (packageId === 1) { cost = 1000; tickets = 10; } else if (packageId === 2) { cost = 5000; tickets = 50; } else if (packageId === 3) { cost = 10000; tickets = 100; } else return res.json({ success: false });
+    // GÜNCELLENDİ: Fiyatlar 10k, 50k, 100k olarak ayarlandı
+    if (packageId === 1) { cost = 10000; tickets = 10; } 
+    else if (packageId === 2) { cost = 50000; tickets = 50; } 
+    else if (packageId === 3) { cost = 100000; tickets = 100; } 
+    else return res.json({ success: false });
     
     // Eşzamanlılık (Race Condition) Koruması
     const user = await User.findOneAndUpdate(
@@ -191,7 +195,7 @@ app.post('/api/adsgram-reward', secureRoute, async (req, res) => {
     );
     if (!user) return res.json({ success: false, message: "Hiç reklam biletiniz kalmadı!" });
     
-    const settings = await Settings.findOne() || { adsgramReward: 500 };
+    const settings = await Settings.findOne() || { adsgramReward: 5000 };
     addPoints(user, settings.adsgramReward); await user.save();
     res.json({ success: true, points: user.points, adTickets: user.adTickets });
 });
@@ -379,7 +383,7 @@ bot.onText(/\/zar (\d+)/, async (msg, match) => { const amount = parseInt(match[
 bot.onText(/\/liderler/, async (msg) => { const topUsers = await User.find().sort({ points: -1 }).limit(5); let text = "🏆 **EN ZENGİN 5 OYUNCU**\n\n"; topUsers.forEach((u, i) => { text += `${i+1}. ${u.firstName} - **${Math.floor(u.points).toLocaleString()} GEP**\n`; }); bot.sendMessage(msg.chat.id, text, { parse_mode: 'Markdown' }); });
 bot.onText(/\/maden/, async (msg) => { const user = await User.findOne({ telegramId: msg.from.id.toString() }); if (!user) return; const diff = new Date().getTime() - new Date(user.lastMining).getTime(); const cooldown = 4 * 60 * 60 * 1000; if (diff >= cooldown) { bot.sendMessage(msg.chat.id, "⛏️ **Madenin Hazır!**\nUygulamaya gir ve ödülünü topla. 🔥"); } else { const remaining = Math.ceil((cooldown - diff) / (60 * 1000)); bot.sendMessage(msg.chat.id, `⛏️ Maden üretimde...\n⏳ **${remaining} dakika** sonra hazır.`); } });
 
-// DÜELLO SİSTEMİ MANTIĞI EKLENDİ
+// DÜELLO SİSTEMİ
 bot.onText(/\/duello (\d+)/, async (msg, match) => { 
     if (!msg.reply_to_message) return bot.sendMessage(msg.chat.id, "Meydan okumak istediğin kişinin mesajını yanıtlayarak /duello <miktar> yazmalısın.");
     const amount = parseInt(match[1]); 
