@@ -21,7 +21,7 @@ const bot = new TelegramBot(TOKEN);
 bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v6.3 - Siber Pano Tıklama Ödülleri Aktif"))
+    .then(() => console.log("✅ Gelir Evreni v6.4 - Siber Pano Akıllı Butonlar Aktif"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -71,14 +71,13 @@ const Settings = mongoose.model('Settings', new mongoose.Schema({
     mainGroupId: { type: String, default: "" }
 }));
 
-// GÜNCELLENDİ: joinedUsers dizisi eklendi (Hile koruması için)
 const AirdropLink = mongoose.model('AirdropLink', new mongoose.Schema({
     telegramId: { type: String, unique: true }, 
     username: String,
     title: String,
     description: String,
     url: String,
-    joinedUsers: { type: [String], default: [] }, // Kimlerin bu linke tıkladığını tutar
+    joinedUsers: { type: [String], default: [] },
     updatedAt: { type: Date, default: Date.now } 
 }));
 
@@ -99,7 +98,7 @@ setInterval(async () => {
         if (utcHour === 6 && utcMin === 0) { bot.sendMessage(s.mainGroupId, morningMsgs[Math.floor(Math.random() * morningMsgs.length)]); }
         else if (utcHour === 20 && utcMin === 30) { bot.sendMessage(s.mainGroupId, nightMsgs[Math.floor(Math.random() * nightMsgs.length)]); }
         else if (utcHour === 12 && utcMin === 0) { if (Math.random() > 0.3) bot.sendMessage(s.mainGroupId, randomMsgs[Math.floor(Math.random() * randomMsgs.length)]); }
-    } catch (e) { console.error("Grup Mesajı Hatası:", e); }
+    } catch (e) { }
 }, 60000);
 
 async function archiveDailyLeaderboard() {
@@ -112,11 +111,10 @@ async function archiveDailyLeaderboard() {
             const archiveData = winners.map((u, i) => ({ rank: i + 1, username: u.username, firstName: u.firstName, points: u.dailyPoints, date: new Date() }));
             await YesterdayWinner.insertMany(archiveData); await User.updateMany({}, { $set: { dailyPoints: 0 } });
         } else { await YesterdayWinner.create({ rank: 0, username: 'sistem', firstName: 'sistem', points: 0, date: new Date() }); }
-    } catch (err) { console.error("Liderlik Arşiv Hatası:", err); }
+    } catch (err) { }
 }
 setInterval(() => { const now = new Date(); if (now.getHours() === 23 && now.getMinutes() === 58) archiveDailyLeaderboard(); }, 60000);
 
-// InitData'dan Gerçek ID'yi Çıkarma
 function getTelegramUserFromInitData(telegramInitData) {
     try {
         if (!telegramInitData) return null;
@@ -129,7 +127,6 @@ function getTelegramUserFromInitData(telegramInitData) {
         const secretKey = crypto.createHmac('sha256', 'WebAppData').update(TOKEN).digest();
         const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
         if (calculatedHash !== hash) return null;
-        
         const userObj = JSON.parse(initData.get('user'));
         return userObj.id.toString(); 
     } catch (error) { return null; }
@@ -143,7 +140,6 @@ const secureRoute = (req, res, next) => {
     next();
 };
 
-// API ROTALARI
 app.post('/api/user/auth', secureRoute, async (req, res) => {
     const { username, firstName, referrerId } = req.body;
     const telegramId = req.realTelegramId;
@@ -171,30 +167,16 @@ app.post('/api/daily-reward', secureRoute, async (req, res) => {
 });
 
 app.post('/api/buy-ad-package', secureRoute, async (req, res) => {
-    const { packageId } = req.body; 
-    let cost = 0; let tickets = 0;
-    if (packageId === 1) { cost = 10000; tickets = 10; } 
-    else if (packageId === 2) { cost = 50000; tickets = 50; } 
-    else if (packageId === 3) { cost = 100000; tickets = 100; } 
-    else return res.json({ success: false });
-    
-    const user = await User.findOneAndUpdate(
-        { telegramId: req.realTelegramId, points: { $gte: cost } },
-        { $inc: { points: -cost, adTickets: tickets } },
-        { new: true }
-    );
+    const { packageId } = req.body; let cost = 0; let tickets = 0;
+    if (packageId === 1) { cost = 10000; tickets = 10; } else if (packageId === 2) { cost = 50000; tickets = 50; } else if (packageId === 3) { cost = 100000; tickets = 100; } else return res.json({ success: false });
+    const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost, adTickets: tickets } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP bakiye!" });
     res.json({ success: true, points: user.points, adTickets: user.adTickets });
 });
 
 app.post('/api/adsgram-reward', secureRoute, async (req, res) => {
-    const user = await User.findOneAndUpdate(
-        { telegramId: req.realTelegramId, adTickets: { $gt: 0 } },
-        { $inc: { adTickets: -1 } },
-        { new: true }
-    );
+    const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, adTickets: { $gt: 0 } }, { $inc: { adTickets: -1 } }, { new: true });
     if (!user) return res.json({ success: false, message: "Hiç reklam biletiniz kalmadı!" });
-    
     const settings = await Settings.findOne() || { adsgramReward: 5000 };
     addPoints(user, settings.adsgramReward); await user.save();
     res.json({ success: true, points: user.points, adTickets: user.adTickets });
@@ -211,14 +193,8 @@ app.post('/api/mine', secureRoute, async (req, res) => {
 app.post('/api/upgrade-mine', secureRoute, async (req, res) => {
     const user = await User.findOne({ telegramId: req.realTelegramId }); if (!user) return res.json({ success: false });
     const upgradeCost = user.miningLevel * 10000;
-    
-    const updatedUser = await User.findOneAndUpdate(
-        { telegramId: req.realTelegramId, points: { $gte: upgradeCost } },
-        { $inc: { points: -upgradeCost, miningLevel: 1 } },
-        { new: true }
-    );
-    if (updatedUser) { res.json({ success: true, points: updatedUser.points, newLevel: updatedUser.miningLevel }); } 
-    else { res.json({ success: false, message: "Yetersiz Bakiye!" }); }
+    const updatedUser = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: upgradeCost } }, { $inc: { points: -upgradeCost, miningLevel: 1 } }, { new: true });
+    if (updatedUser) { res.json({ success: true, points: updatedUser.points, newLevel: updatedUser.miningLevel }); } else { res.json({ success: false, message: "Yetersiz Bakiye!" }); }
 });
 
 app.post('/api/redeem-promo', secureRoute, async (req, res) => {
@@ -226,101 +202,73 @@ app.post('/api/redeem-promo', secureRoute, async (req, res) => {
     const promo = await PromoCode.findOne({ code: code.toUpperCase(), isActive: true }); if (!promo) return res.json({ success: false, message: "Geçersiz kod!" });
     if (promo.usedBy.includes(req.realTelegramId)) return res.json({ success: false, message: "Zaten kullandın!" });
     if (promo.usedBy.length >= promo.maxUsage) { promo.isActive = false; await promo.save(); return res.json({ success: false, message: "Sınır doldu!" }); }
-    
     promo.usedBy.push(req.realTelegramId); if (promo.usedBy.length >= promo.maxUsage) promo.isActive = false; await promo.save();
     addPoints(user, promo.reward); await user.save(); res.json({ success: true, reward: promo.reward, points: user.points });
 });
 
 app.post('/api/arcade/spin', secureRoute, async (req, res) => {
-    const cost = 500; 
-    const user = await User.findOneAndUpdate(
-        { telegramId: req.realTelegramId, points: { $gte: cost } },
-        { $inc: { points: -cost } },
-        { new: true }
-    );
+    const cost = 500; const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP!" }); 
-    
     const rand = Math.random() * 100; let prize = 0; let msg = "BOŞ";
     if (rand <= 40) { prize = 0; msg = "Şansını Dene"; } else if (rand <= 75) { prize = 250; msg = "Yarım Teselli"; } else if (rand <= 92) { prize = 500; msg = "Amorti!"; } else if (rand <= 99) { prize = 1000; msg = "İKİYE KATLADIN!"; } else { prize = 5000; msg = "💥 JACKPOT! 💥"; } 
-    
     if (prize > 0) { addPoints(user, prize); await user.save(); }
     res.json({ success: true, prize, msg, points: user.points });
 });
 
 app.post('/api/arcade/predict', secureRoute, async (req, res) => {
     const { guess } = req.body; const cost = 1000; 
-    const user = await User.findOneAndUpdate(
-        { telegramId: req.realTelegramId, points: { $gte: cost } },
-        { $inc: { points: -cost } },
-        { new: true }
-    );
+    const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP!" });
-
     try {
         const r1 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); const d1 = await r1.json(); const p1 = parseFloat(d1.price);
         await new Promise(resolve => setTimeout(resolve, 10000));
         const r2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); const d2 = await r2.json(); const p2 = parseFloat(d2.price);
-        
         let won = false; let reward = 0; 
         if ((guess === 'UP' && p2 > p1) || (guess === 'DOWN' && p2 < p1)) { won = true; reward = 2000; addPoints(user, reward); await user.save(); }
         res.json({ success: true, won, price1: p1, price2: p2, reward, points: user.points });
-    } catch (e) { 
-        await User.updateOne({ telegramId: req.realTelegramId }, { $inc: { points: cost } });
-        res.json({ success: false, message: "Borsa Bağlantı Hatası. Puan İade Edildi." }); 
-    }
+    } catch (e) { await User.updateOne({ telegramId: req.realTelegramId }, { $inc: { points: cost } }); res.json({ success: false, message: "Borsa Bağlantı Hatası. Puan İade Edildi." }); }
 });
 
 app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
-    const { boxType } = req.body; const user = await User.findOne({ telegramId: req.realTelegramId }); 
-    if (!user) return res.json({ success: false });
-
+    const { boxType } = req.body; const user = await User.findOne({ telegramId: req.realTelegramId }); if (!user) return res.json({ success: false });
     const now = new Date(); let lastOpenDate;
-    if (boxType === 1) lastOpenDate = user.lastLootbox1 || new Date(0);
-    else if (boxType === 2) lastOpenDate = user.lastLootbox2 || new Date(0);
-    else if (boxType === 3) lastOpenDate = user.lastLootbox3 || new Date(0);
-    else return res.json({ success: false });
-
+    if (boxType === 1) lastOpenDate = user.lastLootbox1 || new Date(0); else if (boxType === 2) lastOpenDate = user.lastLootbox2 || new Date(0); else if (boxType === 3) lastOpenDate = user.lastLootbox3 || new Date(0); else return res.json({ success: false });
     const diffHours = (now - new Date(lastOpenDate)) / (1000 * 60 * 60);
     if (diffHours < 24) return res.json({ success: false, message: `Bu kapsülü bugün açtın! ${Math.ceil(24 - diffHours)} saat bekle.` });
-
-    let cost = 0;
-    if (boxType === 1) cost = 1000; else if (boxType === 2) cost = 5000; else if (boxType === 3) cost = 25000;
-    
-    const updatedUser = await User.findOneAndUpdate(
-        { telegramId: req.realTelegramId, points: { $gte: cost } },
-        { $inc: { points: -cost } },
-        { new: true }
-    );
+    let cost = 0; if (boxType === 1) cost = 1000; else if (boxType === 2) cost = 5000; else if (boxType === 3) cost = 25000;
+    const updatedUser = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
     if (!updatedUser) return res.json({ success: false, message: "Yetersiz GEP!" });
-    
-    if (boxType === 1) updatedUser.lastLootbox1 = now;
-    else if (boxType === 2) updatedUser.lastLootbox2 = now;
-    else if (boxType === 3) updatedUser.lastLootbox3 = now;
-
+    if (boxType === 1) updatedUser.lastLootbox1 = now; else if (boxType === 2) updatedUser.lastLootbox2 = now; else if (boxType === 3) updatedUser.lastLootbox3 = now;
     const rand = Math.random() * 100; let prize = 0; let msg = "BOŞ KAPSÜL";
-    if (boxType === 1) { 
-        if (rand <= 40) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 70) { prize = 500; msg = "⚙️ Kırık Çip"; } else if (rand <= 90) { prize = 1500; msg = "🔋 Standart Veri"; } else if (rand <= 99) { prize = 5000; msg = "💎 Nadir Kod"; } else { prize = 10000; msg = "🔥 MEGA KAZANÇ 🔥"; } 
-    } 
-    else if (boxType === 2) { 
-        if (rand <= 30) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 65) { prize = 3000; msg = "🔋 Kaliteli Veri"; } else if (rand <= 85) { prize = 7500; msg = "💎 Nadir Çip"; } else if (rand <= 95) { prize = 20000; msg = "🔥 Destansı Çekirdek"; } else { prize = 50000; msg = "👑 EFSANEVİ NODE 👑"; } 
-    } 
-    else if (boxType === 3) { 
-        if (rand <= 20) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 50) { prize = 15000; msg = "💎 Parazitli Node"; } else if (rand <= 80) { prize = 40000; msg = "🔥 Saf Çekirdek"; } else if (rand <= 95) { prize = 100000; msg = "👑 EFSANEVİ KOD 👑"; } else { prize = 250000; msg = "🌌 UZAY BOŞLUĞU 🌌"; }
-    }
-    
-    if (prize > 0) addPoints(updatedUser, prize); 
-    await updatedUser.save(); 
-    res.json({ success: true, prize, msg, points: updatedUser.points, lastLootbox1: updatedUser.lastLootbox1, lastLootbox2: updatedUser.lastLootbox2, lastLootbox3: updatedUser.lastLootbox3 });
+    if (boxType === 1) { if (rand <= 40) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 70) { prize = 500; msg = "⚙️ Kırık Çip"; } else if (rand <= 90) { prize = 1500; msg = "🔋 Standart Veri"; } else if (rand <= 99) { prize = 5000; msg = "💎 Nadir Kod"; } else { prize = 10000; msg = "🔥 MEGA KAZANÇ 🔥"; } } 
+    else if (boxType === 2) { if (rand <= 30) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 65) { prize = 3000; msg = "🔋 Kaliteli Veri"; } else if (rand <= 85) { prize = 7500; msg = "💎 Nadir Çip"; } else if (rand <= 95) { prize = 20000; msg = "🔥 Destansı Çekirdek"; } else { prize = 50000; msg = "👑 EFSANEVİ NODE 👑"; } } 
+    else if (boxType === 3) { if (rand <= 20) { prize = 0; msg = "🗑️ Çöp Veri"; } else if (rand <= 50) { prize = 15000; msg = "💎 Parazitli Node"; } else if (rand <= 80) { prize = 40000; msg = "🔥 Saf Çekirdek"; } else if (rand <= 95) { prize = 100000; msg = "👑 EFSANEVİ KOD 👑"; } else { prize = 250000; msg = "🌌 UZAY BOŞLUĞU 🌌"; } }
+    if (prize > 0) addPoints(updatedUser, prize); await updatedUser.save(); res.json({ success: true, prize, msg, points: updatedUser.points, lastLootbox1: updatedUser.lastLootbox1, lastLootbox2: updatedUser.lastLootbox2, lastLootbox3: updatedUser.lastLootbox3 });
 });
 
-app.get('/api/airdrop/list', async (req, res) => {
+// GÜNCELLENDİ: Güvenlik eklendi, sadece yetkili kullanıcı kendi verilerini çekerken "Katıldım mı?" diye görebilir.
+app.post('/api/airdrop/list', secureRoute, async (req, res) => {
     const links = await AirdropLink.find().sort({ updatedAt: -1 }).limit(30);
-    res.json({ success: true, links });
+    
+    // Frontende yollarken verileri kullanıcının profiline göre işaretle
+    const userLinks = links.map(l => {
+        return {
+            _id: l._id,
+            username: l.username,
+            title: l.title,
+            description: l.description,
+            url: l.url,
+            hasJoined: l.joinedUsers.includes(req.realTelegramId), // Kullanıcı bu projeye katılmış mı?
+            isOwner: l.telegramId === req.realTelegramId // Proje kullanıcının kendi projesi mi?
+        };
+    });
+    
+    res.json({ success: true, links: userLinks });
 });
 
 app.post('/api/airdrop/share', secureRoute, async (req, res) => {
     const { title, description, url } = req.body;
-    const cost = 250000; 
+    const cost = 1000000; // GÜNCELLENDİ: 1 Milyon GEP yapıldı
     
     if(!url.startsWith("http")) return res.json({success: false, message: "Geçerli bir link (https://) girin!"});
     if(!title || title.length > 25) return res.json({success: false, message: "Başlık çok uzun (Max 25 harf)."});
@@ -331,7 +279,7 @@ app.post('/api/airdrop/share', secureRoute, async (req, res) => {
         { $inc: { points: -cost } },
         { new: true }
     );
-    if(!user) return res.json({success: false, message: "Yetersiz Bakiye! 250.000 GEP gerekli."});
+    if(!user) return res.json({success: false, message: "Yetersiz Bakiye! 1.000.000 GEP gerekli."});
 
     let existing = await AirdropLink.findOne({ telegramId: req.realTelegramId });
     if (existing) { existing.title = title; existing.description = description; existing.url = url; existing.updatedAt = new Date(); await existing.save(); } 
@@ -339,37 +287,27 @@ app.post('/api/airdrop/share', secureRoute, async (req, res) => {
     res.json({success: true, points: user.points, message: "İlanınız başarıyla panoya asıldı!"});
 });
 
-// YENİ ROTA: SİBER PANO KATILIM ÖDÜLÜ
 app.post('/api/airdrop/join', secureRoute, async (req, res) => {
     const { projectId } = req.body;
-    
     try {
         const project = await AirdropLink.findById(projectId);
         if (!project) return res.json({ success: false, message: "Proje bulunamadı." });
-
-        // Kullanıcı bu projeye önceden tıklamış mı kontrol et
         if (project.joinedUsers.includes(req.realTelegramId)) {
             return res.json({ success: false, message: "Bu projeden zaten ödül aldın." });
         }
-
-        // Kendi projesine tıklamayı engelle
         if (project.telegramId === req.realTelegramId) {
              return res.json({ success: false, message: "Kendi projene tıklayamazsın." });
         }
 
-        // Listeye ekle ve kaydet
         project.joinedUsers.push(req.realTelegramId);
         await project.save();
 
-        // Ödülü Ver (5000 GEP)
         const user = await User.findOne({ telegramId: req.realTelegramId });
-        addPoints(user, 5000);
+        addPoints(user, 10000); // GÜNCELLENDİ: Katılım ödülü 10 Bin GEP yapıldı
         await user.save();
 
         res.json({ success: true, points: user.points, message: "Katılım onaylandı!" });
-    } catch (e) {
-        res.json({ success: false, message: "Sistem hatası." });
-    }
+    } catch (e) { res.json({ success: false, message: "Sistem hatası." }); }
 });
 
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
@@ -377,16 +315,12 @@ app.get('/api/leaderboard', async (req, res) => {
     const allTime = await User.find().sort({ points: -1 }).limit(100); const today = new Date(); today.setHours(0, 0, 0, 0); const daily = await User.find({ lastPointDate: { $gte: today } }).sort({ dailyPoints: -1 }).limit(100); const yesterday = await YesterdayWinner.find({ rank: { $gt: 0 } }).sort({ rank: 1 }); res.json({ success: true, leaderboard: allTime, dailyLeaderboard: daily, yesterdayLeaderboard: yesterday }); 
 });
 app.post('/api/tasks/complete', secureRoute, async (req, res) => { 
-    const { taskId } = req.body; 
-    const task = await Task.findOne({ taskId }); 
-    const user = await User.findOne({ telegramId: req.realTelegramId }); 
+    const { taskId } = req.body; const task = await Task.findOne({ taskId }); const user = await User.findOne({ telegramId: req.realTelegramId }); 
     if (!user || !task || user.completedTasks.includes(taskId)) return res.json({ success: false }); 
     addPoints(user, task.reward); user.completedTasks.push(taskId); await user.save(); res.json({ success: true, points: user.points }); 
 });
 
-// ADMIN ROTALARI
 const adminCheck = (req, res, next) => { if (req.realTelegramId !== ADMIN_ID) return res.status(403).send("Yetkisiz"); next(); };
-
 app.post('/api/admin/stats', secureRoute, adminCheck, async (req, res) => { const settings = await Settings.findOne() || { announcements: [] }; res.json({ totalUsers: await User.countDocuments(), totalPoints: (await User.aggregate([{$group: {_id:null, total:{$sum:"$points"}}}]))[0]?.total || 0, announcements: settings.announcements, tasks: await Task.find() }); });
 app.post('/api/admin/add-task', secureRoute, adminCheck, async (req, res) => { await Task.create({ taskId: Date.now().toString(), title: req.body.title, reward: req.body.reward, target: req.body.target }); res.json({ success: true }); });
 app.post('/api/admin/delete-task', secureRoute, adminCheck, async (req, res) => { await Task.deleteOne({ taskId: req.body.taskId }); res.json({ success: true }); });
@@ -394,12 +328,6 @@ app.post('/api/admin/create-promo', secureRoute, adminCheck, async (req, res) =>
 app.post('/api/admin/announcement', secureRoute, adminCheck, async (req, res) => { const s = await Settings.findOne() || await Settings.create({}); if(req.body.action === 'add') s.announcements.push(req.body.text); else s.announcements.splice(req.body.index, 1); await s.save(); res.json({ success: true }); });
 app.post('/api/admin/user-manage', secureRoute, adminCheck, async (req, res) => { const { targetId, action, amount } = req.body; const user = await User.findOne({ $or: [{ telegramId: targetId }, { username: targetId }] }); if (!user) return res.json({ success: false }); if (action === 'add') addPoints(user, Number(amount)); if (action === 'set') user.points = Number(amount); if (action === 'ban') user.isBanned = true; if (action === 'unban') user.isBanned = false; await user.save(); res.json({ success: true }); });
 app.post('/api/admin/delete-airdrop', secureRoute, adminCheck, async (req, res) => { await AirdropLink.findByIdAndDelete(req.body.id); res.json({ success: true }); });
-
-// ==========================================
-// 💬 TELEGRAM GRUP İÇİ KOMUTLAR 
-// ==========================================
-
-const activeDuels = new Map(); // Düelloları hafızada tutmak için Map
 
 bot.onText(/\/start(?:\s+(.*))?/, (msg, match) => {
     if (msg.chat.type !== 'private') return;
@@ -414,7 +342,7 @@ bot.onText(/\/zar (\d+)/, async (msg, match) => { const amount = parseInt(match[
 bot.onText(/\/liderler/, async (msg) => { const topUsers = await User.find().sort({ points: -1 }).limit(5); let text = "🏆 **EN ZENGİN 5 OYUNCU**\n\n"; topUsers.forEach((u, i) => { text += `${i+1}. ${u.firstName} - **${Math.floor(u.points).toLocaleString()} GEP**\n`; }); bot.sendMessage(msg.chat.id, text, { parse_mode: 'Markdown' }); });
 bot.onText(/\/maden/, async (msg) => { const user = await User.findOne({ telegramId: msg.from.id.toString() }); if (!user) return; const diff = new Date().getTime() - new Date(user.lastMining).getTime(); const cooldown = 4 * 60 * 60 * 1000; if (diff >= cooldown) { bot.sendMessage(msg.chat.id, "⛏️ **Madenin Hazır!**\nUygulamaya gir ve ödülünü topla. 🔥"); } else { const remaining = Math.ceil((cooldown - diff) / (60 * 1000)); bot.sendMessage(msg.chat.id, `⛏️ Maden üretimde...\n⏳ **${remaining} dakika** sonra hazır.`); } });
 
-// DÜELLO SİSTEMİ
+const activeDuels = new Map(); 
 bot.onText(/\/duello (\d+)/, async (msg, match) => { 
     if (!msg.reply_to_message) return bot.sendMessage(msg.chat.id, "Meydan okumak istediğin kişinin mesajını yanıtlayarak /duello <miktar> yazmalısın.");
     const amount = parseInt(match[1]); 
@@ -424,42 +352,22 @@ bot.onText(/\/duello (\d+)/, async (msg, match) => {
     if (challenger.points < amount) return bot.sendMessage(msg.chat.id, "Bakiyen bu düello için yetersiz.");
     if (opponent.points < amount) return bot.sendMessage(msg.chat.id, "Karşı tarafın bakiyesi bu düello için yetersiz.");
     if (challenger.telegramId === opponent.telegramId) return bot.sendMessage(msg.chat.id, "Kendinle düello yapamazsın!");
-    
     activeDuels.set(opponent.telegramId, { challengerId: challenger.telegramId, amount: amount, chatId: msg.chat.id });
-    
     bot.sendMessage(msg.chat.id, `⚔️ **DÜELLO DAVETİ!**\n\n@${msg.from.username}, @${msg.reply_to_message.from.username} kullanıcısına **${amount} GEP** değerinde meydan okudu!\n\nKabul etmek için bu mesajı yanıtlayıp \`/kabul\` yazın!`); 
 });
-
 bot.onText(/\/kabul/, async (msg) => { 
     if (!msg.reply_to_message || !msg.reply_to_message.text.includes("DÜELLO DAVETİ!")) return; 
-    
-    const opponentId = msg.from.id.toString();
-    const duelData = activeDuels.get(opponentId);
-    
+    const opponentId = msg.from.id.toString(); const duelData = activeDuels.get(opponentId);
     if (!duelData) return bot.sendMessage(msg.chat.id, "Geçerli bir düello davetin yok veya süresi geçmiş.");
-    activeDuels.delete(opponentId); // Düelloyu hafızadan sil
-    
-    const challenger = await User.findOne({ telegramId: duelData.challengerId });
-    const opponent = await User.findOne({ telegramId: opponentId });
-    
-    if (!challenger || !opponent || challenger.points < duelData.amount || opponent.points < duelData.amount) {
-        return bot.sendMessage(msg.chat.id, "Taraflardan birinin bakiyesi yetersiz olduğu için düello iptal edildi.");
-    }
-    
+    activeDuels.delete(opponentId); 
+    const challenger = await User.findOne({ telegramId: duelData.challengerId }); const opponent = await User.findOne({ telegramId: opponentId });
+    if (!challenger || !opponent || challenger.points < duelData.amount || opponent.points < duelData.amount) { return bot.sendMessage(msg.chat.id, "Taraflardan birinin bakiyesi yetersiz olduğu için düello iptal edildi."); }
     bot.sendMessage(msg.chat.id, "⚔️ Kılıçlar çekildi! Sistem bir kazanan belirliyor..."); 
-    
     setTimeout(async () => { 
-        const isChallengerWin = Math.random() > 0.5;
-        let winner, loser;
-        
-        if (isChallengerWin) { winner = challenger; loser = opponent; } 
-        else { winner = opponent; loser = challenger; }
-        
-        winner.points += duelData.amount;
-        loser.points -= duelData.amount;
-        
+        const isChallengerWin = Math.random() > 0.5; let winner, loser;
+        if (isChallengerWin) { winner = challenger; loser = opponent; } else { winner = opponent; loser = challenger; }
+        winner.points += duelData.amount; loser.points -= duelData.amount;
         await winner.save(); await loser.save();
-        
         bot.sendMessage(msg.chat.id, `🎉 **DÜELLO BİTTİ!**\n\nKazanan: **${winner.firstName}** (+${duelData.amount} GEP)\nKaybeden: **${loser.firstName}** (-${duelData.amount} GEP)`); 
     }, 3000); 
 });
