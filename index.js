@@ -21,7 +21,7 @@ const bot = new TelegramBot(TOKEN);
 bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v6.6.2 - Kapsamlı Hoş Geldin Mesajı Aktif"))
+    .then(() => console.log("✅ Gelir Evreni v6.7 - Çark Logici Düzeltildi"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -87,7 +87,6 @@ function addPoints(user, amount) {
     user.points += amount; user.dailyPoints += amount; user.lastPointDate = now;
 }
 
-// --- GRUP ETKİLEŞİM DEĞİŞKENLERİ ---
 const chatCooldowns = new Map();
 let activeDrop = null;
 
@@ -216,10 +215,21 @@ app.post('/api/redeem-promo', secureRoute, async (req, res) => {
 });
 
 app.post('/api/arcade/spin', secureRoute, async (req, res) => {
-    const cost = 500; const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
+    const cost = 500; 
+    const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP!" }); 
-    const rand = Math.random() * 100; let prize = 0; let msg = "BOŞ";
-    if (rand <= 40) prize = 0; else if (rand <= 75) prize = 250; else if (rand <= 92) prize = 500; else if (rand <= 99) prize = 1000; else prize = 5000;
+    
+    const rand = Math.random() * 100; 
+    let prize = 0; 
+    let msg = "BOŞ";
+    
+    // GÜNCELLENDİ: Mesajlar geri eklendi!
+    if (rand <= 40) { prize = 0; msg = "Şansını Dene"; } 
+    else if (rand <= 75) { prize = 250; msg = "Yarım Teselli"; } 
+    else if (rand <= 92) { prize = 500; msg = "Amorti!"; } 
+    else if (rand <= 99) { prize = 1000; msg = "İKİYE KATLADIN!"; } 
+    else { prize = 5000; msg = "💥 JACKPOT! 💥"; }
+    
     if (prize > 0) { addPoints(user, prize); await user.save(); }
     res.json({ success: true, prize, msg, points: user.points });
 });
@@ -300,7 +310,6 @@ app.post('/api/admin/announcement', secureRoute, adminCheck, async (req, res) =>
 app.post('/api/admin/user-manage', secureRoute, adminCheck, async (req, res) => { const { targetId, action, amount } = req.body; const user = await User.findOne({ $or: [{ telegramId: targetId }, { username: targetId }] }); if (!user) return res.json({ success: false }); if (action === 'add') addPoints(user, Number(amount)); if (action === 'set') user.points = Number(amount); if (action === 'ban') user.isBanned = true; if (action === 'unban') user.isBanned = false; await user.save(); res.json({ success: true }); });
 app.post('/api/admin/delete-airdrop', secureRoute, adminCheck, async (req, res) => { await AirdropLink.findByIdAndDelete(req.body.id); res.json({ success: true }); });
 
-// 1. Karşılama Sistemi (GÜNCELLENDİ: Özet mesaji dahil edildi)
 bot.on('new_chat_members', async (msg) => {
     const s = await Settings.findOne();
     if (!s || msg.chat.id.toString() !== s.mainGroupId) return;
@@ -308,7 +317,7 @@ bot.on('new_chat_members', async (msg) => {
     const summary = `💎 **GELİR EVRENİ (GEP) SİSTEM ÖZETİ** 💎\n\n` +
     `⛏️ **Maden:** 4 saatte bir uygulamaya girip GEP topla.\n` +
     `📢 **Benim Projem:** Kendi projeni 1M GEP'e yayınla veya başkalarının projelerine katılıp anında **+10.000 GEP** kazan.\n` +
-    `🎮 **Oyunlar:** Kripto Kahini (Tahmin), Siber Çark ve Veri Kapsülleri ile GEP'lerini katla.\n` +
+    `🎮 **Oyunlar:** Kripto Kahini (Tahmin), Gelir Çarkı ve Gelir Kapsülleri ile GEP'lerini katla.\n` +
     `💬 **Chat-Kazan:** Bu grupta sohbet ettikçe arka planda otomatik GEP kazanırsın.\n` +
     `⚔️ **Etkileşim:** \`/duello\`, \`/zar\` ve \`/bahsis\` komutlarıyla grupta diğerleriyle kapış.\n` +
     `🎁 **Siber Drop:** Saatte bir rastgele gruba düşen 25.000 GEP'i ilk tıklayan kapar!\n` +
@@ -351,7 +360,7 @@ bot.on('message', async (msg) => {
         const summary = `💎 **GELİR EVRENİ (GEP) SİSTEM ÖZETİ** 💎\n\n` +
         `⛏️ **Maden:** 4 saatte bir uygulamaya girip GEP topla.\n` +
         `📢 **Benim Projem:** Kendi projeni 1M GEP'e yayınla veya başkalarının projelerine katılıp anında **+10.000 GEP** kazan.\n` +
-        `🎮 **Oyunlar:** Kripto Kahini (Tahmin), Siber Çark ve Veri Kapsülleri ile GEP'lerini katla.\n` +
+        `🎮 **Oyunlar:** Kripto Kahini (Tahmin), Gelir Çarkı ve Gelir Kapsülleri ile GEP'lerini katla.\n` +
         `💬 **Chat-Kazan:** Bu grupta sohbet ettikçe arka planda otomatik GEP kazanırsın.\n` +
         `⚔️ **Etkileşim:** \`/duello\`, \`/zar\` ve \`/bahsis\` komutlarıyla grupta diğerleriyle kapış.\n` +
         `🎁 **Siber Drop:** Saatte bir rastgele gruba düşen 25.000 GEP'i ilk tıklayan kapar!\n` +
