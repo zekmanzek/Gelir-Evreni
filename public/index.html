@@ -89,12 +89,13 @@
         .game-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(10px); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
         .close-modal { position: absolute; top: 20px; right: 20px; font-size: 30px; color: var(--text-dim); cursor: pointer; }
         
-        /* GELİŞTİRİLMİŞ ÇARK CSS */
+        /* GELİŞTİRİLMİŞ ÇARK TASARIMI */
         .spin-container { position: relative; width: 240px; height: 240px; margin: 0 auto 30px; }
         .spin-pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 35px; z-index: 10; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
         .spin-wheel { width: 100%; height: 100%; border-radius: 50%; border: 6px solid var(--gold); background: conic-gradient( #ef4444 0deg 72deg, #f97316 72deg 144deg, #eab308 144deg 216deg, #10b981 216deg 288deg, #3b82f6 288deg 360deg ); box-shadow: 0 0 25px var(--gold-glow), inset 0 0 20px rgba(0,0,0,0.6); transition: transform 4s cubic-bezier(0.15, 0.9, 0.15, 1); position: relative; overflow: hidden; }
         .spin-wheel::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: radial-gradient(circle, var(--gold), #b45309); border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 15px rgba(0,0,0,0.8); }
         .wheel-segment-text { position: absolute; top: 15px; left: 50%; transform-origin: 50% 105px; font-weight: 900; font-size: 18px; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.9); }
+        
         .shake-box { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both infinite; }
         @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0) rotate(-5deg); } 20%, 80% { transform: translate3d(4px, 0, 0) rotate(5deg); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0) rotate(-10deg); } 40%, 60% { transform: translate3d(8px, 0, 0) rotate(10deg); } }
     
@@ -186,9 +187,7 @@
         <style>.arcade-card { position: relative; overflow: hidden; padding-top: 35px; border-color: rgba(255,255,255,0.05); } .badge-soon { position: absolute; top:12px; right:15px; background:var(--danger); color:#fff; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:800; letter-spacing:1px; } .arcade-icon { font-size: 40px; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }</style>
 
         <div class="glass-card arcade-card" style="border-color: var(--cyan);"><div class="arcade-icon">📈</div><h3 style="color: var(--cyan); margin-bottom: 5px;">Kripto Kahini</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">BTC fiyatını tahmin et, GEP'lerini katla.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('predict')">TAHMİN ET (1000 GEP)</button></div>
-        
         <div class="glass-card arcade-card" style="border-color: var(--gold);"><div class="arcade-icon">🎰</div><h3 style="color: var(--gold); margin-bottom: 5px;">Gelir Çarkı</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')">ÇEVİR (500 GEP)</button></div>
-        
         <div class="glass-card arcade-card" style="border-color: #10b981;"><div class="arcade-icon">📦</div><h3 style="color: #10b981; margin-bottom: 5px;">Gelir Kapsülleri</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Sandıkları aç, sürprizleri yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #10b981; color:#10b981;" onclick="openGame('lootbox')">KAPSÜLLERİ GÖR</button></div>
 
         <div class="glass-card arcade-card" style="opacity:0.5;"><div class="badge-soon">YAKINDA</div><div class="arcade-icon">🚀</div><h3 style="color: #f43f5e;">Siber Çöküş</h3><p style="font-size: 12px;">Roket patlamadan çekil, kazancı al.</p></div>
@@ -455,13 +454,11 @@
         
         function closeGame(game) { triggerHaptic('light'); document.getElementById(`modal-${game}`).style.display = 'none'; }
         
-        // YENİ GÜNCELLENMİŞ ÇARK ANİMASYON MANTIĞI
         async function playSpin() { 
             if (user.points < 500) return tg.showAlert("Yetersiz GEP!"); 
             const btn = document.getElementById('btn-do-spin'); const wheel = document.getElementById('spin-wheel'); const resText = document.getElementById('spin-result'); 
             btn.disabled = true; resText.style.color = "#fff"; resText.innerText = "Dönüyor..."; triggerHaptic('heavy'); 
             
-            // Animasyonu sıfırla ki geriye sarmadan tam dönsün
             wheel.style.transition = 'none';
             let currentRotation = parseFloat(wheel.getAttribute('data-rotation') || 0);
             let normalized = currentRotation % 360;
@@ -478,9 +475,8 @@
                 const prizeAngles = { 0: 36, 250: 108, 500: 180, 1000: 252, 5000: 324 }; 
                 const targetAngle = prizeAngles[data.prize]; 
                 const offset = 360 - targetAngle;
-                const jitter = Math.floor(Math.random() * 40) - 20; // Tam ortaya düşmemesi için rastgele titreme
+                const jitter = Math.floor(Math.random() * 40) - 20; 
                 
-                // 5 Tam tur dön ve hedefe otur
                 const newRotation = currentRotation + (360 * 5) + offset + jitter - normalized;
                 
                 wheel.style.transform = `rotate(${newRotation}deg)`;
