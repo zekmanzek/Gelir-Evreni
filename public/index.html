@@ -187,7 +187,9 @@
         <style>.arcade-card { position: relative; overflow: hidden; padding-top: 35px; border-color: rgba(255,255,255,0.05); } .badge-soon { position: absolute; top:12px; right:15px; background:var(--danger); color:#fff; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:800; letter-spacing:1px; } .arcade-icon { font-size: 40px; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }</style>
 
         <div class="glass-card arcade-card" style="border-color: var(--cyan);"><div class="arcade-icon">📈</div><h3 style="color: var(--cyan); margin-bottom: 5px;">Kripto Kahini</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">BTC fiyatını tahmin et, GEP'lerini katla.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('predict')">TAHMİN ET (1000 GEP)</button></div>
+        
         <div class="glass-card arcade-card" style="border-color: var(--gold);"><div class="arcade-icon">🎰</div><h3 style="color: var(--gold); margin-bottom: 5px;">Gelir Çarkı</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')">ÇEVİR (500 GEP)</button></div>
+        
         <div class="glass-card arcade-card" style="border-color: #10b981;"><div class="arcade-icon">📦</div><h3 style="color: #10b981; margin-bottom: 5px;">Gelir Kapsülleri</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Sandıkları aç, sürprizleri yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #10b981; color:#10b981;" onclick="openGame('lootbox')">KAPSÜLLERİ GÖR</button></div>
 
         <div class="glass-card arcade-card" style="opacity:0.5;"><div class="badge-soon">YAKINDA</div><div class="arcade-icon">🚀</div><h3 style="color: #f43f5e;">Siber Çöküş</h3><p style="font-size: 12px;">Roket patlamadan çekil, kazancı al.</p></div>
@@ -310,41 +312,120 @@
             if(p === 'admin') loadAdminStats(); 
         }
 
+        // ==========================================
+        // 2-ADIMLI KATILIM VE GÖREV DOĞRULAMA (YENİ)
+        // ==========================================
+        
         async function joinProject(projectId, url) {
-            triggerHaptic('light');
-            tg.openLink(url);
-            
             const btn = document.querySelector(`#ad-${projectId} .btn-join`);
-            if(btn) {
+            if(!btn) return;
+
+            // 1. ADIM: LİNKE GİT
+            if (btn.innerText.includes("KATIL")) {
+                triggerHaptic('light');
+                try { tg.openLink(url); } catch(e) { window.open(url, '_blank'); }
+                
+                // Butonu KONTROL ET moduna geçir
+                btn.innerText = "🔄 KONTROL ET";
+                btn.style.background = "#f59e0b"; // Turuncu
+            } 
+            // 2. ADIM: DOĞRULAMA YAP
+            else if (btn.innerText.includes("KONTROL ET")) {
+                triggerHaptic('medium');
                 btn.disabled = true;
-                btn.style.background = "#10b981";
+                btn.style.background = "#10b981"; // Yeşil
                 btn.style.opacity = "0.6";
                 btn.innerText = "⏳ BEKLENİYOR...";
-            }
 
-            setTimeout(async () => {
-                try {
-                    const res = await fetch(`${API}/api/airdrop/join`, { 
-                        method: 'POST', 
-                        headers: {'Content-Type': 'application/json'}, 
-                        body: JSON.stringify({ projectId, initData: tg.initData }) 
-                    });
-                    const data = await res.json();
-                    if(data.success) {
-                        user.points = data.points;
-                        updateUI();
-                        triggerHaptic('success');
-                        spawnFloatingText(null, "+10.000 GEP", "var(--success)");
-                        tg.showAlert("Tebrikler! Projeye katıldığın için 10.000 GEP kazandın.");
-                        if(btn) { btn.innerText = "✅ KATILINDI"; }
-                    } else {
-                        if(btn) { btn.innerText = "❌ HATA"; }
-                        tg.showAlert(data.message);
-                        loadAirdrops(); 
+                setTimeout(async () => {
+                    try {
+                        const res = await fetch(`${API}/api/airdrop/join`, { 
+                            method: 'POST', 
+                            headers: {'Content-Type': 'application/json'}, 
+                            body: JSON.stringify({ projectId, initData: tg.initData }) 
+                        });
+                        const data = await res.json();
+                        if(data.success) {
+                            user.points = data.points;
+                            updateUI();
+                            triggerHaptic('success');
+                            spawnFloatingText(null, "+10.000 GEP", "var(--success)");
+                            tg.showAlert("Tebrikler! Projeye katıldığın için 10.000 GEP kazandın.");
+                            btn.innerText = "✅ KATILINDI";
+                            btn.style.opacity = "0.6";
+                        } else {
+                            btn.innerText = "❌ HATA";
+                            tg.showAlert(data.message);
+                            loadAirdrops(); 
+                        }
+                    } catch(e) { 
+                        console.error(e); 
+                        btn.innerText = "🔄 KONTROL ET"; 
+                        btn.disabled = false; 
+                        btn.style.background = "#f59e0b"; 
+                        btn.style.opacity = "1"; 
                     }
-                } catch(e) { console.error(e); if(btn) { btn.innerText = "🚀 KATIL (+10.000 GEP)"; btn.disabled = false; btn.style.background = "#8b5cf6"; btn.style.opacity = "1"; } }
-            }, 3000);
+                }, 2000);
+            }
         }
+
+        async function completeTask(e, tid, link) { 
+            const btn = document.getElementById(`task-btn-${tid}`);
+            if (!btn) return;
+
+            // 1. ADIM: LİNKE GİT
+            if (btn.innerText.includes("GİT")) {
+                triggerHaptic('light'); 
+                try { tg.openLink(link); } catch(err) { window.open(link, '_blank'); }
+                
+                btn.innerText = "🔄 KONTROL ET";
+                btn.style.background = "#f59e0b";
+                btn.style.color = "#fff";
+                btn.classList.remove('btn-outline');
+            } 
+            // 2. ADIM: DOĞRULAMA YAP
+            else if (btn.innerText.includes("KONTROL ET")) {
+                triggerHaptic('medium');
+                btn.disabled = true;
+                btn.innerText = "⏳ BEKLENİYOR...";
+                btn.style.opacity = "0.6";
+                btn.style.background = "#10b981";
+
+                setTimeout(async () => { 
+                    try {
+                        const res = await fetch(`${API}/api/tasks/complete`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ taskId: tid, initData: tg.initData }) }); 
+                        const data = await res.json(); 
+                        if(data.success) { 
+                            triggerHaptic('success'); 
+                            spawnFloatingText(e, "GÖREV TAMAM!", "var(--success)"); 
+                            init(); 
+                        } else {
+                            btn.innerText = "🚀 GİT";
+                            btn.disabled = false;
+                            btn.style.opacity = "1";
+                            btn.style.background = "transparent";
+                            btn.classList.add('btn-outline');
+                        }
+                    } catch(err) {
+                        btn.innerText = "🔄 KONTROL ET";
+                        btn.disabled = false;
+                        btn.style.opacity = "1";
+                        btn.style.background = "#f59e0b";
+                    }
+                }, 2000); 
+            }
+        }
+
+        function renderTasks() { 
+            const cont = document.getElementById('task-list'); 
+            if(!cont) return; 
+            cont.innerHTML = tasks.map(tData => { 
+                const isDone = user.completedTasks.includes(tData.taskId); 
+                return `<div class="task-card" style="${isDone ? 'opacity:0.5;' : ''}"><div><div style="font-weight: 800; font-size:14px; margin-bottom: 4px;">${tData.title}</div><div style="font-family: 'Space Grotesk'; color: ${isDone ? 'var(--text-dim)' : 'var(--gold)'}; font-weight: 700;">+${tData.reward} GEP</div></div><button id="task-btn-${tData.taskId}" class="game-btn ${isDone ? '' : 'btn-outline'}" style="${isDone ? 'background:#1e293b; color:#64748b; padding:10px 20px; width:auto; font-size:12px; box-shadow:none;' : 'padding:10px 20px; width:auto; font-size:12px;'}" ${isDone ? 'disabled' : ''} onclick="completeTask(event, '${tData.taskId}','${tData.target}')">${isDone ? '✅ BİTTİ' : '🚀 GİT'}</button></div>`; 
+            }).join(''); 
+        }
+
+        // ==========================================
 
         async function loadAirdrops() {
             try {
@@ -463,7 +544,7 @@
             let currentRotation = parseFloat(wheel.getAttribute('data-rotation') || 0);
             let normalized = currentRotation % 360;
             wheel.style.transform = `rotate(${normalized}deg)`;
-            void wheel.offsetWidth; // Reflow tetiklemesi
+            void wheel.offsetWidth; 
             
             wheel.style.transition = 'transform 4s cubic-bezier(0.15, 0.9, 0.15, 1)';
             
@@ -548,12 +629,6 @@
         async function claimDaily(event) { triggerHaptic('medium'); const res = await fetch(`${API}/api/daily-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if(data.success) { triggerHaptic('success'); spawnFloatingText(event, "+" + data.reward, "var(--gold)"); tg.showAlert(`🎉 Ödül Alındı! Seri: ${data.streak}. GÜN (+${data.reward} GEP)`); init(); } else { triggerHaptic('error'); tg.showAlert(data.message); } }
         
         function renderAnnouncements(annList) { const annContainer = document.getElementById('ann-container'); const annScroll = document.getElementById('ann-scroll'); if (annList && annList.length > 0) { annScroll.innerText = annList.join(" 🔔 ") + " 🔔 "; annContainer.style.display = 'flex'; } else { annContainer.style.display = 'none'; } }
-        
-        async function refreshTasks() { const tRes = await fetch(`${API}/api/tasks`); const tData = await tRes.json(); tasks = tData.tasks || []; renderTasks(); }
-        
-        function renderTasks() { const cont = document.getElementById('task-list'); if(!cont) return; cont.innerHTML = tasks.map(tData => { const isDone = user.completedTasks.includes(tData.taskId); return `<div class="task-card" style="${isDone ? 'opacity:0.5;' : ''}"><div><div style="font-weight: 800; font-size:14px; margin-bottom: 4px;">${tData.title}</div><div style="font-family: 'Space Grotesk'; color: ${isDone ? 'var(--text-dim)' : 'var(--gold)'}; font-weight: 700;">+${tData.reward} GEP</div></div><button class="game-btn ${isDone ? '' : 'btn-outline'}" style="${isDone ? 'background:#1e293b; color:#64748b; padding:10px 20px; width:auto; font-size:12px; box-shadow:none;' : 'padding:10px 20px; width:auto; font-size:12px;'}" ${isDone ? 'disabled' : ''} onclick="completeTask(event, '${tData.taskId}','${tData.target}')">${isDone ? 'BİTTİ' : 'GİT'}</button></div>`; }).join(''); }
-        
-        async function completeTask(e, tid, link) { triggerHaptic('light'); tg.openLink(link); setTimeout(async () => { const res = await fetch(`${API}/api/tasks/complete`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ taskId: tid, initData: tg.initData }) }); const data = await res.json(); if(data.success) { triggerHaptic('success'); spawnFloatingText(e, "GÖREV TAMAM!", "var(--success)"); init(); } }, 3000); }
         
         async function loadLeaderboard() { const list = document.getElementById('leader-list'); list.innerHTML = `<p style='text-align:center; padding: 30px; font-weight:600; color:var(--text-dim);'>YÜKLENİYOR...</p>`; const res = await fetch(`${API}/api/leaderboard`); const data = await res.json(); if(data.success) { lbAllTime = data.leaderboard || []; lbDaily = data.dailyLeaderboard || []; lbYesterday = data.yesterdayLeaderboard || []; renderLB(); } }
         
