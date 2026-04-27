@@ -89,12 +89,79 @@
         .game-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(10px); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
         .close-modal { position: absolute; top: 20px; right: 20px; font-size: 30px; color: var(--text-dim); cursor: pointer; }
         
-        /* GELİŞTİRİLMİŞ ÇARK TASARIMI */
-        .spin-container { position: relative; width: 240px; height: 240px; margin: 0 auto 30px; }
-        .spin-pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 35px; z-index: 10; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
-        .spin-wheel { width: 100%; height: 100%; border-radius: 50%; border: 6px solid var(--gold); background: conic-gradient( #ef4444 0deg 72deg, #f97316 72deg 144deg, #eab308 144deg 216deg, #10b981 216deg 288deg, #3b82f6 288deg 360deg ); box-shadow: 0 0 25px var(--gold-glow), inset 0 0 20px rgba(0,0,0,0.6); transition: transform 4s cubic-bezier(0.15, 0.9, 0.15, 1); position: relative; overflow: hidden; }
-        .spin-wheel::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: radial-gradient(circle, var(--gold), #b45309); border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 15px rgba(0,0,0,0.8); }
-        .wheel-segment-text { position: absolute; top: 15px; left: 50%; transform-origin: 50% 105px; font-weight: 900; font-size: 18px; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.9); }
+        /* 💎 YENİ GELİŞTİRİLMİŞ PREMIUM ÇARK TASARIMI 💎 */
+        .spin-container { position: relative; width: 250px; height: 250px; margin: 0 auto 35px; }
+        
+        .spin-pointer { 
+            position: absolute; 
+            top: -22px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            font-size: 45px; 
+            z-index: 20; 
+            filter: drop-shadow(0 4px 8px rgba(245, 158, 11, 0.8)); 
+        }
+
+        .spin-wheel { 
+            width: 100%; height: 100%; 
+            border-radius: 50%; 
+            border: 8px solid #1e293b; /* Koyu metalik dış çerçeve */
+            background: conic-gradient( 
+                #ef4444 0deg 72deg, 
+                #f97316 72deg 144deg, 
+                #eab308 144deg 216deg, 
+                #10b981 216deg 288deg, 
+                #8b5cf6 288deg 360deg 
+            ); 
+            box-shadow: 0 0 0 4px var(--gold), 0 0 40px rgba(245, 158, 11, 0.4), inset 0 0 30px rgba(0,0,0,0.8); 
+            transition: transform 4s cubic-bezier(0.15, 0.9, 0.15, 1); 
+            position: relative; 
+            overflow: hidden; 
+        }
+
+        /* Dilimleri ayıran ince çizgiler */
+        .spin-wheel::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%;
+            background: 
+                linear-gradient(72deg, transparent 49.5%, rgba(0,0,0,0.6) 50%, transparent 50.5%),
+                linear-gradient(144deg, transparent 49.5%, rgba(0,0,0,0.6) 50%, transparent 50.5%),
+                linear-gradient(216deg, transparent 49.5%, rgba(0,0,0,0.6) 50%, transparent 50.5%),
+                linear-gradient(288deg, transparent 49.5%, rgba(0,0,0,0.6) 50%, transparent 50.5%);
+            z-index: 1;
+        }
+
+        /* Çarkın ortasındaki altın renkli göbek (mil) */
+        .spin-wheel::after { 
+            content: ''; 
+            position: absolute; 
+            top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            width: 45px; height: 45px; 
+            background: radial-gradient(circle, var(--gold), #b45309); 
+            border-radius: 50%; 
+            border: 4px solid #fff; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.9); 
+            z-index: 5; 
+        }
+
+        /* Düzeltilmiş ve hizalanmış yazılar */
+        .wheel-segment-text { 
+            position: absolute; 
+            top: 15px; /* Dış çembere uzaklık */
+            left: 50%; 
+            margin-left: -35px; /* Yazıyı tam ortalamak için genişliğin yarısı */
+            width: 70px; 
+            text-align: center;
+            transform-origin: 50% 102px; /* Merkez noktası etrafında dönüş ayarı */
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 900; 
+            font-size: 20px; 
+            color: #fff; 
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.9), 0 0 10px rgba(255,255,255,0.3); 
+            z-index: 3;
+        }
         
         .shake-box { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both infinite; }
         @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0) rotate(-5deg); } 20%, 80% { transform: translate3d(4px, 0, 0) rotate(5deg); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0) rotate(-10deg); } 40%, 60% { transform: translate3d(8px, 0, 0) rotate(10deg); } }
@@ -237,7 +304,19 @@
 
     <div id="modal-predict" class="game-modal"><div class="close-modal" onclick="closeGame('predict')">✖</div><h2 style="color: var(--cyan); margin-bottom:10px;">Kripto Kahini</h2><div id="tv_chart_container" style="width: 100%; max-width:400px; height: 220px; border-radius: 12px; margin-bottom: 15px; border:1px solid var(--glass-border);"></div><p style="color: var(--text-dim); margin-bottom: 15px;">10 saniye sonra BTC fiyatı ne olacak?</p><h1 id="predict-price" style="font-size: 30px; color: #fff; margin-bottom: 10px;">Bekleniyor...</h1><div id="predict-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-top: 10px;"><button class="game-btn btn-success" style="flex:1;" onclick="playPredict('UP')">YÜKSELECEK</button><button class="game-btn btn-danger" style="flex:1;" onclick="playPredict('DOWN')">DÜŞECEK</button></div><div id="predict-loading" style="display:none; margin-top:10px;"><div class="loader-ring" style="width:40px; height:40px;"></div><p style="color:var(--gold); font-weight:bold; margin-top:10px;">Piyasa Analiz Ediliyor...</p></div></div>
     
-    <div id="modal-spin" class="game-modal"><div class="close-modal" onclick="closeGame('spin')">✖</div><h2 style="color: var(--gold);">Gelir Çarkı</h2><p style="color: var(--text-dim); margin-bottom: 30px;">Bedel: 500 GEP</p><div class="spin-container"><div class="spin-pointer">🔻</div><div id="spin-wheel" class="spin-wheel" data-rotation="0"><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(36deg);">BOŞ</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(108deg);">250</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(180deg);">500</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(252deg);">1K</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(324deg);">5K</span></div></div><h3 id="spin-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Şansını Dene!</h3><button id="btn-do-spin" class="game-btn" style="max-width: 300px;" onclick="playSpin()">ÇEVİR (500 GEP)</button></div>
+    <div id="modal-spin" class="game-modal"><div class="close-modal" onclick="closeGame('spin')">✖</div><h2 style="color: var(--gold);">Gelir Çarkı</h2><p style="color: var(--text-dim); margin-bottom: 30px;">Bedel: 500 GEP</p>
+        <div class="spin-container">
+            <div class="spin-pointer">🔻</div>
+            <div id="spin-wheel" class="spin-wheel" data-rotation="0">
+                <span class="wheel-segment-text" style="transform: rotate(36deg);">BOŞ</span>
+                <span class="wheel-segment-text" style="transform: rotate(108deg);">250</span>
+                <span class="wheel-segment-text" style="transform: rotate(180deg);">500</span>
+                <span class="wheel-segment-text" style="transform: rotate(252deg);">1K</span>
+                <span class="wheel-segment-text" style="transform: rotate(324deg);">5K</span>
+            </div>
+        </div>
+        <h3 id="spin-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Şansını Dene!</h3><button id="btn-do-spin" class="game-btn" style="max-width: 300px;" onclick="playSpin()">ÇEVİR (500 GEP)</button>
+    </div>
     
     <div id="modal-lootbox" class="game-modal">
         <div class="close-modal" onclick="closeGame('lootbox')">✖</div><h2 style="color: #10b981; margin-bottom:5px;">Gelir Kapsülleri</h2><p style="color: var(--danger); font-weight:bold; font-size:12px; margin-bottom: 20px;">⚠️ Her kapsül türü günde sadece 1 kez açılabilir!</p>
@@ -312,59 +391,34 @@
             if(p === 'admin') loadAdminStats(); 
         }
 
-        // ==========================================
-        // 2-ADIMLI KATILIM VE GÖREV DOĞRULAMA (YENİ)
-        // ==========================================
-        
         async function joinProject(projectId, url) {
             const btn = document.querySelector(`#ad-${projectId} .btn-join`);
             if(!btn) return;
 
-            // 1. ADIM: LİNKE GİT
             if (btn.innerText.includes("KATIL")) {
                 triggerHaptic('light');
                 try { tg.openLink(url); } catch(e) { window.open(url, '_blank'); }
-                
-                // Butonu KONTROL ET moduna geçir
                 btn.innerText = "🔄 KONTROL ET";
-                btn.style.background = "#f59e0b"; // Turuncu
+                btn.style.background = "#f59e0b"; 
             } 
-            // 2. ADIM: DOĞRULAMA YAP
             else if (btn.innerText.includes("KONTROL ET")) {
                 triggerHaptic('medium');
                 btn.disabled = true;
-                btn.style.background = "#10b981"; // Yeşil
+                btn.style.background = "#10b981"; 
                 btn.style.opacity = "0.6";
                 btn.innerText = "⏳ BEKLENİYOR...";
 
                 setTimeout(async () => {
                     try {
-                        const res = await fetch(`${API}/api/airdrop/join`, { 
-                            method: 'POST', 
-                            headers: {'Content-Type': 'application/json'}, 
-                            body: JSON.stringify({ projectId, initData: tg.initData }) 
-                        });
+                        const res = await fetch(`${API}/api/airdrop/join`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ projectId, initData: tg.initData }) });
                         const data = await res.json();
                         if(data.success) {
-                            user.points = data.points;
-                            updateUI();
-                            triggerHaptic('success');
-                            spawnFloatingText(null, "+10.000 GEP", "var(--success)");
-                            tg.showAlert("Tebrikler! Projeye katıldığın için 10.000 GEP kazandın.");
-                            btn.innerText = "✅ KATILINDI";
-                            btn.style.opacity = "0.6";
+                            user.points = data.points; updateUI(); triggerHaptic('success'); spawnFloatingText(null, "+10.000 GEP", "var(--success)"); tg.showAlert("Tebrikler! Projeye katıldığın için 10.000 GEP kazandın.");
+                            btn.innerText = "✅ KATILINDI"; btn.style.opacity = "0.6";
                         } else {
-                            btn.innerText = "❌ HATA";
-                            tg.showAlert(data.message);
-                            loadAirdrops(); 
+                            btn.innerText = "❌ HATA"; tg.showAlert(data.message); loadAirdrops(); 
                         }
-                    } catch(e) { 
-                        console.error(e); 
-                        btn.innerText = "🔄 KONTROL ET"; 
-                        btn.disabled = false; 
-                        btn.style.background = "#f59e0b"; 
-                        btn.style.opacity = "1"; 
-                    }
+                    } catch(e) { btn.innerText = "🔄 KONTROL ET"; btn.disabled = false; btn.style.background = "#f59e0b"; btn.style.opacity = "1"; }
                 }, 2000);
             }
         }
@@ -372,46 +426,20 @@
         async function completeTask(e, tid, link) { 
             const btn = document.getElementById(`task-btn-${tid}`);
             if (!btn) return;
-
-            // 1. ADIM: LİNKE GİT
             if (btn.innerText.includes("GİT")) {
                 triggerHaptic('light'); 
                 try { tg.openLink(link); } catch(err) { window.open(link, '_blank'); }
-                
-                btn.innerText = "🔄 KONTROL ET";
-                btn.style.background = "#f59e0b";
-                btn.style.color = "#fff";
-                btn.classList.remove('btn-outline');
+                btn.innerText = "🔄 KONTROL ET"; btn.style.background = "#f59e0b"; btn.style.color = "#fff"; btn.classList.remove('btn-outline');
             } 
-            // 2. ADIM: DOĞRULAMA YAP
             else if (btn.innerText.includes("KONTROL ET")) {
-                triggerHaptic('medium');
-                btn.disabled = true;
-                btn.innerText = "⏳ BEKLENİYOR...";
-                btn.style.opacity = "0.6";
-                btn.style.background = "#10b981";
-
+                triggerHaptic('medium'); btn.disabled = true; btn.innerText = "⏳ BEKLENİYOR..."; btn.style.opacity = "0.6"; btn.style.background = "#10b981";
                 setTimeout(async () => { 
                     try {
                         const res = await fetch(`${API}/api/tasks/complete`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ taskId: tid, initData: tg.initData }) }); 
                         const data = await res.json(); 
-                        if(data.success) { 
-                            triggerHaptic('success'); 
-                            spawnFloatingText(e, "GÖREV TAMAM!", "var(--success)"); 
-                            init(); 
-                        } else {
-                            btn.innerText = "🚀 GİT";
-                            btn.disabled = false;
-                            btn.style.opacity = "1";
-                            btn.style.background = "transparent";
-                            btn.classList.add('btn-outline');
-                        }
-                    } catch(err) {
-                        btn.innerText = "🔄 KONTROL ET";
-                        btn.disabled = false;
-                        btn.style.opacity = "1";
-                        btn.style.background = "#f59e0b";
-                    }
+                        if(data.success) { triggerHaptic('success'); spawnFloatingText(e, "GÖREV TAMAM!", "var(--success)"); init(); } 
+                        else { btn.innerText = "🚀 GİT"; btn.disabled = false; btn.style.opacity = "1"; btn.style.background = "transparent"; btn.classList.add('btn-outline'); }
+                    } catch(err) { btn.innerText = "🔄 KONTROL ET"; btn.disabled = false; btn.style.opacity = "1"; btn.style.background = "#f59e0b"; }
                 }, 2000); 
             }
         }
@@ -425,42 +453,19 @@
             }).join(''); 
         }
 
-        // ==========================================
-
         async function loadAirdrops() {
             try {
-                const res = await fetch(`${API}/api/airdrop/list`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ initData: tg.initData })
-                }); 
-                const data = await res.json(); 
-                const listDiv = document.getElementById('airdrop-list');
-                
+                const res = await fetch(`${API}/api/airdrop/list`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); 
+                const data = await res.json(); const listDiv = document.getElementById('airdrop-list');
                 if(data.success && data.links.length > 0) {
                     listDiv.innerHTML = data.links.map(l => {
                         let btnHtml = '';
-                        if (l.isOwner) {
-                            btnHtml = `<button class="btn-join" style="background:#475569; cursor:not-allowed;" disabled>SENİN PROJEN</button>`;
-                        } else if (l.hasJoined) {
-                            btnHtml = `<button class="btn-join" style="background:#10b981; cursor:not-allowed; opacity:0.6;" disabled>✅ KATILINDI</button>`;
-                        } else {
-                            btnHtml = `<button class="btn-join" onclick="joinProject('${l._id}', '${l.url}')">🚀 KATIL (+10.000 GEP)</button>`;
-                        }
-
-                        return `<div class="airdrop-item" id="ad-${l._id}">
-                                    <div style="flex:1;">
-                                        <div class="ad-user">@${l.username}</div>
-                                        <div class="ad-title">${l.title}</div>
-                                        <div class="ad-desc">${l.description}</div>
-                                        ${btnHtml}
-                                    </div>
-                                    ${user.isAdmin ? `<button class="btn-delete-ad" onclick="deleteAirdrop('${l._id}')">SİL</button>` : ''}
-                                </div>`;
+                        if (l.isOwner) { btnHtml = `<button class="btn-join" style="background:#475569; cursor:not-allowed;" disabled>SENİN PROJEN</button>`; } 
+                        else if (l.hasJoined) { btnHtml = `<button class="btn-join" style="background:#10b981; cursor:not-allowed; opacity:0.6;" disabled>✅ KATILINDI</button>`; } 
+                        else { btnHtml = `<button class="btn-join" onclick="joinProject('${l._id}', '${l.url}')">🚀 KATIL (+10.000 GEP)</button>`; }
+                        return `<div class="airdrop-item" id="ad-${l._id}"><div style="flex:1;"><div class="ad-user">@${l.username}</div><div class="ad-title">${l.title}</div><div class="ad-desc">${l.description}</div>${btnHtml}</div>${user.isAdmin ? `<button class="btn-delete-ad" onclick="deleteAirdrop('${l._id}')">SİL</button>` : ''}</div>`;
                     }).join('');
-                } else { 
-                    listDiv.innerHTML = "<div style='text-align:center; color:var(--text-dim); font-size:12px; padding:10px;'>Henüz hiç proje eklenmemiş. İlk sen ol!</div>"; 
-                }
+                } else { listDiv.innerHTML = "<div style='text-align:center; color:var(--text-dim); font-size:12px; padding:10px;'>Henüz hiç proje eklenmemiş. İlk sen ol!</div>"; }
             } catch(e) {}
         }
 
@@ -470,20 +475,14 @@
             triggerHaptic('medium'); 
             if (user.points < 1000000) return tg.showAlert("Yetersiz GEP! 1.000.000 GEP gerekli.");
             const title = document.getElementById('ad-title').value.trim(); const desc = document.getElementById('ad-desc').value.trim(); const url = document.getElementById('ad-link').value.trim();
-            
             if(!title || !desc || !url) return tg.showAlert("Tüm alanları doldurmalısın.");
             if(!url.startsWith("http://") && !url.startsWith("https://")) return tg.showAlert("Geçerli bir link (https:// veya http://) girmelisin.");
-
             if(btn) { btn.disabled = true; btn.style.opacity = "0.5"; btn.innerText = "YÜKLENİYOR..."; }
-            
             try {
                 const res = await fetch(`${API}/api/airdrop/share`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ title, description: desc, url, initData: tg.initData }) });
                 const data = await res.json();
-                if(data.success) { 
-                    user.points = data.points; updateUI(); triggerHaptic('success'); tg.showAlert(data.message); 
-                    document.getElementById('ad-title').value = ''; document.getElementById('ad-desc').value = ''; document.getElementById('ad-link').value = ''; 
-                    loadAirdrops(); 
-                } else { triggerHaptic('error'); tg.showAlert(data.message); }
+                if(data.success) { user.points = data.points; updateUI(); triggerHaptic('success'); tg.showAlert(data.message); document.getElementById('ad-title').value = ''; document.getElementById('ad-desc').value = ''; document.getElementById('ad-link').value = ''; loadAirdrops(); } 
+                else { triggerHaptic('error'); tg.showAlert(data.message); }
             } catch(e) { tg.showAlert("Bağlantı hatası oluştu!"); } finally { if(btn) { btn.disabled = false; btn.style.opacity = "1"; btn.innerText = "YAYINLA (1M GEP)"; } }
         }
 
@@ -491,10 +490,8 @@
 
         let isBuyingPkg = false;
         async function buyAdPackage(pid) { 
-            if (isBuyingPkg) return;
-            triggerHaptic('light'); let cost = pid === 1 ? 10000 : (pid === 2 ? 50000 : 100000); 
-            if (user.points < cost) return tg.showAlert("Yetersiz GEP Bakiye!"); 
-            isBuyingPkg = true;
+            if (isBuyingPkg) return; triggerHaptic('light'); let cost = pid === 1 ? 10000 : (pid === 2 ? 50000 : 100000); 
+            if (user.points < cost) return tg.showAlert("Yetersiz GEP Bakiye!"); isBuyingPkg = true;
             try {
                 const res = await fetch(`${API}/api/buy-ad-package`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ packageId: pid, initData: tg.initData }) }); 
                 const data = await res.json(); 
@@ -504,12 +501,9 @@
         }
 
         async function redeemPromo() { 
-            const btn = document.getElementById('btn-redeem-promo');
-            if (btn && btn.disabled) return;
-            triggerHaptic('medium'); 
-            const codeInput = document.getElementById('ui-promo-code'); const code = codeInput.value.trim(); 
-            if(!code) return tg.showAlert("Lütfen bir kod girin."); 
-            if(btn) { btn.disabled = true; btn.style.opacity = "0.5"; }
+            const btn = document.getElementById('btn-redeem-promo'); if (btn && btn.disabled) return;
+            triggerHaptic('medium'); const codeInput = document.getElementById('ui-promo-code'); const code = codeInput.value.trim(); 
+            if(!code) return tg.showAlert("Lütfen bir kod girin."); if(btn) { btn.disabled = true; btn.style.opacity = "0.5"; }
             try {
                 const res = await fetch(`${API}/api/redeem-promo`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ code: code, initData: tg.initData }) }); 
                 const data = await res.json(); 
@@ -569,10 +563,7 @@
                     else { resText.style.color = "var(--danger)"; triggerHaptic('error'); } 
                     btn.disabled = false; 
                 }, 4000); 
-            } catch(e) {
-                resText.innerText = "Bağlantı Hatası!";
-                btn.disabled = false;
-            }
+            } catch(e) { resText.innerText = "Bağlantı Hatası!"; btn.disabled = false; }
         }
 
         async function playPredict(guess) { 
@@ -603,12 +594,8 @@
             setTimeout(() => {
                 boxIcon.classList.remove('shake-box');
                 if(data.success) {
-                    user.points = data.points; 
-                    if(data.lastLootbox1) user.lastLootbox1 = data.lastLootbox1;
-                    if(data.lastLootbox2) user.lastLootbox2 = data.lastLootbox2;
-                    if(data.lastLootbox3) user.lastLootbox3 = data.lastLootbox3;
-                    updateUI();
-                    resText.innerText = data.msg; boxIcon.innerText = "✨";
+                    user.points = data.points; if(data.lastLootbox1) user.lastLootbox1 = data.lastLootbox1; if(data.lastLootbox2) user.lastLootbox2 = data.lastLootbox2; if(data.lastLootbox3) user.lastLootbox3 = data.lastLootbox3;
+                    updateUI(); resText.innerText = data.msg; boxIcon.innerText = "✨";
                     if(data.prize > 0) { resText.style.color = "var(--success)"; triggerHaptic('success'); spawnFloatingText(null, `+${data.prize} GEP`, "var(--success)"); } 
                     else { resText.style.color = "var(--danger)"; boxIcon.innerText = "🗑️"; triggerHaptic('error'); }
                 } else { resText.innerText = "KİLİTLİ!"; tg.showAlert(data.message); }
