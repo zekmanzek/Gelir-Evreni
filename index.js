@@ -21,7 +21,7 @@ const bot = new TelegramBot(TOKEN);
 bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v6.7 - Çark Logici Düzeltildi"))
+    .then(() => console.log("✅ Gelir Evreni v6.8 - Güvenlik ve Performans Yaması Aktif"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -88,6 +88,7 @@ function addPoints(user, amount) {
 }
 
 const chatCooldowns = new Map();
+const activePredictions = new Map(); // Kripto kahini için eklendi
 let activeDrop = null;
 
 const morningMsgs = ["☀️ Günaydın Siber Ağ! Madenleri toplamayı unutmayın.", "🌅 Günaydın! Yeni bir gün, yeni GEP'ler...", "☕ Günaydın Gelir Evreni ailesi!"];
@@ -223,7 +224,6 @@ app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     let prize = 0; 
     let msg = "BOŞ";
     
-    // GÜNCELLENDİ: Mesajlar geri eklendi!
     if (rand <= 40) { prize = 0; msg = "Şansını Dene"; } 
     else if (rand <= 75) { prize = 250; msg = "Yarım Teselli"; } 
     else if (rand <= 92) { prize = 500; msg = "Amorti!"; } 
@@ -234,18 +234,52 @@ app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     res.json({ success: true, prize, msg, points: user.points });
 });
 
-app.post('/api/arcade/predict', secureRoute, async (req, res) => {
+// KRİPTO KAHİNİ GÜNCELLEMESİ (Sunucuyu yormayan 2 aşamalı sistem)
+app.post('/api/arcade/predict/start', secureRoute, async (req, res) => {
     const { guess } = req.body; const cost = 1000; 
+    
+    if (activePredictions.has(req.realTelegramId)) return res.json({ success: false, message: "Zaten devam eden bir tahminin var!" });
+
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
-    if (!user) return res.json({ success: false });
+    if (!user) return res.json({ success: false, message: "Yetersiz GEP!" });
+
     try {
-        const r1 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); const d1 = await r1.json(); const p1 = parseFloat(d1.price);
-        await new Promise(r => setTimeout(r, 10000));
-        const r2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); const d2 = await r2.json(); const p2 = parseFloat(d2.price);
-        let won = false; if ((guess === 'UP' && p2 > p1) || (guess === 'DOWN' && p2 < p1)) won = true;
+        const r1 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); 
+        const d1 = await r1.json(); 
+        const p1 = parseFloat(d1.price);
+        
+        activePredictions.set(req.realTelegramId, { guess, p1, startTime: Date.now() });
+        res.json({ success: true, price1: p1, points: user.points });
+    } catch (e) { 
+        await User.updateOne({ telegramId: req.realTelegramId }, { $inc: { points: cost } }); 
+        res.json({ success: false, message: "Fiyat alınamadı, GEP iade edildi." }); 
+    }
+});
+
+app.post('/api/arcade/predict/result', secureRoute, async (req, res) => {
+    const prediction = activePredictions.get(req.realTelegramId);
+    if (!prediction) return res.json({ success: false, message: "Aktif tahmin bulunamadı." });
+
+    if (Date.now() - prediction.startTime < 9000) return res.json({ success: false, message: "Henüz süre dolmadı!" });
+
+    activePredictions.delete(req.realTelegramId);
+
+    try {
+        const r2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); 
+        const d2 = await r2.json(); 
+        const p2 = parseFloat(d2.price);
+        
+        let won = false; 
+        if ((prediction.guess === 'UP' && p2 > prediction.p1) || (prediction.guess === 'DOWN' && p2 < prediction.p1)) won = true;
+        
+        let user = await User.findOne({ telegramId: req.realTelegramId });
         if (won) { addPoints(user, 2000); await user.save(); }
-        res.json({ success: true, won, price1: p1, price2: p2, points: user.points });
-    } catch (e) { await User.updateOne({ telegramId: req.realTelegramId }, { $inc: { points: cost } }); res.json({ success: false }); }
+        
+        res.json({ success: true, won, price1: prediction.p1, price2: p2, points: user.points });
+    } catch (e) { 
+        let user = await User.findOneAndUpdate({ telegramId: req.realTelegramId }, { $inc: { points: 1000 } }, { new: true });
+        res.json({ success: false, message: "Bağlantı koptu, 1000 GEP iade edildi.", points: user.points }); 
+    }
 });
 
 app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
@@ -279,15 +313,24 @@ app.post('/api/airdrop/share', secureRoute, async (req, res) => {
     res.json({success: true, points: user.points, message: "Pano güncellendi!"});
 });
 
+// AİRDROP KATILIM GÜNCELLEMESİ (Hızlı Tıklama Atomik Koruma)
 app.post('/api/airdrop/join', secureRoute, async (req, res) => {
     const { projectId } = req.body;
     try {
-        const project = await AirdropLink.findById(projectId);
-        if (!project || project.joinedUsers.includes(req.realTelegramId) || project.telegramId === req.realTelegramId) return res.json({ success: false });
-        project.joinedUsers.push(req.realTelegramId); await project.save();
+        const project = await AirdropLink.findOneAndUpdate(
+            { _id: projectId, joinedUsers: { $ne: req.realTelegramId }, telegramId: { $ne: req.realTelegramId } },
+            { $addToSet: { joinedUsers: req.realTelegramId } },
+            { new: true }
+        );
+        if (!project) return res.json({ success: false });
+
         const user = await User.findOne({ telegramId: req.realTelegramId });
-        addPoints(user, 10000); await user.save();
-        res.json({ success: true, points: user.points });
+        if (user) {
+            addPoints(user, 10000); 
+            await user.save();
+            return res.json({ success: true, points: user.points });
+        }
+        res.json({ success: false });
     } catch (e) { res.json({ success: false }); }
 });
 
@@ -295,10 +338,23 @@ app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ 
 app.get('/api/leaderboard', async (req, res) => { 
     const allTime = await User.find().sort({ points: -1 }).limit(100); const today = new Date(); today.setHours(0, 0, 0, 0); const daily = await User.find({ lastPointDate: { $gte: today } }).sort({ dailyPoints: -1 }).limit(100); const yesterday = await YesterdayWinner.find({ rank: { $gt: 0 } }).sort({ rank: 1 }); res.json({ success: true, leaderboard: allTime, dailyLeaderboard: daily, yesterdayLeaderboard: yesterday }); 
 });
+
+// GÖREV TAMAMLAMA GÜNCELLEMESİ (Hızlı Tıklama Atomik Koruma)
 app.post('/api/tasks/complete', secureRoute, async (req, res) => { 
-    const { taskId } = req.body; const task = await Task.findOne({ taskId }); const user = await User.findOne({ telegramId: req.realTelegramId }); 
-    if (!user || !task || user.completedTasks.includes(taskId)) return res.json({ success: false }); 
-    addPoints(user, task.reward); user.completedTasks.push(taskId); await user.save(); res.json({ success: true, points: user.points }); 
+    const { taskId } = req.body; 
+    const task = await Task.findOne({ taskId }); 
+    if (!task) return res.json({ success: false }); 
+    
+    const user = await User.findOneAndUpdate(
+        { telegramId: req.realTelegramId, completedTasks: { $ne: taskId } },
+        { $addToSet: { completedTasks: taskId } },
+        { new: true }
+    );
+    if (!user) return res.json({ success: false }); 
+    
+    addPoints(user, task.reward); 
+    await user.save(); 
+    res.json({ success: true, points: user.points }); 
 });
 
 const adminCheck = (req, res, next) => { if (req.realTelegramId !== ADMIN_ID) return res.status(403).send("Yetkisiz"); next(); };
