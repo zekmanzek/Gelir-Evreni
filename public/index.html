@@ -579,18 +579,57 @@
             } catch(e) { resText.innerText = "Bağlantı Hatası!"; btn.disabled = false; }
         }
 
-        async function playPredict(guess) { 
-            if (user.points < 1000) return tg.showAlert("Yetersiz GEP!"); 
-            document.getElementById('predict-buttons').style.display = 'none'; document.getElementById('predict-loading').style.display = 'flex'; document.getElementById('predict-price').innerText = "Sonuç Bekleniyor..."; triggerHaptic('medium'); 
-            const res = await fetch(`${API}/api/arcade/predict`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ guess, initData: tg.initData }) }); 
-            const data = await res.json(); 
-            document.getElementById('predict-loading').style.display = 'none'; 
-            if(data.success) { 
-                user.points = data.points; updateUI(); const emoji = data.won ? '🎉' : '💀'; const color = data.won ? 'var(--success)' : 'var(--danger)'; 
-                document.getElementById('predict-price').innerHTML = `<span style="color:${color}; font-size:24px;">Giriş: $${data.price1}<br>Kapanış: $${data.price2}</span><br>${emoji}`; 
-                if(data.won) { triggerHaptic('success'); spawnFloatingText(null, "+2000 GEP", "var(--success)"); } else { triggerHaptic('error'); } 
-            } else { document.getElementById('predict-price').innerText = "HATA!"; tg.showAlert(data.message); } 
-            setTimeout(() => { document.getElementById('predict-buttons').style.display = 'flex'; document.getElementById('predict-price').innerText = "Tekrar Dene"; }, 4000); 
+        // YENİ KRİPTO KAHİNİ (SUNUCUYU YORMAYAN İSTEMCİ TARAFLI BEKLEME SİSTEMİ)
+        async function playPredict(guess) {
+            if (user.points < 1000) return tg.showAlert("Yetersiz GEP!");
+            document.getElementById('predict-buttons').style.display = 'none';
+            document.getElementById('predict-loading').style.display = 'flex';
+            document.getElementById('predict-price').innerText = "Fiyat Alınıyor...";
+            triggerHaptic('medium');
+
+            // 1. AŞAMA: Oyunu Başlat (Sunucu beklemez, anında cevap verir)
+            const resStart = await fetch(`${API}/api/arcade/predict/start`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ guess, initData: tg.initData }) });
+            const dataStart = await resStart.json();
+
+            if(!dataStart.success) {
+                document.getElementById('predict-loading').style.display = 'none';
+                document.getElementById('predict-buttons').style.display = 'flex';
+                document.getElementById('predict-price').innerText = "Tekrar Dene";
+                return tg.showAlert(dataStart.message || "Hata oluştu.");
+            }
+
+            user.points = dataStart.points; updateUI();
+
+            // Bekleme sayacını artık Frontend (İstemci) tutuyor
+            let timeLeft = 10;
+            document.getElementById('predict-price').innerHTML = `<span style="color:var(--cyan); font-size:24px;">Giriş: $${dataStart.price1}</span><br>Sonuç bekleniyor: ${timeLeft}s`;
+
+            const timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('predict-price').innerHTML = `<span style="color:var(--cyan); font-size:24px;">Giriş: $${dataStart.price1}</span><br>Sonuç bekleniyor: ${timeLeft}s`;
+            }, 1000);
+
+            // 10 Saniye sonra 2. AŞAMA: Sonucu Çek
+            setTimeout(async () => {
+                clearInterval(timer);
+                document.getElementById('predict-price').innerText = "Sonuç Analiz Ediliyor...";
+
+                const resResult = await fetch(`${API}/api/arcade/predict/result`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) });
+                const dataResult = await resResult.json();
+
+                document.getElementById('predict-loading').style.display = 'none';
+
+                if(dataResult.success) {
+                    user.points = dataResult.points; updateUI(); const emoji = dataResult.won ? '🎉' : '💀'; const color = dataResult.won ? 'var(--success)' : 'var(--danger)';
+                    document.getElementById('predict-price').innerHTML = `<span style="color:${color}; font-size:24px;">Giriş: $${dataResult.price1}<br>Kapanış: $${dataResult.price2}</span><br>${emoji}`;
+                    if(dataResult.won) { triggerHaptic('success'); spawnFloatingText(null, "+2000 GEP", "var(--success)"); } else { triggerHaptic('error'); }
+                } else {
+                    if(dataResult.points) { user.points = dataResult.points; updateUI(); }
+                    document.getElementById('predict-price').innerText = "HATA!"; tg.showAlert(dataResult.message);
+                }
+
+                setTimeout(() => { document.getElementById('predict-buttons').style.display = 'flex'; document.getElementById('predict-price').innerText = "Tekrar Dene"; }, 4000);
+            }, 10000);
         }
         
         function resetLootbox() { document.getElementById('lootbox-selection').style.display = 'flex'; document.getElementById('lootbox-animation').style.display = 'none'; document.getElementById('btn-back-lootbox').style.display = 'none'; updateUI(); }
