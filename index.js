@@ -21,7 +21,7 @@ const bot = new TelegramBot(TOKEN);
 bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v6.6 - Grup Etkileşim Yaması Aktif"))
+    .then(() => console.log("✅ Gelir Evreni v6.6.1 - Sistem Özeti (GEP) Aktif"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -88,8 +88,8 @@ function addPoints(user, amount) {
 }
 
 // --- GRUP ETKİLEŞİM DEĞİŞKENLERİ ---
-const chatCooldowns = new Map(); // Mesaj madenciliği için
-let activeDrop = null; // Aktif drop etkinliği için
+const chatCooldowns = new Map();
+let activeDrop = null;
 
 const morningMsgs = ["☀️ Günaydın Siber Ağ! Madenleri toplamayı unutmayın.", "🌅 Günaydın! Yeni bir gün, yeni GEP'ler...", "☕ Günaydın Gelir Evreni ailesi!"];
 const nightMsgs = ["🌙 İyi geceler millet! Bırakın sistem uyurken de sizin için çalışsın.", "🌌 Herkese iyi geceler. Yarın daha çok kazanacağız..."];
@@ -100,11 +100,9 @@ setInterval(async () => {
         const s = await Settings.findOne(); if (!s || !s.mainGroupId) return;
         const now = new Date(); const utcHour = now.getUTCHours(); const utcMin = now.getUTCMinutes();
         
-        // Klasik Grup Mesajları
         if (utcHour === 6 && utcMin === 0) { bot.sendMessage(s.mainGroupId, morningMsgs[Math.floor(Math.random() * morningMsgs.length)]); }
         else if (utcHour === 20 && utcMin === 30) { bot.sendMessage(s.mainGroupId, nightMsgs[Math.floor(Math.random() * nightMsgs.length)]); }
         
-        // RASTGELE DROP SİSTEMİ (Her saat başı %10 ihtimalle)
         if (utcMin === 0 && Math.random() < 0.10) {
             activeDrop = { reward: 25000, claimed: false };
             bot.sendMessage(s.mainGroupId, "🎁 **DİKKAT: SİBER DROP TESPİT EDİLDİ!**\n\nAğda sahipsiz bir veri paketi bulundu. Aşağıdaki butona ilk tıklayan **25.000 GEP** kazanır!", {
@@ -112,10 +110,9 @@ setInterval(async () => {
                 reply_markup: { inline_keyboard: [[{ text: "💎 ÖDÜLÜ KAP", callback_data: "claim_drop" }]] }
             });
         }
-    } catch (e) { console.error("Interval Hatası:", e); }
+    } catch (e) { }
 }, 60000);
 
-// Liderlik Arşivi (23:58)
 async function archiveDailyLeaderboard() {
     try {
         const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -125,12 +122,11 @@ async function archiveDailyLeaderboard() {
             await YesterdayWinner.deleteMany({}); 
             const archiveData = winners.map((u, i) => ({ rank: i + 1, username: u.username, firstName: u.firstName, points: u.dailyPoints, date: new Date() }));
             await YesterdayWinner.insertMany(archiveData); await User.updateMany({}, { $set: { dailyPoints: 0 } });
-        }
+        } else { await YesterdayWinner.create({ rank: 0, username: 'sistem', firstName: 'sistem', points: 0, date: new Date() }); }
     } catch (err) { }
 }
 setInterval(() => { const now = new Date(); if (now.getHours() === 23 && now.getMinutes() === 58) archiveDailyLeaderboard(); }, 60000);
 
-// InitData Doğrulama
 function getTelegramUserFromInitData(telegramInitData) {
     try {
         if (!telegramInitData) return null;
@@ -155,7 +151,6 @@ const secureRoute = (req, res, next) => {
     next();
 };
 
-// API ROTALARI
 app.post('/api/user/auth', secureRoute, async (req, res) => {
     const { username, firstName, referrerId } = req.body;
     const telegramId = req.realTelegramId;
@@ -183,7 +178,7 @@ app.post('/api/daily-reward', secureRoute, async (req, res) => {
 });
 
 app.post('/api/buy-ad-package', secureRoute, async (req, res) => {
-    const { packageId } = req.body; let cost = pid === 1 ? 10000 : (pid === 2 ? 50000 : 100000); 
+    const { packageId } = req.body; let cost = packageId === 1 ? 10000 : (packageId === 2 ? 50000 : 100000); 
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost, adTickets: (packageId === 1 ? 10 : (packageId === 2 ? 50 : 100)) } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP!" });
     res.json({ success: true, points: user.points, adTickets: user.adTickets });
@@ -215,13 +210,14 @@ app.post('/api/redeem-promo', secureRoute, async (req, res) => {
     const { code } = req.body; const user = await User.findOne({ telegramId: req.realTelegramId }); if (!user || !code) return res.json({ success: false });
     const promo = await PromoCode.findOne({ code: code.toUpperCase(), isActive: true }); if (!promo) return res.json({ success: false, message: "Geçersiz!" });
     if (promo.usedBy.includes(req.realTelegramId)) return res.json({ success: false, message: "Zaten kullandın!" });
+    if (promo.usedBy.length >= promo.maxUsage) { promo.isActive = false; await promo.save(); return res.json({ success: false, message: "Sınır doldu!" }); }
     promo.usedBy.push(req.realTelegramId); if (promo.usedBy.length >= promo.maxUsage) promo.isActive = false; await promo.save();
     addPoints(user, promo.reward); await user.save(); res.json({ success: true, reward: promo.reward, points: user.points });
 });
 
 app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     const cost = 500; const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
-    if (!user) return res.json({ success: false }); 
+    if (!user) return res.json({ success: false, message: "Yetersiz GEP!" }); 
     const rand = Math.random() * 100; let prize = 0; let msg = "BOŞ";
     if (rand <= 40) prize = 0; else if (rand <= 75) prize = 250; else if (rand <= 92) prize = 500; else if (rand <= 99) prize = 1000; else prize = 5000;
     if (prize > 0) { addPoints(user, prize); await user.save(); }
@@ -295,7 +291,6 @@ app.post('/api/tasks/complete', secureRoute, async (req, res) => {
     addPoints(user, task.reward); user.completedTasks.push(taskId); await user.save(); res.json({ success: true, points: user.points }); 
 });
 
-// ADMİN ROTALARI
 const adminCheck = (req, res, next) => { if (req.realTelegramId !== ADMIN_ID) return res.status(403).send("Yetkisiz"); next(); };
 app.post('/api/admin/stats', secureRoute, adminCheck, async (req, res) => { const settings = await Settings.findOne() || { announcements: [] }; res.json({ totalUsers: await User.countDocuments(), totalPoints: (await User.aggregate([{$group: {_id:null, total:{$sum:"$points"}}}]))[0]?.total || 0, announcements: settings.announcements, tasks: await Task.find() }); });
 app.post('/api/admin/add-task', secureRoute, adminCheck, async (req, res) => { await Task.create({ taskId: Date.now().toString(), title: req.body.title, reward: req.body.reward, target: req.body.target }); res.json({ success: true }); });
@@ -305,86 +300,58 @@ app.post('/api/admin/announcement', secureRoute, adminCheck, async (req, res) =>
 app.post('/api/admin/user-manage', secureRoute, adminCheck, async (req, res) => { const { targetId, action, amount } = req.body; const user = await User.findOne({ $or: [{ telegramId: targetId }, { username: targetId }] }); if (!user) return res.json({ success: false }); if (action === 'add') addPoints(user, Number(amount)); if (action === 'set') user.points = Number(amount); if (action === 'ban') user.isBanned = true; if (action === 'unban') user.isBanned = false; await user.save(); res.json({ success: true }); });
 app.post('/api/admin/delete-airdrop', secureRoute, adminCheck, async (req, res) => { await AirdropLink.findByIdAndDelete(req.body.id); res.json({ success: true }); });
 
-// ==========================================
-// 💬 TELEGRAM GRUP İÇİ ETKİLEŞİM MANTIĞI
-// ==========================================
-
-// 1. Karşılama Sistemi
 bot.on('new_chat_members', async (msg) => {
     const s = await Settings.findOne();
     if (!s || msg.chat.id.toString() !== s.mainGroupId) return;
-    
     msg.new_chat_members.forEach(newUser => {
-        const name = newUser.first_name;
-        bot.sendMessage(msg.chat.id, `🌟 **Siber Ağ'a Hoş Geldin ${name}!**\n\nGelir Evreni'nde yerin hazır. Hemen uygulamayı aç ve **Madenini** çalıştırarak kazanmaya başla!`, {
-            parse_mode: 'Markdown',
-            reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: WEBHOOK_URL } }]] }
-        });
+        bot.sendMessage(msg.chat.id, `🌟 **Siber Ağ'a Hoş Geldin ${newUser.first_name}!**\n\nGelir Evreni'nde yerin hazır. Hemen uygulamayı aç ve **Madenini** çalıştırarak kazanmaya başla!`, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: WEBHOOK_URL } }]] } });
     });
 });
 
-// 2. Drop Yakalama Butonu (Callback)
 bot.on('callback_query', async (query) => {
     if (query.data === 'claim_drop') {
-        if (!activeDrop || activeDrop.claimed) {
-            return bot.answerCallbackQuery(query.id, { text: "⚠️ Bu drop çoktan kapıldı!", show_alert: true });
-        }
+        if (!activeDrop || activeDrop.claimed) return bot.answerCallbackQuery(query.id, { text: "⚠️ Bu drop çoktan kapıldı!", show_alert: true });
+        const user = await User.findOne({ telegramId: query.from.id.toString() });
+        if (!user) return bot.answerCallbackQuery(query.id, { text: "⚠️ Önce botu başlatmalısın!", show_alert: true });
         
-        const userId = query.from.id.toString();
-        const user = await User.findOne({ telegramId: userId });
-        
-        if (!user) {
-            return bot.answerCallbackQuery(query.id, { text: "⚠️ Önce botu başlatmalısın!", show_alert: true });
-        }
-        
-        activeDrop.claimed = true;
-        addPoints(user, activeDrop.reward);
-        await user.save();
-        
-        bot.editMessageText(`🎉 **DROP KAPILDI!**\n\nVeri paketini hızlı davranan @${query.from.username || query.from.first_name} yakaladı ve **25.000 GEP** kazandı!`, {
-            chat_id: query.message.chat.id,
-            message_id: query.message.message_id,
-            parse_mode: 'Markdown'
-        });
-        
-        bot.answerCallbackQuery(query.id, { text: "Tebrikler! 25.000 GEP hesabına eklendi." });
-        activeDrop = null;
+        activeDrop.claimed = true; addPoints(user, activeDrop.reward); await user.save();
+        bot.editMessageText(`🎉 **DROP KAPILDI!**\n\nVeri paketini hızlı davranan @${query.from.username || query.from.first_name} yakaladı ve **25.000 GEP** kazandı!`, { chat_id: query.message.chat.id, message_id: query.message.message_id, parse_mode: 'Markdown' });
+        bot.answerCallbackQuery(query.id, { text: "Tebrikler! 25.000 GEP hesabına eklendi." }); activeDrop = null;
     }
 });
 
-// 3. Mesaj Madenciliği & Akıllı Cevaplar
 bot.on('message', async (msg) => {
     if (!msg.text || msg.chat.type === 'private') return;
+    const s = await Settings.findOne(); if (!s || msg.chat.id.toString() !== s.mainGroupId) return;
     
-    const s = await Settings.findOne();
-    if (!s || msg.chat.id.toString() !== s.mainGroupId) return;
-    
-    const userId = msg.from.id.toString();
-    const text = msg.text.toLowerCase();
+    const userId = msg.from.id.toString(); const text = msg.text.toLowerCase().trim();
 
     // A) Mesaj Madenciliği
     const now = Date.now();
     if (!chatCooldowns.has(userId) || (now - chatCooldowns.get(userId)) > 60000) {
         const user = await User.findOne({ telegramId: userId });
-        if (user) {
-            const reward = Math.floor(Math.random() * 9) + 2; // 2-10 GEP
-            addPoints(user, reward);
-            await user.save();
-            chatCooldowns.set(userId, now);
-        }
+        if (user) { addPoints(user, Math.floor(Math.random() * 9) + 2); await user.save(); chatCooldowns.set(userId, now); }
     }
 
-    // B) Akıllı Cevaplar
-    if (text.includes("günaydın") || text.includes("gunaydin")) {
+    // B) Akıllı Cevaplar (YENİ GEP ÖZETİ BURADA EKLENDİ)
+    if (text === "gep" || text.includes("gep nedir") || text.includes("nasil kazanilir") || text.includes("nasıl kazanılır") || text.includes("özetle")) {
+        const summary = `💎 **GELİR EVRENİ (GEP) SİSTEM ÖZETİ** 💎\n\n` +
+        `⛏️ **Maden:** 4 saatte bir uygulamaya girip GEP topla.\n` +
+        `📢 **Siber Pano:** Kendi airdrop/referans linkini 1M GEP'e yayınla veya başkalarının projelerine katılıp anında **+10.000 GEP** kazan.\n` +
+        `🎮 **Oyunlar:** Kripto Kahini (Tahmin), Siber Çark ve Veri Kapsülleri ile GEP'lerini katla.\n` +
+        `💬 **Chat-Kazan:** Bu grupta sohbet ettikçe arka planda otomatik GEP kazanırsın.\n` +
+        `⚔️ **Etkileşim:** \`/duello\`, \`/zar\` ve \`/bahsis\` komutlarıyla grupta diğerleriyle kapış.\n` +
+        `🎁 **Siber Drop:** Saatte bir rastgele gruba düşen 25.000 GEP'i ilk tıklayan kapar!\n` +
+        `🎫 **Promokod:** Kırmızı bilet şifrelerini yakalayıp sürpriz ödülleri aç.\n` +
+        `👥 **Davet Et:** Profil sekmesindeki linkinle gelen her arkadaşın için ikiniz de anında **10.000 GEP** kazanırsınız.`;
+        bot.sendMessage(msg.chat.id, summary, { parse_mode: 'Markdown' });
+    } else if (text.includes("günaydın") || text.includes("gunaydin")) {
         bot.sendMessage(msg.chat.id, "☀️ Günaydın! Siber madenler seni bekliyor.");
-    } else if (text.includes("nasil kazanilir") || text.includes("nasıl kazanılır") || text.includes("gep nedir")) {
-        bot.sendMessage(msg.chat.id, "💎 GEP kazanmak için uygulamadaki **Maden**'i çalıştırabilir, **Görevleri** yapabilir veya grupta aktif olabilirsin!");
     } else if (text.includes("bot bozuk") || text.includes("calismiyor") || text.includes("çalışmıyor")) {
         bot.sendMessage(msg.chat.id, "⚡ Sistemler %100 kapasiteyle çalışıyor. Lütfen internet bağlantınızı kontrol edin.");
     }
 });
 
-// Klasik Komutlar
 bot.onText(/\/start(?:\s+(.*))?/, (msg, match) => {
     if (msg.chat.type !== 'private') return;
     const refId = match[1] ? match[1].trim() : ''; const appUrl = refId ? `${WEBHOOK_URL}?tgWebAppStartParam=${refId}` : WEBHOOK_URL;
