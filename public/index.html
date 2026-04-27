@@ -88,10 +88,13 @@
 
         .game-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(10px); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
         .close-modal { position: absolute; top: 20px; right: 20px; font-size: 30px; color: var(--text-dim); cursor: pointer; }
+        
+        /* GELİŞTİRİLMİŞ ÇARK CSS */
         .spin-container { position: relative; width: 240px; height: 240px; margin: 0 auto 30px; }
         .spin-pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 35px; z-index: 10; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
-        .spin-wheel { width: 100%; height: 100%; border-radius: 50%; border: 4px solid var(--gold); background: conic-gradient( #ef4444 0deg 72deg, #f97316 72deg 144deg, #eab308 144deg 216deg, #10b981 216deg 288deg, #8b5cf6 288deg 360deg ); box-shadow: 0 0 20px var(--gold-glow); transition: transform 4s cubic-bezier(0.25, 1, 0.1, 1); position: relative; }
-        .wheel-segment-text { position: absolute; top: 15px; left: 50%; transform-origin: 50% 101px; font-weight: 900; font-size: 18px; color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+        .spin-wheel { width: 100%; height: 100%; border-radius: 50%; border: 6px solid var(--gold); background: conic-gradient( #ef4444 0deg 72deg, #f97316 72deg 144deg, #eab308 144deg 216deg, #10b981 216deg 288deg, #3b82f6 288deg 360deg ); box-shadow: 0 0 25px var(--gold-glow), inset 0 0 20px rgba(0,0,0,0.6); transition: transform 4s cubic-bezier(0.15, 0.9, 0.15, 1); position: relative; overflow: hidden; }
+        .spin-wheel::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: radial-gradient(circle, var(--gold), #b45309); border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 15px rgba(0,0,0,0.8); }
+        .wheel-segment-text { position: absolute; top: 15px; left: 50%; transform-origin: 50% 105px; font-weight: 900; font-size: 18px; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.9); }
         .shake-box { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both infinite; }
         @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0) rotate(-5deg); } 20%, 80% { transform: translate3d(4px, 0, 0) rotate(5deg); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0) rotate(-10deg); } 40%, 60% { transform: translate3d(8px, 0, 0) rotate(10deg); } }
     
@@ -183,8 +186,10 @@
         <style>.arcade-card { position: relative; overflow: hidden; padding-top: 35px; border-color: rgba(255,255,255,0.05); } .badge-soon { position: absolute; top:12px; right:15px; background:var(--danger); color:#fff; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:800; letter-spacing:1px; } .arcade-icon { font-size: 40px; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }</style>
 
         <div class="glass-card arcade-card" style="border-color: var(--cyan);"><div class="arcade-icon">📈</div><h3 style="color: var(--cyan); margin-bottom: 5px;">Kripto Kahini</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">BTC fiyatını tahmin et, GEP'lerini katla.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('predict')">TAHMİN ET (1000 GEP)</button></div>
-        <div class="glass-card arcade-card" style="border-color: var(--gold);"><div class="arcade-icon">🎰</div><h3 style="color: var(--gold); margin-bottom: 5px;">Siber Çark</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')">ÇEVİR (500 GEP)</button></div>
-        <div class="glass-card arcade-card" style="border-color: #10b981;"><div class="arcade-icon">📦</div><h3 style="color: #10b981; margin-bottom: 5px;">Veri Kapsülleri</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Sandıkları aç, sürprizleri yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #10b981; color:#10b981;" onclick="openGame('lootbox')">KAPSÜLLERİ GÖR</button></div>
+        
+        <div class="glass-card arcade-card" style="border-color: var(--gold);"><div class="arcade-icon">🎰</div><h3 style="color: var(--gold); margin-bottom: 5px;">Gelir Çarkı</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')">ÇEVİR (500 GEP)</button></div>
+        
+        <div class="glass-card arcade-card" style="border-color: #10b981;"><div class="arcade-icon">📦</div><h3 style="color: #10b981; margin-bottom: 5px;">Gelir Kapsülleri</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Sandıkları aç, sürprizleri yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #10b981; color:#10b981;" onclick="openGame('lootbox')">KAPSÜLLERİ GÖR</button></div>
 
         <div class="glass-card arcade-card" style="opacity:0.5;"><div class="badge-soon">YAKINDA</div><div class="arcade-icon">🚀</div><h3 style="color: #f43f5e;">Siber Çöküş</h3><p style="font-size: 12px;">Roket patlamadan çekil, kazancı al.</p></div>
     </div>
@@ -230,9 +235,11 @@
     </div>
 
     <div id="modal-predict" class="game-modal"><div class="close-modal" onclick="closeGame('predict')">✖</div><h2 style="color: var(--cyan); margin-bottom:10px;">Kripto Kahini</h2><div id="tv_chart_container" style="width: 100%; max-width:400px; height: 220px; border-radius: 12px; margin-bottom: 15px; border:1px solid var(--glass-border);"></div><p style="color: var(--text-dim); margin-bottom: 15px;">10 saniye sonra BTC fiyatı ne olacak?</p><h1 id="predict-price" style="font-size: 30px; color: #fff; margin-bottom: 10px;">Bekleniyor...</h1><div id="predict-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-top: 10px;"><button class="game-btn btn-success" style="flex:1;" onclick="playPredict('UP')">YÜKSELECEK</button><button class="game-btn btn-danger" style="flex:1;" onclick="playPredict('DOWN')">DÜŞECEK</button></div><div id="predict-loading" style="display:none; margin-top:10px;"><div class="loader-ring" style="width:40px; height:40px;"></div><p style="color:var(--gold); font-weight:bold; margin-top:10px;">Piyasa Analiz Ediliyor...</p></div></div>
-    <div id="modal-spin" class="game-modal"><div class="close-modal" onclick="closeGame('spin')">✖</div><h2 style="color: var(--gold);">Siber Çark</h2><p style="color: var(--text-dim); margin-bottom: 30px;">Bedel: 500 GEP</p><div class="spin-container"><div class="spin-pointer">🔻</div><div id="spin-wheel" class="spin-wheel"><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(36deg);">BOŞ</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(108deg);">250</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(180deg);">500</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(252deg);">1K</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(324deg);">5K</span></div></div><h3 id="spin-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Şansını Dene!</h3><button id="btn-do-spin" class="game-btn" style="max-width: 300px;" onclick="playSpin()">ÇEVİR (500 GEP)</button></div>
+    
+    <div id="modal-spin" class="game-modal"><div class="close-modal" onclick="closeGame('spin')">✖</div><h2 style="color: var(--gold);">Gelir Çarkı</h2><p style="color: var(--text-dim); margin-bottom: 30px;">Bedel: 500 GEP</p><div class="spin-container"><div class="spin-pointer">🔻</div><div id="spin-wheel" class="spin-wheel" data-rotation="0"><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(36deg);">BOŞ</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(108deg);">250</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(180deg);">500</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(252deg);">1K</span><span class="wheel-segment-text" style="transform:translateX(-50%) rotate(324deg);">5K</span></div></div><h3 id="spin-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Şansını Dene!</h3><button id="btn-do-spin" class="game-btn" style="max-width: 300px;" onclick="playSpin()">ÇEVİR (500 GEP)</button></div>
+    
     <div id="modal-lootbox" class="game-modal">
-        <div class="close-modal" onclick="closeGame('lootbox')">✖</div><h2 style="color: #10b981; margin-bottom:5px;">Veri Kapsülleri</h2><p style="color: var(--danger); font-weight:bold; font-size:12px; margin-bottom: 20px;">⚠️ Her kapsül türü günde sadece 1 kez açılabilir!</p>
+        <div class="close-modal" onclick="closeGame('lootbox')">✖</div><h2 style="color: #10b981; margin-bottom:5px;">Gelir Kapsülleri</h2><p style="color: var(--danger); font-weight:bold; font-size:12px; margin-bottom: 20px;">⚠️ Her kapsül türü günde sadece 1 kez açılabilir!</p>
         <div id="lootbox-selection" style="display:flex; flex-direction:column; gap:12px; width:100%; max-width:320px; margin-top:10px;">
             <button id="lb-btn-1" class="game-btn btn-outline lb-box-btn" style="padding:16px; font-size:13px; border-color:var(--text-main); color:var(--text-main);" onclick="playLootbox(1)">📦 STANDART KAPSÜL (1K GEP)<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Max Ödül: 10.000 GEP</span></button>
             <button id="lb-btn-2" class="game-btn btn-outline lb-box-btn" style="padding:16px; font-size:13px; border-color:#3b82f6; color:#3b82f6;" onclick="playLootbox(2)">🎁 NADİR KAPSÜL (5K GEP)<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Max Ödül: 50.000 GEP</span></button>
@@ -448,22 +455,47 @@
         
         function closeGame(game) { triggerHaptic('light'); document.getElementById(`modal-${game}`).style.display = 'none'; }
         
+        // YENİ GÜNCELLENMİŞ ÇARK ANİMASYON MANTIĞI
         async function playSpin() { 
             if (user.points < 500) return tg.showAlert("Yetersiz GEP!"); 
             const btn = document.getElementById('btn-do-spin'); const wheel = document.getElementById('spin-wheel'); const resText = document.getElementById('spin-result'); 
-            btn.disabled = true; resText.style.color = "#fff"; resText.innerText = "Dönüyor..."; triggerHaptic('heavy'); wheel.style.transform = `rotate(1080deg)`; 
-            const res = await fetch(`${API}/api/arcade/spin`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); 
-            const data = await res.json(); 
-            if(!data.success) { resText.innerText = "Hata oluştu."; tg.showAlert(data.message); btn.disabled = false; return; } 
-            const prizeAngles = { 0: 36, 250: 108, 500: 180, 1000: 252, 5000: 324 }; 
-            const targetAngle = prizeAngles[data.prize]; const rotateDeg = (360 * 5) + (360 - targetAngle); wheel.style.transform = `rotate(${rotateDeg}deg)`; 
-            setTimeout(() => { 
-                user.points = data.points; updateUI(); resText.innerText = data.msg; 
-                if(data.prize > 0) { resText.style.color = "var(--success)"; triggerHaptic('success'); spawnFloatingText(null, `+${data.prize} GEP`, "var(--success)"); } 
-                else { resText.style.color = "var(--danger)"; triggerHaptic('error'); } 
-                btn.disabled = false; 
-                setTimeout(() => { wheel.style.transition = 'none'; wheel.style.transform = `rotate(${360 - targetAngle}deg)`; setTimeout(() => { wheel.style.transition = 'transform 4s cubic-bezier(0.25, 1, 0.1, 1)'; }, 50); }, 2000); 
-            }, 4000); 
+            btn.disabled = true; resText.style.color = "#fff"; resText.innerText = "Dönüyor..."; triggerHaptic('heavy'); 
+            
+            // Animasyonu sıfırla ki geriye sarmadan tam dönsün
+            wheel.style.transition = 'none';
+            let currentRotation = parseFloat(wheel.getAttribute('data-rotation') || 0);
+            let normalized = currentRotation % 360;
+            wheel.style.transform = `rotate(${normalized}deg)`;
+            void wheel.offsetWidth; // Reflow tetiklemesi
+            
+            wheel.style.transition = 'transform 4s cubic-bezier(0.15, 0.9, 0.15, 1)';
+            
+            try {
+                const res = await fetch(`${API}/api/arcade/spin`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); 
+                const data = await res.json(); 
+                if(!data.success) { resText.innerText = "Hata oluştu."; tg.showAlert(data.message); btn.disabled = false; return; } 
+                
+                const prizeAngles = { 0: 36, 250: 108, 500: 180, 1000: 252, 5000: 324 }; 
+                const targetAngle = prizeAngles[data.prize]; 
+                const offset = 360 - targetAngle;
+                const jitter = Math.floor(Math.random() * 40) - 20; // Tam ortaya düşmemesi için rastgele titreme
+                
+                // 5 Tam tur dön ve hedefe otur
+                const newRotation = currentRotation + (360 * 5) + offset + jitter - normalized;
+                
+                wheel.style.transform = `rotate(${newRotation}deg)`;
+                wheel.setAttribute('data-rotation', newRotation);
+                
+                setTimeout(() => { 
+                    user.points = data.points; updateUI(); resText.innerText = data.msg; 
+                    if(data.prize > 0) { resText.style.color = "var(--success)"; triggerHaptic('success'); spawnFloatingText(null, `+${data.prize} GEP`, "var(--success)"); } 
+                    else { resText.style.color = "var(--danger)"; triggerHaptic('error'); } 
+                    btn.disabled = false; 
+                }, 4000); 
+            } catch(e) {
+                resText.innerText = "Bağlantı Hatası!";
+                btn.disabled = false;
+            }
         }
 
         async function playPredict(guess) { 
@@ -549,4 +581,4 @@
         window.onload = init;
     </script>
 </body>
-</html>        
+</html>
