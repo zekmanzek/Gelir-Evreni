@@ -89,78 +89,27 @@
         .game-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(10px); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
         .close-modal { position: absolute; top: 20px; right: 20px; font-size: 30px; color: var(--text-dim); cursor: pointer; }
         
-        /* 💎 YENİ GELİŞTİRİLMİŞ PREMIUM ÇARK TASARIMI 💎 */
+        /* 💎 PREMIUM ÇARK TASARIMI 💎 */
         .spin-container { position: relative; width: 250px; height: 250px; margin: 0 auto 35px; }
         
         .spin-pointer { 
-            position: absolute; 
-            top: -22px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            font-size: 45px; 
-            z-index: 20; 
-            filter: drop-shadow(0 4px 8px rgba(245, 158, 11, 0.8)); 
+            position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 45px; z-index: 20; filter: drop-shadow(0 4px 8px rgba(245, 158, 11, 0.8)); 
         }
 
         .spin-wheel { 
-            width: 100%; height: 100%; 
-            border-radius: 50%; 
-            border: 8px solid #1e293b; /* Koyu metalik dış çerçeve */
-            background: conic-gradient( 
-                #ef4444 0deg 72deg, 
-                #f97316 72deg 144deg, 
-                #eab308 144deg 216deg, 
-                #10b981 216deg 288deg, 
-                #8b5cf6 288deg 360deg 
-            ); 
-            box-shadow: 0 0 0 4px var(--gold), 0 0 40px rgba(245, 158, 11, 0.4), inset 0 0 30px rgba(0,0,0,0.8); 
-            transition: transform 4s cubic-bezier(0.15, 0.9, 0.15, 1); 
-            position: relative; 
-            overflow: hidden; 
+            width: 100%; height: 100%; border-radius: 50%; border: 8px solid #1e293b; background: conic-gradient( #ef4444 0deg 72deg, #f97316 72deg 144deg, #eab308 144deg 216deg, #10b981 216deg 288deg, #8b5cf6 288deg 360deg ); box-shadow: 0 0 0 4px var(--gold), 0 0 40px rgba(245, 158, 11, 0.4), inset 0 0 30px rgba(0,0,0,0.8); transition: transform 4s cubic-bezier(0.15, 0.9, 0.15, 1); position: relative; overflow: hidden; 
         }
 
-        /* Dilimleri ayıran ince çizgiler */
         .spin-wheel::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            border-radius: 50%;
-            background: 
-                linear-gradient(72deg, transparent 49.5%, rgba(0,0,0,0.6) 50%, transparent 50.5%),
-                linear-gradient(144deg, transparent 49.5%, rgba(0,0,0,0.6) 50%, transparent 50.5%),
-                linear-gradient(216deg, transparent 49.5%, rgba(0,0,0,0.6) 50%, transparent 50.5%),
-                linear-gradient(288deg, transparent 49.5%, rgba(0,0,0,0.6) 50%, transparent 50.5%);
-            z-index: 1;
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 50%; background: linear-gradient(72deg, transparent 49.5%, rgba(0,0,0,0.6) 50%, transparent 50.5%), linear-gradient(144deg, transparent 49.5%, rgba(0,0,0,0.6) 50%, transparent 50.5%), linear-gradient(216deg, transparent 49.5%, rgba(0,0,0,0.6) 50%, transparent 50.5%), linear-gradient(288deg, transparent 49.5%, rgba(0,0,0,0.6) 50%, transparent 50.5%); z-index: 1;
         }
 
-        /* Çarkın ortasındaki altın renkli göbek (mil) */
         .spin-wheel::after { 
-            content: ''; 
-            position: absolute; 
-            top: 50%; left: 50%; 
-            transform: translate(-50%, -50%); 
-            width: 45px; height: 45px; 
-            background: radial-gradient(circle, var(--gold), #b45309); 
-            border-radius: 50%; 
-            border: 4px solid #fff; 
-            box-shadow: 0 0 20px rgba(0,0,0,0.9); 
-            z-index: 5; 
+            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 45px; height: 45px; background: radial-gradient(circle, var(--gold), #b45309); border-radius: 50%; border: 4px solid #fff; box-shadow: 0 0 20px rgba(0,0,0,0.9); z-index: 5; 
         }
 
-        /* Düzeltilmiş ve hizalanmış yazılar */
         .wheel-segment-text { 
-            position: absolute; 
-            top: 15px; /* Dış çembere uzaklık */
-            left: 50%; 
-            margin-left: -35px; /* Yazıyı tam ortalamak için genişliğin yarısı */
-            width: 70px; 
-            text-align: center;
-            transform-origin: 50% 102px; /* Merkez noktası etrafında dönüş ayarı */
-            font-family: 'Space Grotesk', sans-serif;
-            font-weight: 900; 
-            font-size: 20px; 
-            color: #fff; 
-            text-shadow: 2px 2px 5px rgba(0,0,0,0.9), 0 0 10px rgba(255,255,255,0.3); 
-            z-index: 3;
+            position: absolute; top: 12px; left: 50%; margin-left: -35px; width: 70px; text-align: center; transform-origin: 50% 105px; font-family: 'Space Grotesk', sans-serif; font-weight: 900; font-size: 18px; color: #fff; text-shadow: 2px 2px 5px rgba(0,0,0,0.9), 0 0 10px rgba(255,255,255,0.3); z-index: 3;
         }
         
         .shake-box { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both infinite; }
@@ -616,6 +565,31 @@
         async function claimDaily(event) { triggerHaptic('medium'); const res = await fetch(`${API}/api/daily-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if(data.success) { triggerHaptic('success'); spawnFloatingText(event, "+" + data.reward, "var(--gold)"); tg.showAlert(`🎉 Ödül Alındı! Seri: ${data.streak}. GÜN (+${data.reward} GEP)`); init(); } else { triggerHaptic('error'); tg.showAlert(data.message); } }
         
         function renderAnnouncements(annList) { const annContainer = document.getElementById('ann-container'); const annScroll = document.getElementById('ann-scroll'); if (annList && annList.length > 0) { annScroll.innerText = annList.join(" 🔔 ") + " 🔔 "; annContainer.style.display = 'flex'; } else { annContainer.style.display = 'none'; } }
+        
+        async function refreshTasks() { const tRes = await fetch(`${API}/api/tasks`); const tData = await tRes.json(); tasks = tData.tasks || []; renderTasks(); }
+        
+        function renderTasks() { const cont = document.getElementById('task-list'); if(!cont) return; cont.innerHTML = tasks.map(tData => { const isDone = user.completedTasks.includes(tData.taskId); return `<div class="task-card" style="${isDone ? 'opacity:0.5;' : ''}"><div><div style="font-weight: 800; font-size:14px; margin-bottom: 4px;">${tData.title}</div><div style="font-family: 'Space Grotesk'; color: ${isDone ? 'var(--text-dim)' : 'var(--gold)'}; font-weight: 700;">+${tData.reward} GEP</div></div><button id="task-btn-${tData.taskId}" class="game-btn ${isDone ? '' : 'btn-outline'}" style="${isDone ? 'background:#1e293b; color:#64748b; padding:10px 20px; width:auto; font-size:12px; box-shadow:none;' : 'padding:10px 20px; width:auto; font-size:12px;'}" ${isDone ? 'disabled' : ''} onclick="completeTask(event, '${tData.taskId}','${tData.target}')">${isDone ? '✅ BİTTİ' : '🚀 GİT'}</button></div>`; }).join(''); }
+        
+        async function completeTask(e, tid, link) { 
+            const btn = document.getElementById(`task-btn-${tid}`);
+            if (!btn) return;
+            if (btn.innerText.includes("GİT")) {
+                triggerHaptic('light'); 
+                try { tg.openLink(link); } catch(err) { window.open(link, '_blank'); }
+                btn.innerText = "🔄 KONTROL ET"; btn.style.background = "#f59e0b"; btn.style.color = "#fff"; btn.classList.remove('btn-outline');
+            } 
+            else if (btn.innerText.includes("KONTROL ET")) {
+                triggerHaptic('medium'); btn.disabled = true; btn.innerText = "⏳ BEKLENİYOR..."; btn.style.opacity = "0.6"; btn.style.background = "#10b981";
+                setTimeout(async () => { 
+                    try {
+                        const res = await fetch(`${API}/api/tasks/complete`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ taskId: tid, initData: tg.initData }) }); 
+                        const data = await res.json(); 
+                        if(data.success) { triggerHaptic('success'); spawnFloatingText(e, "GÖREV TAMAM!", "var(--success)"); init(); } 
+                        else { btn.innerText = "🚀 GİT"; btn.disabled = false; btn.style.opacity = "1"; btn.style.background = "transparent"; btn.classList.add('btn-outline'); }
+                    } catch(err) { btn.innerText = "🔄 KONTROL ET"; btn.disabled = false; btn.style.opacity = "1"; btn.style.background = "#f59e0b"; }
+                }, 2000); 
+            }
+        }
         
         async function loadLeaderboard() { const list = document.getElementById('leader-list'); list.innerHTML = `<p style='text-align:center; padding: 30px; font-weight:600; color:var(--text-dim);'>YÜKLENİYOR...</p>`; const res = await fetch(`${API}/api/leaderboard`); const data = await res.json(); if(data.success) { lbAllTime = data.leaderboard || []; lbDaily = data.dailyLeaderboard || []; lbYesterday = data.yesterdayLeaderboard || []; renderLB(); } }
         
