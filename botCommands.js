@@ -20,10 +20,16 @@ module.exports = function(bot, models, config, addPoints, sharedState) {
         `👥 **Davet Et:** Profil sekmesindeki linkinle gelen her arkadaşın için ikiniz de anında **10.000 GEP** kazanırsınız.`;
 
         msg.new_chat_members.forEach(newUser => {
-            bot.sendMessage(msg.chat.id, `🌟 **Siber Ağ'a Hoş Geldin ${newUser.first_name}!**\n\n${summary}\n\nHemen aşağıdaki butona tıkla ve kazanmaya başla! 👇`, { 
+            // Botların gruba girişinde karşılama mesajı atmasını engelliyoruz
+            if (newUser.is_bot) return;
+
+            // Kullanıcı isminde bulunabilecek Markdown bozan karakterleri kaçış (escape) ile temizliyoruz
+            const safeName = newUser.first_name ? newUser.first_name.replace(/([_*\[\]`])/g, '\\$1') : 'Kullanıcı';
+
+            bot.sendMessage(msg.chat.id, `🌟 **Siber Ağ'a Hoş Geldin ${safeName}!**\n\n${summary}\n\nHemen aşağıdaki butona tıkla ve kazanmaya başla! 👇`, { 
                 parse_mode: 'Markdown', 
                 reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: WEBHOOK_URL } }]] } 
-            });
+            }).catch(err => console.error("Hoş geldin mesajı hatası:", err.message)); // Olası anlık API hatalarında backend'in çökmesini önler
         });
     });
 
