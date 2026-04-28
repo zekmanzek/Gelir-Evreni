@@ -104,11 +104,19 @@
 
     <div id="page-network" class="page">
         <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">🏆</div><h3 style="margin: 0; color: #fff;">ŞAMPİYONLAR</h3></div>
+        
         <div class="tab-container" style="margin-bottom: 10px;">
-            <button id="tab-lb-all" class="tab-btn active" onclick="switchLB('all')">TOP 100</button>
-            <button id="tab-lb-daily" class="tab-btn" onclick="switchLB('daily')">GÜNLÜK</button>
-            <button id="tab-lb-yesterday" class="tab-btn" onclick="switchLB('yesterday')">DÜN</button>
+            <button id="tab-lb-all" class="tab-btn active" onclick="switchLB('all')">TOP 50</button>
+            <button id="tab-lb-daily" class="tab-btn" onclick="switchLB('daily')">BU HAFTA</button>
+            <button id="tab-lb-yesterday" class="tab-btn" onclick="switchLB('yesterday')">GEÇEN HAFTA</button>
         </div>
+
+        <div id="weekly-reward-info" style="display:none; background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(15,23,42,0.6) 100%); border: 1px solid rgba(16,185,129,0.3); padding: 15px; border-radius: 16px; margin-bottom: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <div style="font-size: 24px; margin-bottom: 5px;">🎁</div>
+            <h4 style="color: var(--success); margin-bottom: 5px; font-weight: 800;">HAFTALIK BÜYÜK ÖDÜL</h4>
+            <p style="color: var(--text-dim); font-size: 12px; margin: 0; line-height: 1.4;">Bu haftanın sıralamasında ilk 5'e giren her oyuncu <strong>5$ NAKİT ÖDÜL</strong> kazanır!<br><span style="font-size:10px; opacity:0.7;">(Sıfırlanma: Pazar 23:58)</span></p>
+        </div>
+
         <div class="glass-card" style="padding: 0; overflow: hidden;"><div id="leader-list" style="width: 100%;"></div></div>
     </div>
 
