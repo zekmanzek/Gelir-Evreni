@@ -9,21 +9,21 @@ module.exports = function(bot, models, config, addPoints, sharedState) {
         const s = await Settings.findOne();
         if (!s || msg.chat.id.toString() !== s.mainGroupId) return;
         
-        // YENİ: Yönetici karşılama mesajını kapattıysa hiçbir şey yapma
+        // Yönetici karşılama mesajını kapattıysa hiçbir şey yapma
         if (s.isWelcomeEnabled === false) return;
         
         msg.new_chat_members.forEach(newUser => {
             // Botların gruba girişinde karşılama mesajı atmasını engelliyoruz
             if (newUser.is_bot) return;
 
-            // Kullanıcı isminde bulunabilecek Markdown bozan karakterleri kaçış (escape) ile temizliyoruz
+            // Kullanıcı isminde bulunabilecek Markdown bozan karakterleri temizliyoruz
             const safeName = newUser.first_name ? newUser.first_name.replace(/([_*\[\]`])/g, '\\$1') : 'Kullanıcı';
 
-            // YENİ: Veritabanından gelen dinamik mesajı kullanıyoruz
+            // Veritabanından gelen dinamik mesajı kullanıyoruz
             let finalMessage = s.welcomeMessage;
             if (!finalMessage) {
-                // Eğer veritabanında mesaj yoksa varsayılan (eski) mesajı kullan
-                const summary = `💎 **GELİR EVRENİ (GEP) SİSTEM ÖZETİ** 💎\n\n⛏️ **Maden:** 4 saatte bir uygulamaya girip GEP topla.\n📢 **Benim Projem:** Kendi projeni 1M GEP'e yayınla veya başkalarının projelerine katılıp anında **+10.000 GEP** kazan.\n🎮 **Oyunlar:** Kripto Kahini (Tahmin), Gelir Çarkı ve Gelir Kapsülleri ile GEP'lerini katla.\n💬 **Chat-Kazan:** Bu grupta sohbet ettikçe arka planda otomatik GEP kazanırsın.\n⚔️ **Etkileşim:** \`/duello\`, \`/zar\` ve \`/bahsis\` komutlarıyla grupta diğerleriyle kapış.\n🎁 **Siber Drop:** Saatte bir rastgele gruba düşen 25.000 GEP'i ilk tıklayan kapar!\n🎫 **Promokod:** Bilet şifrelerini yakalayıp sürpriz ödülleri aç.\n👥 **Davet Et:** Profil sekmesindeki linkinle gelen her arkadaşın için ikiniz de anında **10.000 GEP** kazanırsınız.`;
+                // Eğer veritabanında mesaj yoksa varsayılan mesajı kullan (Zar oyunu metni çıkarıldı)
+                const summary = `💎 **GELİR EVRENİ (GEP) SİSTEM ÖZETİ** 💎\n\n⛏️ **Maden:** 4 saatte bir uygulamaya girip GEP topla.\n📢 **Benim Projem:** Kendi projeni 1M GEP'e yayınla veya başkalarının projelerine katılıp anında **+10.000 GEP** kazan.\n🎮 **Oyunlar:** Kripto Kahini, Gelir Çarkı, Siber Zar ve Kapsüller ile GEP'lerini katla.\n💬 **Chat-Kazan:** Bu grupta sohbet ettikçe arka planda otomatik GEP kazanırsın.\n⚔️ **Etkileşim:** \`/duello\` ve \`/bahsis\` komutlarıyla grupta diğerleriyle etkileşime geç.\n🎁 **Siber Drop:** Saatte bir rastgele gruba düşen 25.000 GEP'i ilk tıklayan kapar!\n🎫 **Promokod:** Bilet şifrelerini yakalayıp sürpriz ödülleri aç.\n👥 **Davet Et:** Profil sekmesindeki linkinle gelen her arkadaşın için ikiniz de anında **10.000 GEP** kazanırsınız.`;
                 finalMessage = `🌟 **Siber Ağ'a Hoş Geldin {isim}!**\n\n${summary}`;
             }
 
@@ -60,7 +60,7 @@ module.exports = function(bot, models, config, addPoints, sharedState) {
         
         const userId = msg.from.id.toString(); const text = msg.text.toLowerCase().trim();
 
-        // YENİ: Dinamik Oto-Cevap Kontrolü
+        // Dinamik Oto-Cevap Kontrolü
         if (s.autoReplies && s.autoReplies.size > 0) {
             for (const [key, value] of s.autoReplies.entries()) {
                 if (text.includes(key.toLowerCase())) {
@@ -70,7 +70,7 @@ module.exports = function(bot, models, config, addPoints, sharedState) {
             }
         }
 
-        // YENİ: Dinamik Chat-Kazan Kontrolü (Açıksa çalışır)
+        // Dinamik Chat-Kazan Kontrolü (Açıksa çalışır)
         const now = Date.now();
         if (s.isChatEarnEnabled !== false) {
             if (!chatCooldowns.has(userId) || (now - chatCooldowns.get(userId)) > 60000) {
@@ -88,9 +88,9 @@ module.exports = function(bot, models, config, addPoints, sharedState) {
             const summary = `💎 **GELİR EVRENİ (GEP) SİSTEM ÖZETİ** 💎\n\n` +
             `⛏️ **Maden:** 4 saatte bir uygulamaya girip GEP topla.\n` +
             `📢 **Benim Projem:** Kendi projeni 1M GEP'e yayınla veya başkalarının projelerine katılıp anında **+10.000 GEP** kazan.\n` +
-            `🎮 **Oyunlar:** Kripto Kahini (Tahmin), Gelir Çarkı ve Gelir Kapsülleri ile GEP'lerini katla.\n` +
+            `🎮 **Oyunlar:** Kripto Kahini, Gelir Çarkı, Siber Zar ve Kapsüller ile GEP'lerini katla.\n` +
             `💬 **Chat-Kazan:** Bu grupta sohbet ettikçe arka planda otomatik GEP kazanırsın.\n` +
-            `⚔️ **Etkileşim:** \`/duello\`, \`/zar\` ve \`/bahsis\` komutlarıyla grupta diğerleriyle kapış.\n` +
+            `⚔️ **Etkileşim:** \`/duello\` ve \`/bahsis\` komutlarıyla grupta diğerleriyle etkileşime geç.\n` +
             `🎁 **Siber Drop:** Saatte bir rastgele gruba düşen 25.000 GEP'i ilk tıklayan kapar!\n` +
             `🎫 **Promokod:** Bilet şifrelerini yakalayıp sürpriz ödülleri aç.\n` +
             `👥 **Davet Et:** Profil sekmesindeki linkinle gelen her arkadaşın için ikiniz de anında **10.000 GEP** kazanırsınız.`;
@@ -108,12 +108,9 @@ module.exports = function(bot, models, config, addPoints, sharedState) {
         bot.sendMessage(msg.chat.id, "🌟 **Gelir Evreni'ne Hoş Geldin!**", { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: appUrl } }]] } });
     });
 
-    // GENEL KOMUTLAR VE DETAYLI KILAVUZ
+    // GENEL KOMUTLAR VE DETAYLI KILAVUZ (Zar komutu çıkarıldı)
     bot.onText(/\/(yardim|kilavuz)/, (msg) => { 
         const klavuz = `📚 **GELİR EVRENİ KULLANIM KILAVUZU** 📚\n\n` +
-        `🎲 **/zar <miktar>**\n` +
-        `Şansına güveniyorsan zarları at! Zar 4, 5 veya 6 gelirse yatırdığın GEP'i ikiye katlarsın. 1, 2 veya 3 gelirse kasanın olur. (Minimum bahis: 100 GEP)\n` +
-        `👉 *Örnek Kullanım:* \`/zar 500\`\n\n` +
         `⚔️ **/duello <miktar>**\n` +
         `Gruptaki birine meydan oku! Meydan okumak istediğin kişinin herhangi bir mesajını **yanıtlayarak** bu komutu yaz. Karşı taraf \`/kabul\` yazarsa, sistem kılıçları çarpıştırır ve şanslı olan kazanır.\n` +
         `👉 *Örnek Kullanım:* Birinin mesajını yanıtla ve \`/duello 1000\` yaz.\n\n` +
@@ -132,12 +129,7 @@ module.exports = function(bot, models, config, addPoints, sharedState) {
     bot.onText(/\/maden/, async (msg) => { const user = await User.findOne({ telegramId: msg.from.id.toString() }); if (!user) return; const diff = new Date().getTime() - new Date(user.lastMining).getTime(); const cooldown = 4 * 60 * 60 * 1000; if (diff >= cooldown) { bot.sendMessage(msg.chat.id, "⛏️ **Madenin Hazır!**\nUygulamaya gir ve ödülünü topla. 🔥"); } else { const remaining = Math.ceil((cooldown - diff) / (60 * 1000)); bot.sendMessage(msg.chat.id, `⛏️ Maden üretimde...\n⏳ **${remaining} dakika** sonra hazır.`); } });
     bot.onText(/\/bahsis (\d+)/, async (msg, match) => { if (!msg.reply_to_message) return; const amount = parseInt(match[1]); const sender = await User.findOne({ telegramId: msg.from.id.toString() }); const receiver = await User.findOne({ telegramId: msg.reply_to_message.from.id.toString() }); if (sender && receiver && sender.points >= amount && sender.telegramId !== receiver.telegramId) { sender.points -= amount; addPoints(receiver, amount); await sender.save(); await receiver.save(); bot.sendMessage(msg.chat.id, `💸 **Transfer Başarılı!**\n${sender.firstName} ➔ ${receiver.firstName}: **${amount} GEP**`); } });
 
-    // OYUN KOMUTLARI (MODÜL KONTROLLÜ)
-    bot.onText(/\/zar (\d+)/, async (msg, match) => { 
-        const s = await Settings.findOne(); if (s && s.isDiceEnabled === false) return bot.sendMessage(msg.chat.id, "⚠️ Zar oyunu geçici olarak kapatılmıştır.");
-        const amount = parseInt(match[1]); const user = await User.findOne({ telegramId: msg.from.id.toString() }); if (!user || user.points < amount || amount < 100) return; user.points -= amount; await user.save(); const diceMsg = await bot.sendDice(msg.chat.id); setTimeout(async () => { if (diceMsg.dice.value >= 4) { const win = amount * 2; addPoints(user, win); await user.save(); bot.sendMessage(msg.chat.id, `🎉 **KAZANDIN!** +${win} GEP!`, { reply_to_message_id: diceMsg.message_id }); } else { bot.sendMessage(msg.chat.id, `💀 **KAYBETTİN...**`, { reply_to_message_id: diceMsg.message_id }); } }, 4000); 
-    });
-
+    // OYUN KOMUTLARI
     bot.onText(/\/duello (\d+)/, async (msg, match) => { 
         const s = await Settings.findOne(); if (s && s.isDuelEnabled === false) return bot.sendMessage(msg.chat.id, "⚠️ Düello sistemi geçici olarak kapatılmıştır.");
         if (!msg.reply_to_message) return bot.sendMessage(msg.chat.id, "Meydan okumak istediğin kişinin mesajını yanıtlayarak /duello <miktar> yazmalısın.");
@@ -168,7 +160,6 @@ module.exports = function(bot, models, config, addPoints, sharedState) {
         const text = `⚙️ **SİSTEM DURUMU**\n\n` +
         `👋 Karşılama: **${s.isWelcomeEnabled !== false ? "AÇIK" : "KAPALI"}**\n` +
         `💬 Chat-Kazan: **${s.isChatEarnEnabled !== false ? "AÇIK" : "KAPALI"}** (Ödül: ${s.chatEarnMin || 2}-${s.chatEarnMax || 10} GEP)\n` +
-        `🎲 Zar Modülü: **${s.isDiceEnabled !== false ? "AÇIK" : "KAPALI"}**\n` +
         `⚔️ Düello Modülü: **${s.isDuelEnabled !== false ? "AÇIK" : "KAPALI"}**\n` +
         `🤖 Oto-Cevap Sayısı: **${s.autoReplies ? s.autoReplies.size : 0}**`;
         bot.sendMessage(msg.chat.id, text, { parse_mode: 'Markdown' });
@@ -202,10 +193,9 @@ module.exports = function(bot, models, config, addPoints, sharedState) {
         bot.sendMessage(msg.chat.id, `✅ Grupta mesaj başı ödül **${min} ile ${max} GEP** arası olarak güncellendi!`, { parse_mode: 'Markdown' });
     });
 
-    bot.onText(/\/modul (zar|duello) (kapat|ac)/, async (msg, match) => {
+    bot.onText(/\/modul (duello) (kapat|ac)/, async (msg, match) => {
         if (String(msg.from.id) !== String(ADMIN_ID)) return;
         const modul = match[1]; const durum = match[2] === "ac";
-        if (modul === "zar") await Settings.updateOne({}, { $set: { isDiceEnabled: durum } });
         if (modul === "duello") await Settings.updateOne({}, { $set: { isDuelEnabled: durum } });
         bot.sendMessage(msg.chat.id, `✅ ${modul.toUpperCase()} modülü **${durum ? "AÇILDI" : "KAPATILDI"}**.`, { parse_mode: 'Markdown' });
     });
