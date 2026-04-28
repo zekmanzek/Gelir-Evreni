@@ -208,7 +208,6 @@ async function redeemPromo() {
     } catch (e) { tg.showAlert("Bağlantı hatası!"); } finally { if(btn) { btn.disabled = false; btn.style.opacity = "1"; } }
 }
 
-// OYUN AÇMA/KAPAMA YÖNETİMİ
 function openGame(game) { 
     triggerHaptic('light'); document.getElementById(`modal-${game}`).style.display = 'flex'; 
     if(game === 'predict') { 
@@ -227,7 +226,6 @@ function openGame(game) {
 
 function closeGame(game) { triggerHaptic('light'); document.getElementById(`modal-${game}`).style.display = 'none'; }
 
-// YENİ OYUN: ZARZARA (Siber Zar)
 async function playZarzara() {
     const betInput = document.getElementById('zarzara-bet').value;
     const amount = parseInt(betInput);
@@ -261,7 +259,6 @@ async function playZarzara() {
             user.points = data.points;
             updateUI();
             
-            // Sonuç zarını ekrana bas
             const diceEmojis = { 1: "⚀", 2: "⚁", 3: "⚂", 4: "⚃", 5: "⚄", 6: "⚅" };
             display.innerText = diceEmojis[data.diceValue] || "🎲";
             
@@ -285,8 +282,9 @@ async function playZarzara() {
     }
 }
 
+// GÜNCELLEME: Çark Bedeli 5000'e çıkarıldığı için uyarı metni güncellendi.
 async function playSpin() { 
-    if (user.points < 500) return tg.showAlert("Yetersiz GEP!"); 
+    if (user.points < 5000) return tg.showAlert("Yetersiz GEP! (Bedel: 5000 GEP)"); 
     const btn = document.getElementById('btn-do-spin'); const wheel = document.getElementById('spin-wheel'); const resText = document.getElementById('spin-result'); 
     btn.disabled = true; resText.style.color = "#fff"; resText.innerText = "Dönüyor..."; triggerHaptic('heavy'); 
     
@@ -303,7 +301,8 @@ async function playSpin() {
         const data = await res.json(); 
         if(!data.success) { resText.innerText = "Hata oluştu."; tg.showAlert(data.message); btn.disabled = false; return; } 
         
-        const prizeAngles = { 0: 36, 250: 108, 500: 180, 1000: 252, 5000: 324 }; 
+        // Ödül açıları 10X ödüllere göre güncellendi
+        const prizeAngles = { 0: 36, 2500: 108, 5000: 180, 10000: 252, 50000: 324 }; 
         const targetAngle = prizeAngles[data.prize]; 
         const offset = 360 - targetAngle;
         const jitter = Math.floor(Math.random() * 40) - 20; 
@@ -403,6 +402,25 @@ async function upgradeMine(event) { triggerHaptic('light'); const upgradeCost = 
 
 async function showAd(event) { triggerHaptic('medium'); if (user.adTickets <= 0) return tg.showAlert("Hiç reklam biletiniz kalmadı!"); if(!AdController) return tg.showAlert("Reklam hazır değil."); AdController.show().then(async (result) => { if (result.done) { const res = await fetch(`${API}/api/adsgram-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); if (res.ok) { const data = await res.json(); if(data.success) { user.points = data.points; user.adTickets = data.adTickets; updateUI(); triggerHaptic('success'); spawnFloatingText(event, "+5000", "var(--success)"); tg.showAlert("Tebrikler! +5000 GEP eklendi."); } else { tg.showAlert(data.message); } } } }).catch(e => {}); }
 
+// GÜNCELLEME: Günlük Seriyi Yansıtan Fonksiyonun Çarpanı Değişti
+function renderStreak() { 
+    const streakBox = document.getElementById('streak-box'); 
+    if(!streakBox) return; 
+    streakBox.innerHTML = ''; 
+    const currentStreak = user.streak || 0; 
+    for (let i = 1; i <= 7; i++) { 
+        // 100 yerine 1000 yapıldı (Arayüzde görünmesi için)
+        const rewardVal = 1000 * Math.pow(2, i - 1); 
+        // Kısaltma (örn: 1000 yerine 1K, 64000 yerine 64K yazması için)
+        const displayVal = rewardVal >= 1000 ? (rewardVal / 1000) + 'K' : rewardVal;
+        
+        const dayDiv = document.createElement('div'); 
+        dayDiv.className = `streak-day ${i <= currentStreak ? 'completed' : ''}`; 
+        dayDiv.innerHTML = `<div style="font-weight:800; font-size:11px; margin-bottom:4px; opacity:0.8">GÜN ${i}</div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:11px; color:var(--gold);">${displayVal}</div>`; 
+        streakBox.appendChild(dayDiv); 
+    } 
+}
+
 async function claimDaily(event) { triggerHaptic('medium'); const res = await fetch(`${API}/api/daily-reward`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if(data.success) { triggerHaptic('success'); spawnFloatingText(event, "+" + data.reward, "var(--gold)"); tg.showAlert(`🎉 Ödül Alındı! Seri: ${data.streak}. GÜN (+${data.reward} GEP)`); init(); } else { triggerHaptic('error'); tg.showAlert(data.message); } }
 
 function renderAnnouncements(annList) { const annContainer = document.getElementById('ann-container'); const annScroll = document.getElementById('ann-scroll'); if (annList && annList.length > 0) { annScroll.innerText = annList.join(" 🔔 ") + " 🔔 "; annContainer.style.display = 'flex'; } else { annContainer.style.display = 'none'; } }
@@ -459,8 +477,6 @@ function renderLB() {
         return `<div class="list-row ${i < 3 ? 'rank-top' : ''}"><span style="color: ${i < 3 ? 'var(--gold)' : 'var(--text-main)'}; font-weight: ${i < 3 ? 800 : 600}; font-size:15px; display:flex; align-items:center;">${rank}. ${u.username || u.firstName} ${rewardTag}</span><span style="font-family:'Space Grotesk'; color: ${i < 3 ? 'var(--gold)' : 'var(--cyan)'}; font-weight:700;">${displayPoints.toLocaleString()}</span></div>`; 
     }).join(''); 
 }
-
-function renderStreak() { const streakBox = document.getElementById('streak-box'); if(!streakBox) return; streakBox.innerHTML = ''; const currentStreak = user.streak || 0; for (let i = 1; i <= 7; i++) { const rewardVal = 100 * Math.pow(2, i - 1); const dayDiv = document.createElement('div'); dayDiv.className = `streak-day ${i <= currentStreak ? 'completed' : ''}`; dayDiv.innerHTML = `<div style="font-weight:800; font-size:11px; margin-bottom:4px; opacity:0.8">GÜN ${i}</div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:11px; color:var(--gold);">${rewardVal}</div>`; streakBox.appendChild(dayDiv); } }
 
 function copyRef(e) { triggerHaptic('success'); document.getElementById('ref-link').select(); document.execCommand('copy'); spawnFloatingText(e, "KOPYALANDI!", "var(--success)"); }
 
