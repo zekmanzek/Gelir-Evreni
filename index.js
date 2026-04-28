@@ -43,14 +43,20 @@ function addPoints(user, amount) {
     user.points += amount; user.dailyPoints += amount; user.lastPointDate = now;
 }
 
-// BÜYÜK ÖDÜL DUYURU FONKSİYONU
+// BÜYÜK ÖDÜL DUYURU FONKSİYONU (BUTONLU)
 async function broadcastBigWin(username, firstName, gameName, prize) {
     try {
         const s = await Settings.findOne();
         if (!s || !s.mainGroupId) return; // Grup bağlı değilse iptal et
         const displayName = username ? `@${username}` : firstName;
-        const msg = `🎉 **BÜYÜK VURGUN!**\n\n${displayName}, **${gameName}** oyunundan tam **${prize.toLocaleString()} GEP** kazandı! 🤑\n\nSen de şansını denemek için hemen uygulamaya gir! 🚀`;
-        bot.sendMessage(s.mainGroupId, msg, { parse_mode: 'Markdown' });
+        const msg = `🎉 **BÜYÜK VURGUN!**\n\n${displayName}, **${gameName}** oyunundan tam **${prize.toLocaleString()} GEP** kazandı! 🤑\n\nSen de şansını denemek için hemen aşağıdaki butona tıkla! 🚀`;
+        
+        bot.sendMessage(s.mainGroupId, msg, { 
+            parse_mode: 'Markdown',
+            reply_markup: { 
+                inline_keyboard: [[{ text: "🚀 Sen De Kazan", web_app: { url: WEBHOOK_URL } }]] 
+            }
+        });
     } catch (err) { console.error("Duyuru hatası:", err); }
 }
 
@@ -198,7 +204,7 @@ app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     else if (rand <= 99) { prize = 1000; msg = "İKİYE KATLADIN!"; } 
     else { prize = 5000; msg = "💥 JACKPOT! 💥"; }
     
-    // YENİ EKLENEN DUYURU KISMI
+    // DUYURU SİSTEMİ
     if (prize === 5000) {
         broadcastBigWin(user.username, user.firstName, "Gelir Çarkı", prize);
     }
@@ -258,7 +264,7 @@ app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
     let prize = 0; const rand = Math.random() * 100;
     if (boxType === 1) prize = rand > 90 ? 10000 : 500; else if (boxType === 2) prize = rand > 90 ? 50000 : 3000; else prize = rand > 95 ? 250000 : 15000;
     
-    // YENİ EKLENEN DUYURU KISMI
+    // DUYURU SİSTEMİ
     if ((boxType === 1 && prize === 10000) || (boxType === 2 && prize === 50000) || (boxType === 3 && prize === 250000)) {
         let boxName = boxType === 1 ? "Standart Kapsül" : (boxType === 2 ? "Nadir Kapsül" : "Efsanevi Kapsül");
         broadcastBigWin(updatedUser.username, updatedUser.firstName, boxName, prize);
