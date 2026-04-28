@@ -193,13 +193,11 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// GÜNCELLEME: Günlük Seri Ödülü 10 Katına Çıktı
 app.post('/api/daily-reward', secureRoute, async (req, res) => {
     const user = await User.findOne({ telegramId: req.realTelegramId }); if (!user) return res.json({ success: false });
     const now = new Date(); const diffHours = (now - new Date(user.lastCheckin)) / (1000 * 60 * 60);
     if (diffHours < 24) return res.json({ success: false, message: "24 saat bekleyin." });
     if (diffHours >= 48) user.streak = 1; else user.streak = user.streak >= 7 ? 1 : user.streak + 1;
-    // Temel ödül 100 yerine 1000 yapıldı. (1000, 2000, 4000...)
     const reward = 1000 * Math.pow(2, user.streak - 1); 
     addPoints(user, reward); user.lastCheckin = now; await user.save();
     res.json({ success: true, points: user.points, streak: user.streak, reward });
@@ -267,16 +265,14 @@ app.post('/api/arcade/zarzara', secureRoute, async (req, res) => {
     res.json({ success: true, diceValue, winAmount, points: user.points });
 });
 
-// GÜNCELLEME: Çark Bedeli ve Ödülleri 10 Katına Çıktı
 app.post('/api/arcade/spin', secureRoute, async (req, res) => {
-    const cost = 5000; // 500'den 5000'e çıkarıldı
+    const cost = 5000; 
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP!" }); 
     
     const rand = Math.random() * 100; 
     let prize = 0; let msg = "BOŞ";
     
-    // Ödüller 10X yapıldı
     if (rand <= 40) { prize = 0; msg = "Şansını Dene"; } 
     else if (rand <= 75) { prize = 2500; msg = "Yarım Teselli"; } 
     else if (rand <= 92) { prize = 5000; msg = "Amorti!"; } 
@@ -288,6 +284,40 @@ app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     res.json({ success: true, prize, msg, points: user.points });
 });
 
+// YENİ ROTA: GEPÇÖZ (hCaptcha Doğrulaması)
+app.post('/api/arcade/gepcoz', secureRoute, async (req, res) => {
+    const { token } = req.body;
+    const secret = process.env.HCAPTCHA_SECRET;
+
+    if (!token || !secret) return res.json({ success: false, message: "Yapılandırma hatası." });
+
+    try {
+        const params = new URLSearchParams();
+        params.append('secret', secret);
+        params.append('response', token);
+
+        const verifyRes = await fetch('https://hcaptcha.com/siteverify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params
+        });
+        const data = await verifyRes.json();
+
+        if (data.success) {
+            const user = await User.findOne({ telegramId: req.realTelegramId });
+            const reward = 2500; // Kullanıcıya verilecek ödül
+            addPoints(user, reward);
+            await user.save();
+            res.json({ success: true, points: user.points, reward: reward });
+        } else {
+            res.json({ success: false, message: "Doğrulama başarısız." });
+        }
+    } catch (e) {
+        res.json({ success: false, message: "Sistem hatası." });
+    }
+});
+
+// ... (Diğer tüm rotalar aşağıya aynı şekilde devam ediyor) ...
 app.post('/api/arcade/predict/start', secureRoute, async (req, res) => {
     const { guess } = req.body; const cost = 1000; 
     if (activePredictions.has(req.realTelegramId)) return res.json({ success: false, message: "Zaten devam eden bir tahminin var!" });
