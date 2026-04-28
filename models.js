@@ -18,7 +18,8 @@ const User = mongoose.model('User', new mongoose.Schema({
     adTickets: { type: Number, default: 0 },
     lastLootbox1: { type: Date, default: new Date(0) },
     lastLootbox2: { type: Date, default: new Date(0) },
-    lastLootbox3: { type: Date, default: new Date(0) }
+    lastLootbox3: { type: Date, default: new Date(0) },
+    isMiningNotified: { type: Boolean, default: false } // YENİ: Spam önleyici uyarı işareti
 }));
 
 const PromoCode = mongoose.model('PromoCode', new mongoose.Schema({
