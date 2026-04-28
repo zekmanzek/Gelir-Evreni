@@ -5,44 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gelir Evreni | Siber Uzay</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="loader"><div class="loader-ring"></div></div>
-    
+    <div id="loader"><div class="loader-ring"></div><div class="loader-text">GELİR EVRENİ</div></div>
+    <div id="ann-container" class="announcement-container"><div id="ann-scroll" class="announcement-scroll"></div></div>
+
     <div class="header-panel">
+        <div id="user-level" class="level-badge">YÜKLENİYOR...</div>
         <div class="balance-wrapper">
             <div class="balance-label">GÜNCEL BAKİYE</div>
             <div class="points-row"><div class="points" id="balance">0</div><div class="currency">GEP</div></div>
             <div class="usd-val" id="usd">≈ 0.00 USDT</div>
-            <div style="font-size: 12px; color: var(--text-dim); margin-top: 5px;" id="header-name">YÜKLENİYOR...</div>
+            <div style="font-size: 12px; color: var(--text-dim); margin-top: 5px;" id="header-name">@KULLANICI</div>
         </div>
     </div>
 
     <div id="page-hub" class="page active">
-        <div class="glass-card" style="text-align:center;"><h3>🚀 SİSTEM ÇALIŞIYOR</h3><p>Haftalık yarışa katılmak için "AĞ" sekmesine bak!</p></div>
+        <div class="glass-card">
+            <div class="streak-grid" id="streak-box"></div>
+            <button class="game-btn btn-outline" onclick="claimDaily(event)">GÜNLÜK ÖDÜL</button>
+        </div>
+        <div class="stat-grid">
+            <div class="stat-box"><div class="balance-label">MOTOR LVL</div><div id="ui-mine-level" class="stat-val">1</div></div>
+            <div class="stat-box"><div class="balance-label">KAPASİTE</div><div id="ui-mine-reward" class="stat-val">1000</div></div>
+        </div>
+        <div class="glass-card" style="text-align:center;">
+            <div class="core-container" onclick="startMining(event)"><div class="core-glow" id="core-glow"></div><div class="core-button">⛏️</div></div>
+            <div id="mining-timer" style="font-size:30px; font-weight:800; color:var(--gold); display:none;">00:00:00</div>
+            <button id="btn-mine" class="game-btn" onclick="startMining(event)">ÜRETİMİ BAŞLAT</button>
+        </div>
+    </div>
+
+    <div id="page-earn" class="page">
+        <div class="glass-card" style="border-color:#8b5cf6;">
+            <h3>📢 PROJEM</h3>
+            <input type="text" id="ad-title" class="glass-input" placeholder="Başlık">
+            <input type="text" id="ad-link" class="glass-input" placeholder="Link">
+            <button class="game-btn" style="background:#8b5cf6;" onclick="postAirdrop()">YAYINLA (1M GEP)</button>
+            <div id="airdrop-list" style="margin-top:15px;"></div>
+        </div>
+        <div id="task-list"></div>
+    </div>
+
+    <div id="page-arcade" class="page">
+        <div class="glass-card" onclick="openGame('predict')">📈 Kripto Kahini</div>
+        <div class="glass-card" onclick="openGame('spin')">🎰 Gelir Çarkı</div>
+        <div class="glass-card" onclick="openGame('lootbox')">📦 Gelir Kapsülleri</div>
     </div>
 
     <div id="page-network" class="page">
-        <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px;">🏆</div><h3 style="margin: 0;">ŞAMPİYONLAR</h3></div>
-        
         <div class="tab-container">
             <button id="tab-lb-all" class="tab-btn active" onclick="switchLB('all')">TOP 100</button>
             <button id="tab-lb-weekly" class="tab-btn" onclick="switchLB('weekly')">BU HAFTA</button>
         </div>
-
-        <div id="weekly-reward-info" style="display:none; background: rgba(16,185,129,0.1); border: 1px solid var(--success); padding: 15px; border-radius: 16px; margin-bottom: 15px; text-align: center;">
-            <h4 style="color: var(--success); margin-bottom: 5px;">🎁 HAFTALIK BÜYÜK ÖDÜL</h4>
-            <p style="font-size: 12px; margin: 0;">Bu hafta ilk 5'e giren herkese <strong>5$ NAKİT ÖDÜL</strong>!<br>Sıfırlanma: Pazar 23:59</p>
+        <div id="weekly-reward-info" style="display:none; background:rgba(16,185,129,0.1); padding:15px; border-radius:12px; margin-bottom:10px; text-align:center;">
+            <h4 style="color:var(--success);">🎁 HAFTALIK 5$ ÖDÜL</h4>
+            <p style="font-size:11px;">İlk 5'e giren herkese nakit ödül!</p>
         </div>
+        <div id="leader-list"></div>
+    </div>
 
-        <div class="glass-card" style="padding: 0; overflow: hidden;"><div id="leader-list"></div></div>
+    <div id="page-profile" class="page">
+        <div class="glass-card">
+            <h3>AĞI BÜYÜT</h3>
+            <input type="text" id="ref-link" class="glass-input" readonly>
+            <button class="game-btn" onclick="copyRef(event)">KOPYALA</button>
+        </div>
+        <div id="admin-panel-btn" class="glass-card" style="display:none; border-color:red;" onclick="showPage('admin')">🛡️ ADMIN</div>
+    </div>
+
+    <div id="modal-spin" class="game-modal">
+        <div class="close-modal" onclick="closeGame('spin')">✖</div>
+        <div class="spin-container"><div id="spin-wheel" class="spin-wheel"></div></div>
+        <h3 id="spin-result">Şansını Dene!</h3>
+        <button id="btn-do-spin" class="game-btn" onclick="playSpin()">ÇEVİR (500 GEP)</button>
     </div>
 
     <div class="dock-container">
-        <a href="javascript:void(0)" class="dock-item active" onclick="showPage('hub', this)"><div class="dock-icon">🏠</div><div class="dock-text">MERKEZ</div></a>
-        <a href="javascript:void(0)" class="dock-item" onclick="showPage('network', this)"><div class="dock-icon">🏆</div><div class="dock-text">AĞ</div></a>
+        <a href="#" class="dock-item active" onclick="showPage('hub', this)">🏠</a>
+        <a href="#" class="dock-item" onclick="showPage('earn', this)">💸</a>
+        <a href="#" class="dock-item" onclick="showPage('arcade', this)">🕹️</a>
+        <a href="#" class="dock-item" onclick="showPage('network', this)">🏆</a>
+        <a href="#" class="dock-item" onclick="showPage('profile', this)">👤</a>
     </div>
 
     <script src="app.js"></script>
