@@ -262,7 +262,6 @@ async function playSpin() {
     } catch(e) { resText.innerText = "Bağlantı Hatası!"; btn.disabled = false; }
 }
 
-// YENİ KRİPTO KAHİNİ (SUNUCUYU YORMAYAN İSTEMCİ TARAFLI BEKLEME SİSTEMİ)
 async function playPredict(guess) {
     if (user.points < 1000) return tg.showAlert("Yetersiz GEP!");
     document.getElementById('predict-buttons').style.display = 'none';
@@ -270,7 +269,6 @@ async function playPredict(guess) {
     document.getElementById('predict-price').innerText = "Fiyat Alınıyor...";
     triggerHaptic('medium');
 
-    // 1. AŞAMA: Oyunu Başlat (Sunucu beklemez, anında cevap verir)
     const resStart = await fetch(`${API}/api/arcade/predict/start`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ guess, initData: tg.initData }) });
     const dataStart = await resStart.json();
 
@@ -282,8 +280,6 @@ async function playPredict(guess) {
     }
 
     user.points = dataStart.points; updateUI();
-
-    // Bekleme sayacını artık Frontend (İstemci) tutuyor
     let timeLeft = 10;
     document.getElementById('predict-price').innerHTML = `<span style="color:var(--cyan); font-size:24px;">Giriş: $${dataStart.price1}</span><br>Sonuç bekleniyor: ${timeLeft}s`;
 
@@ -292,7 +288,6 @@ async function playPredict(guess) {
         document.getElementById('predict-price').innerHTML = `<span style="color:var(--cyan); font-size:24px;">Giriş: $${dataStart.price1}</span><br>Sonuç bekleniyor: ${timeLeft}s`;
     }, 1000);
 
-    // 10 Saniye sonra 2. AŞAMA: Sonucu Çek
     setTimeout(async () => {
         clearInterval(timer);
         document.getElementById('predict-price').innerText = "Sonuç Analiz Ediliyor...";
@@ -354,9 +349,47 @@ function renderAnnouncements(annList) { const annContainer = document.getElement
 
 async function loadLeaderboard() { const list = document.getElementById('leader-list'); list.innerHTML = `<p style='text-align:center; padding: 30px; font-weight:600; color:var(--text-dim);'>YÜKLENİYOR...</p>`; const res = await fetch(`${API}/api/leaderboard`); const data = await res.json(); if(data.success) { lbAllTime = data.leaderboard || []; lbDaily = data.dailyLeaderboard || []; lbYesterday = data.yesterdayLeaderboard || []; renderLB(); } }
 
-function switchLB(tab) { triggerHaptic('light'); currentLbTab = tab; const tabs = ['all', 'daily', 'yesterday']; tabs.forEach(tName => { const btn = document.getElementById(`tab-lb-${tName}`); if (tName === tab) { btn.classList.add('active'); } else { btn.classList.remove('active'); } }); renderLB(); }
+function switchLB(tab) { 
+    triggerHaptic('light'); currentLbTab = tab; 
+    const tabs = ['all', 'daily', 'yesterday']; 
+    tabs.forEach(tName => { 
+        const btn = document.getElementById(`tab-lb-${tName}`); 
+        if (tName === tab) btn.classList.add('active'); 
+        else btn.classList.remove('active'); 
+    }); 
+    
+    // HAFTALIK ÖDÜL BİLGİLENDİRMESİNİ GÖSTER/GİZLE
+    const infoPanel = document.getElementById('weekly-reward-info');
+    if (infoPanel) {
+        if (tab === 'daily' || tab === 'yesterday') infoPanel.style.display = 'block';
+        else infoPanel.style.display = 'none';
+    }
+    renderLB(); 
+}
 
-function renderLB() { const list = document.getElementById('leader-list'); let dataToRender = []; if(currentLbTab === 'all') dataToRender = lbAllTime; else if(currentLbTab === 'daily') dataToRender = lbDaily; else dataToRender = lbYesterday; if(dataToRender.length === 0) { list.innerHTML = `<p style='text-align:center; padding: 30px; color: var(--text-dim); font-weight:600;'>KAYIT BULUNAMADI.</p>`; return; } list.innerHTML = dataToRender.map((u, i) => { const rank = currentLbTab === 'yesterday' && u.rank ? u.rank : (i + 1); let displayPoints = u.points; if(currentLbTab === 'daily') displayPoints = u.dailyPoints || 0; return `<div class="list-row ${i < 3 ? 'rank-top' : ''}"><span style="color: ${i < 3 ? 'var(--gold)' : 'var(--text-main)'}; font-weight: ${i < 3 ? 800 : 600}; font-size:15px;">${rank}. ${u.username || u.firstName}</span><span style="font-family:'Space Grotesk'; color: ${i < 3 ? 'var(--gold)' : 'var(--cyan)'}; font-weight:700;">${displayPoints.toLocaleString()}</span></div>`; }).join(''); }
+function renderLB() { 
+    const list = document.getElementById('leader-list'); 
+    let dataToRender = []; 
+    if(currentLbTab === 'all') dataToRender = lbAllTime; 
+    else if(currentLbTab === 'daily') dataToRender = lbDaily; 
+    else dataToRender = lbYesterday; 
+    
+    if(dataToRender.length === 0) { list.innerHTML = `<p style='text-align:center; padding: 30px; color: var(--text-dim); font-weight:600;'>KAYIT BULUNAMADI.</p>`; return; } 
+    
+    list.innerHTML = dataToRender.map((u, i) => { 
+        const rank = currentLbTab === 'yesterday' && u.rank ? u.rank : (i + 1); 
+        let displayPoints = u.points; 
+        if(currentLbTab === 'daily') displayPoints = u.dailyPoints || 0; 
+        
+        // İLK 5 KİŞİYE $5 NAKİT ETİKETİ
+        let rewardTag = '';
+        if ((currentLbTab === 'daily' || currentLbTab === 'yesterday') && i < 5) {
+            rewardTag = `<span style="background: var(--success); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 6px; margin-left: 8px; font-weight: 800;">+$5 💵</span>`;
+        }
+
+        return `<div class="list-row ${i < 3 ? 'rank-top' : ''}"><span style="color: ${i < 3 ? 'var(--gold)' : 'var(--text-main)'}; font-weight: ${i < 3 ? 800 : 600}; font-size:15px; display:flex; align-items:center;">${rank}. ${u.username || u.firstName} ${rewardTag}</span><span style="font-family:'Space Grotesk'; color: ${i < 3 ? 'var(--gold)' : 'var(--cyan)'}; font-weight:700;">${displayPoints.toLocaleString()}</span></div>`; 
+    }).join(''); 
+}
 
 function renderStreak() { const streakBox = document.getElementById('streak-box'); if(!streakBox) return; streakBox.innerHTML = ''; const currentStreak = user.streak || 0; for (let i = 1; i <= 7; i++) { const rewardVal = 100 * Math.pow(2, i - 1); const dayDiv = document.createElement('div'); dayDiv.className = `streak-day ${i <= currentStreak ? 'completed' : ''}`; dayDiv.innerHTML = `<div style="font-weight:800; font-size:11px; margin-bottom:4px; opacity:0.8">GÜN ${i}</div><div style="font-family:'Space Grotesk'; font-weight:700; font-size:11px; color:var(--gold);">${rewardVal}</div>`; streakBox.appendChild(dayDiv); } }
 
