@@ -35,6 +35,7 @@
             <div class="streak-grid" id="streak-box"></div>
             <button id="btn-checkin" class="game-btn btn-outline" style="margin-top: 5px; padding: 12px; font-size: 13px;" onclick="claimDaily(event)">GÜNLÜK ÖDÜLÜ AL</button>
         </div>
+
         <div class="stat-grid">
             <div class="stat-box"><div class="balance-label">MOTOR SEVİYESİ</div><div id="ui-mine-level" class="stat-val" style="color: var(--gold);">1</div></div>
             <div class="stat-box"><div class="balance-label">KAPASİTE (4H)</div><div id="ui-mine-reward" class="stat-val" style="color: var(--cyan);">1,000</div></div>
@@ -58,21 +59,47 @@
             <button id="btn-post-ad" class="game-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color:#fff; padding: 14px; font-size:13px;" onclick="postAirdrop()">YAYINLA (1M GEP)</button>
             <div id="airdrop-list" style="margin-top:20px; max-height:350px; overflow-y:auto;"></div>
         </div>
+
         <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">🎯</div><div><h3 style="margin: 0; color: #fff;">GÖREVLER</h3><p style="font-size: 12px; margin: 0; color: var(--text-dim);">Tamamla ve kazan.</p></div></div>
         <div id="task-list" style="margin-bottom: 20px;"></div>
+
         <div class="glass-card" style="text-align: center; border-color: #f97316;">
             <div style="font-size: 36px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(249,115,22,0.5));">🎫</div>
             <h3 style="color: #f97316;">PROMOKOD</h3>
             <input type="text" id="ui-promo-code" class="glass-input" placeholder="KOD GİRİN" style="text-transform: uppercase; border-color:rgba(249,115,22,0.3); color:#f97316;">
             <button id="btn-redeem-promo" class="game-btn" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #fff; box-shadow: 0 4px 15px rgba(249,115,22,0.4);" onclick="redeemPromo()">KODU KULLAN</button>
         </div>
+
+        <div class="glass-card" style="text-align: center; background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(15,23,42,0.6) 100%); border-color: rgba(16,185,129,0.3);">
+            <div style="font-size: 36px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(16,185,129,0.5));">📺</div>
+            <h3 style="color: #fff; margin-bottom: 5px;">İZLE & KAZAN</h3>
+            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 10px; margin-bottom: 15px; border: 1px solid var(--glass-border);">
+                <span style="font-size: 12px; color: var(--text-main); font-weight: bold;">Mevcut Biletin:</span>
+                <span id="ui-ad-tickets" style="font-size: 18px; color: var(--success); font-weight: 900; margin-left: 5px;">0</span>
+            </div>
+            <button class="game-btn btn-success" onclick="showAd(event)">REKLAM İZLE (+5000 GEP)</button>
+            <div style="margin-top: 25px; text-align: left;">
+                <h4 style="font-size:13px; color:var(--gold); margin-bottom:10px; text-align:center;">BİLET PAKETLERİ</h4>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#3b82f6; color:#3b82f6;" onclick="buyAdPackage(1)">10 BİLET (10.000 GEP)</button>
+                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#8b5cf6; color:#8b5cf6;" onclick="buyAdPackage(2)">50 BİLET (50.000 GEP)</button>
+                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#ec4899; color:#ec4899;" onclick="buyAdPackage(3)">100 BİLET (100.000 GEP)</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="page-arcade" class="page">
         <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">🕹️</div><div><h3 style="margin: 0; color: #fff;">SİBER ARCADE</h3><p style="font-size: 12px; margin: 0; color: var(--text-dim);">Yeni oyunlar çok yakında.</p></div></div>
+        <style>.arcade-card { position: relative; overflow: hidden; padding-top: 35px; border-color: rgba(255,255,255,0.05); } .badge-soon { position: absolute; top:12px; right:15px; background:var(--danger); color:#fff; font-size:10px; padding:4px 8px; border-radius:6px; font-weight:800; letter-spacing:1px; } .arcade-icon { font-size: 40px; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }</style>
+
         <div class="glass-card arcade-card" style="border-color: var(--cyan);"><div class="arcade-icon">📈</div><h3 style="color: var(--cyan); margin-bottom: 5px;">Kripto Kahini</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">BTC fiyatını tahmin et, GEP'lerini katla.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('predict')">TAHMİN ET (1000 GEP)</button></div>
+        
         <div class="glass-card arcade-card" style="border-color: var(--gold);"><div class="arcade-icon">🎰</div><h3 style="color: var(--gold); margin-bottom: 5px;">Gelir Çarkı</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')">ÇEVİR (500 GEP)</button></div>
+        
         <div class="glass-card arcade-card" style="border-color: #10b981;"><div class="arcade-icon">📦</div><h3 style="color: #10b981; margin-bottom: 5px;">Gelir Kapsülleri</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Sandıkları aç, sürprizleri yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #10b981; color:#10b981;" onclick="openGame('lootbox')">KAPSÜLLERİ GÖR</button></div>
+
+        <div class="glass-card arcade-card" style="opacity:0.5;"><div class="badge-soon">YAKINDA</div><div class="arcade-icon">🚀</div><h3 style="color: #f43f5e;">Siber Çöküş</h3><p style="font-size: 12px;">Roket patlamadan çekil, kazancı al.</p></div>
     </div>
 
     <div id="page-network" class="page">
@@ -87,16 +114,19 @@
 
     <div id="page-profile" class="page">
         <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px;">👤</div><div><h3 style="margin: 0; color: #fff;">PROFİL & AYARLAR</h3></div></div>
+        
         <div class="glass-card" style="text-align: center;">
             <h3 style="color: #fff;">AĞI BÜYÜT</h3>
             <p style="font-size: 12px; color: var(--gold); margin-bottom: 10px;">Hem sen hem arkadaşın 10.000 GEP kazanır!</p>
             <input type="text" id="ref-link" class="glass-input" style="direction: ltr;" readonly onclick="this.select()">
             <button class="game-btn" onclick="copyRef(event)">LİNKİ KOPYALA</button>
         </div>
+
         <div class="stat-grid" style="margin-bottom: 15px;">
             <div class="stat-box"><div class="balance-label">DAVET ETTİKLERİN</div><div id="stat-ref-count" class="stat-val" style="color: var(--gold);">0</div></div>
             <div class="stat-box"><div class="balance-label">HESAP DURUMU</div><div id="user-status-text" class="stat-val" style="color: var(--success); font-size: 18px; margin-top: 8px;">AKTİF</div></div>
         </div>
+
         <div id="admin-panel-btn" class="glass-card" style="display:none; text-align:center; border-color:var(--danger); cursor:pointer;" onclick="showPage('admin', null)">
             <h3 style="color: var(--danger); margin:0;">🛡️ YÖNETİCİ TERMİNALİ</h3>
         </div>
@@ -106,7 +136,11 @@
         <button class="game-btn btn-outline" style="margin-bottom: 15px; padding: 10px;" onclick="showPage('profile', null)">⬅ GERİ DÖN</button>
         <h3 style="color: var(--danger);">🛡️ YÖNETİCİ TERMİNALİ</h3>
         <div class="stat-grid"><div class="stat-box"><div class="balance-label">TOPLAM OYUNCU</div><div id="adm-stat-users" class="stat-val" style="color:var(--cyan)">0</div></div><div class="stat-box"><div class="balance-label">TOPLAM GEP</div><div id="adm-stat-points" class="stat-val" style="color:var(--gold)">0</div></div></div>
-        </div>
+        <div class="glass-card" style="border-color: var(--danger);"><h4 style="color: var(--danger);">🧧 Promo Kod Oluştur</h4><input type="text" id="adm-promo-code" class="glass-input" placeholder="KOD (Örn: VIP2026)"><input type="number" id="adm-promo-reward" class="glass-input" placeholder="Ödül Miktarı (GEP)"><input type="number" id="adm-promo-usage" class="glass-input" placeholder="Kaç Kişi Kullanabilir?"><button class="game-btn btn-danger" onclick="createPromo()">KOD OLUŞTUR</button></div>
+        <div class="glass-card"><h4>Duyuru Yayınla</h4><input type="text" id="adm-ann-text" class="glass-input" placeholder="Sistem mesajı..."><button class="game-btn btn-outline" onclick="addAnnouncement()">YAYINLA</button><div id="adm-ann-list" style="margin-top:15px; max-height:150px; overflow-y:auto;"></div></div>
+        <div class="glass-card"><h4>Görev Ekle</h4><input type="text" id="adm-task-title" class="glass-input" placeholder="Görev Başlığı"><input type="number" id="adm-task-reward" class="glass-input" placeholder="Ödül (GEP)"><input type="text" id="adm-task-target" class="glass-input" placeholder="Link (https://...)"><button class="game-btn btn-success" onclick="addTask()">EKLE</button><div id="adm-task-list" style="margin-top:15px; max-height: 150px; overflow-y: auto;"></div></div>
+        <div class="glass-card"><h4>Kullanıcı Yönetimi</h4><input type="text" id="adm-target-id" class="glass-input" placeholder="ID veya @Username"><input type="number" id="adm-amount" class="glass-input" placeholder="Miktar"><div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"><button class="game-btn btn-success" style="padding: 12px; font-size: 12px;" onclick="manageUser('add')">EKLE</button><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="manageUser('set')">EŞİTLE</button><button class="game-btn btn-danger" style="padding: 12px; font-size: 12px;" onclick="manageUser('ban')">BAN</button><button class="game-btn" style="padding: 12px; font-size: 12px; background: #334155; color:#fff;" onclick="manageUser('unban')">KALDIR</button></div></div>
+    </div>
 
     <div id="modal-predict" class="game-modal"><div class="close-modal" onclick="closeGame('predict')">✖</div><h2 style="color: var(--cyan); margin-bottom:10px;">Kripto Kahini</h2><div id="tv_chart_container" style="width: 100%; max-width:400px; height: 220px; border-radius: 12px; margin-bottom: 15px; border:1px solid var(--glass-border);"></div><p style="color: var(--text-dim); margin-bottom: 15px;">10 saniye sonra BTC fiyatı ne olacak?</p><h1 id="predict-price" style="font-size: 30px; color: #fff; margin-bottom: 10px;">Bekleniyor...</h1><div id="predict-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-top: 10px;"><button class="game-btn btn-success" style="flex:1;" onclick="playPredict('UP')">YÜKSELECEK</button><button class="game-btn btn-danger" style="flex:1;" onclick="playPredict('DOWN')">DÜŞECEK</button></div><div id="predict-loading" style="display:none; margin-top:10px;"><div class="loader-ring" style="width:40px; height:40px;"></div><p style="color:var(--gold); font-weight:bold; margin-top:10px;">Piyasa Analiz Ediliyor...</p></div></div>
     
