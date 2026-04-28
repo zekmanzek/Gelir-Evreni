@@ -208,6 +208,7 @@ async function redeemPromo() {
     } catch (e) { tg.showAlert("Bağlantı hatası!"); } finally { if(btn) { btn.disabled = false; btn.style.opacity = "1"; } }
 }
 
+// OYUN AÇMA/KAPAMA YÖNETİMİ
 function openGame(game) { 
     triggerHaptic('light'); document.getElementById(`modal-${game}`).style.display = 'flex'; 
     if(game === 'predict') { 
@@ -221,9 +222,68 @@ function openGame(game) {
     } 
     if(game === 'spin') { document.getElementById('spin-result').innerText = "Şansını Dene!"; } 
     if(game === 'lootbox') { resetLootbox(); } 
+    if(game === 'zarzara') { document.getElementById('zarzara-result').innerText = "Bahsini Gir ve At!"; document.getElementById('zarzara-display').innerText = "🎲"; }
 }
 
 function closeGame(game) { triggerHaptic('light'); document.getElementById(`modal-${game}`).style.display = 'none'; }
+
+// YENİ OYUN: ZARZARA (Siber Zar)
+async function playZarzara() {
+    const betInput = document.getElementById('zarzara-bet').value;
+    const amount = parseInt(betInput);
+    if (!amount || isNaN(amount) || amount < 100) return tg.showAlert("Minimum bahis 100 GEP olmalıdır!");
+    if (user.points < amount) return tg.showAlert("Yetersiz GEP bakiye!");
+    
+    const btn = document.getElementById('btn-do-zarzara');
+    const display = document.getElementById('zarzara-display');
+    const resultText = document.getElementById('zarzara-result');
+    
+    btn.disabled = true;
+    resultText.innerText = "Zar atılıyor...";
+    resultText.style.color = "#fff";
+    display.classList.add('shake-box');
+    triggerHaptic('heavy');
+    
+    try {
+        const res = await fetch(`${API}/api/arcade/zarzara`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ bet: amount, initData: tg.initData }) });
+        const data = await res.json();
+        
+        if (!data.success) {
+            display.classList.remove('shake-box');
+            resultText.innerText = "Hata!";
+            tg.showAlert(data.message);
+            btn.disabled = false;
+            return;
+        }
+
+        setTimeout(() => {
+            display.classList.remove('shake-box');
+            user.points = data.points;
+            updateUI();
+            
+            // Sonuç zarını ekrana bas
+            const diceEmojis = { 1: "⚀", 2: "⚁", 3: "⚂", 4: "⚃", 5: "⚄", 6: "⚅" };
+            display.innerText = diceEmojis[data.diceValue] || "🎲";
+            
+            if (data.winAmount > 0) {
+                resultText.innerText = `KAZANDIN! (+${data.winAmount} GEP)`;
+                resultText.style.color = "var(--success)";
+                triggerHaptic('success');
+                spawnFloatingText(null, `+${data.winAmount} GEP`, "var(--success)");
+            } else {
+                resultText.innerText = "KAYBETTİN!";
+                resultText.style.color = "var(--danger)";
+                triggerHaptic('error');
+            }
+            btn.disabled = false;
+        }, 1500);
+
+    } catch(e) {
+        display.classList.remove('shake-box');
+        resultText.innerText = "Bağlantı Hatası!";
+        btn.disabled = false;
+    }
+}
 
 async function playSpin() { 
     if (user.points < 500) return tg.showAlert("Yetersiz GEP!"); 
@@ -359,7 +419,6 @@ async function loadLeaderboard() {
     } 
 }
 
-// YENİ: Sadece 'all' ve 'daily' kaldı
 function switchLB(tab) { 
     triggerHaptic('light'); currentLbTab = tab; 
     const tabs = ['all', 'daily']; 
@@ -371,7 +430,6 @@ function switchLB(tab) {
         }
     }); 
     
-    // HAFTALIK ÖDÜL BİLGİLENDİRMESİNİ GÖSTER/GİZLE
     const infoPanel = document.getElementById('weekly-reward-info');
     if (infoPanel) {
         if (tab === 'daily') infoPanel.style.display = 'block';
@@ -393,7 +451,6 @@ function renderLB() {
         let displayPoints = u.points; 
         if(currentLbTab === 'daily') displayPoints = u.dailyPoints || 0; 
         
-        // İLK 5 KİŞİYE $5 NAKİT ETİKETİ (Sadece Haftalık listede)
         let rewardTag = '';
         if (currentLbTab === 'daily' && i < 5) {
             rewardTag = `<span style="background: var(--success); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 6px; margin-left: 8px; font-weight: 800;">+$5 💵</span>`;
