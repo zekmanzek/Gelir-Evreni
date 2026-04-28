@@ -97,6 +97,13 @@
     <div id="page-arcade" class="page">
         <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px; filter: drop-shadow(0 0 8px #fff);">🕹️</div><div><h3 style="margin: 0; color: #fff;">SİBER ARCADE</h3><p style="font-size: 12px; margin: 0; color: var(--text-dim);">Yeni nesil mini oyunlar.</p></div></div>
         
+        <div class="glass-card arcade-card" style="border-color: #ef4444;">
+            <div class="arcade-icon">🎲</div>
+            <h3 style="color: #ef4444; margin-bottom: 5px;">Zarzara</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Zar 4, 5 veya 6 gelirse bahsini ikiye katla!</p>
+            <button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #ef4444; color: #ef4444;" onclick="openGame('zarzara')">ZAR AT (MİN 100 GEP)</button>
+        </div>
+
         <div class="glass-card arcade-card" style="border-color: var(--cyan);"><div class="arcade-icon">📈</div><h3 style="color: var(--cyan); margin-bottom: 5px;">Kripto Kahini</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">BTC fiyatını tahmin et, GEP'lerini katla.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: var(--cyan); color: var(--cyan);" onclick="openGame('predict')">TAHMİN ET (1000 GEP)</button></div>
         
         <div class="glass-card arcade-card" style="border-color: var(--gold);"><div class="arcade-icon">🎰</div><h3 style="color: var(--gold); margin-bottom: 5px;">Gelir Çarkı</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')">ÇEVİR (500 GEP)</button></div>
@@ -151,6 +158,23 @@
         <div class="glass-card"><h4>Duyuru Yayınla</h4><input type="text" id="adm-ann-text" class="glass-input" placeholder="Sistem mesajı..."><button class="game-btn btn-outline" onclick="addAnnouncement()">YAYINLA</button><div id="adm-ann-list" style="margin-top:15px; max-height:150px; overflow-y:auto; padding-right:5px;"></div></div>
         <div class="glass-card"><h4>Görev Ekle</h4><input type="text" id="adm-task-title" class="glass-input" placeholder="Görev Başlığı"><input type="number" id="adm-task-reward" class="glass-input" placeholder="Ödül (GEP)"><input type="text" id="adm-task-target" class="glass-input" placeholder="Link (https://...)"><button class="game-btn btn-success" onclick="addTask()">EKLE</button><div id="adm-task-list" style="margin-top:15px; max-height: 150px; overflow-y: auto; padding-right:5px;"></div></div>
         <div class="glass-card"><h4>Kullanıcı Yönetimi</h4><input type="text" id="adm-target-id" class="glass-input" placeholder="ID veya @Username"><input type="number" id="adm-amount" class="glass-input" placeholder="Miktar"><div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"><button class="game-btn btn-success" style="padding: 12px; font-size: 12px;" onclick="manageUser('add')">EKLE</button><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="manageUser('set')">EŞİTLE</button><button class="game-btn btn-danger" style="padding: 12px; font-size: 12px;" onclick="manageUser('ban')">BAN</button><button class="game-btn" style="padding: 12px; font-size: 12px; background: #1e293b; color:#fff;" onclick="manageUser('unban')">KALDIR</button></div></div>
+    </div>
+
+    <div id="modal-zarzara" class="game-modal">
+        <div class="close-modal" onclick="closeGame('zarzara')">✖</div>
+        <h2 style="color: #ef4444; margin-bottom:5px; text-shadow: 0 0 15px rgba(239, 68, 68, 0.5);">Zarzara</h2>
+        <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 12px;">4, 5, 6 atarsan ikiye katlarsın.</p>
+        
+        <div id="zarzara-display" style="font-size: 100px; line-height: 1; margin: 20px 0; height: 120px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.4));">
+            🎲
+        </div>
+        
+        <h3 id="zarzara-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Bahsini Gir ve At!</h3>
+        
+        <div style="width: 100%; max-width: 300px;">
+            <input type="number" id="zarzara-bet" class="glass-input" placeholder="Miktar (Min 100 GEP)" style="border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">
+            <button id="btn-do-zarzara" class="game-btn" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);" onclick="playZarzara()">ZAR AT</button>
+        </div>
     </div>
 
     <div id="modal-predict" class="game-modal"><div class="close-modal" onclick="closeGame('predict')">✖</div><h2 style="color: var(--cyan); margin-bottom:10px;">Kripto Kahini</h2><div id="tv_chart_container" style="width: 100%; max-width:400px; height: 220px; border-radius: 12px; margin-bottom: 15px; border:1px solid rgba(6,182,212,0.3); box-shadow: 0 0 20px rgba(6,182,212,0.1);"></div><p style="color: var(--text-dim); margin-bottom: 15px;">10 saniye sonra BTC fiyatı ne olacak?</p><h1 id="predict-price" style="font-size: 30px; color: #fff; margin-bottom: 10px; text-shadow: 0 0 10px rgba(255,255,255,0.5);">Bekleniyor...</h1><div id="predict-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-top: 10px;"><button class="game-btn btn-success" style="flex:1;" onclick="playPredict('UP')">YÜKSELECEK</button><button class="game-btn btn-danger" style="flex:1;" onclick="playPredict('DOWN')">DÜŞECEK</button></div><div id="predict-loading" style="display:none; margin-top:10px;"><div class="loader-ring" style="width:40px; height:40px; border-top-color: var(--cyan);"></div><p style="color:var(--cyan); font-weight:bold; margin-top:10px;">Piyasa Analiz Ediliyor...</p></div></div>
