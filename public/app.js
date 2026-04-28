@@ -3,7 +3,7 @@ tg.expand();
 tg.setHeaderColor('#000109'); 
 const API = window.location.origin;
 let user, tasks = [], miningInterval; 
-let lbAllTime = [], lbWeekly = []; 
+let lbAllTime = [], lbDaily = [], lbYesterday = []; 
 let currentLbTab = 'all'; 
 const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "27433" }) : null; 
 let tvWidgetCreated = false;
@@ -347,54 +347,47 @@ async function claimDaily(event) { triggerHaptic('medium'); const res = await fe
 
 function renderAnnouncements(annList) { const annContainer = document.getElementById('ann-container'); const annScroll = document.getElementById('ann-scroll'); if (annList && annList.length > 0) { annScroll.innerText = annList.join(" 🔔 ") + " 🔔 "; annContainer.style.display = 'flex'; } else { annContainer.style.display = 'none'; } }
 
-async function loadLeaderboard() { 
-    const list = document.getElementById('leader-list'); 
-    if(list) list.innerHTML = `<p style='text-align:center; padding: 30px; font-weight:600; color:var(--text-dim);'>YÜKLENİYOR...</p>`; 
-    const res = await fetch(`${API}/api/leaderboard`); 
-    const data = await res.json(); 
-    if(data.success) { 
-        lbAllTime = data.leaderboard || []; 
-        lbWeekly = data.dailyLeaderboard || []; 
-        renderLB(); 
-    } 
-}
+async function loadLeaderboard() { const list = document.getElementById('leader-list'); list.innerHTML = `<p style='text-align:center; padding: 30px; font-weight:600; color:var(--text-dim);'>YÜKLENİYOR...</p>`; const res = await fetch(`${API}/api/leaderboard`); const data = await res.json(); if(data.success) { lbAllTime = data.leaderboard || []; lbDaily = data.dailyLeaderboard || []; lbYesterday = data.yesterdayLeaderboard || []; renderLB(); } }
 
 function switchLB(tab) { 
-    triggerHaptic('light'); 
-    currentLbTab = (tab === 'daily') ? 'weekly' : tab; // Eğer eski buton kalmışsa güvenli yakala
-    if (currentLbTab === 'yesterday') return; // Eski buton varsa yoksay
+    triggerHaptic('light'); currentLbTab = tab; 
+    const tabs = ['all', 'daily', 'yesterday']; 
+    tabs.forEach(tName => { 
+        const btn = document.getElementById(`tab-lb-${tName}`); 
+        if (tName === tab) btn.classList.add('active'); 
+        else btn.classList.remove('active'); 
+    }); 
     
-    const tabAll = document.getElementById('tab-lb-all');
-    if(tabAll) tabAll.classList.toggle('active', currentLbTab === 'all');
-    
-    const tabWeekly = document.getElementById('tab-lb-weekly') || document.getElementById('tab-lb-daily');
-    if(tabWeekly) tabWeekly.classList.toggle('active', currentLbTab === 'weekly');
-    
-    const tabYesterday = document.getElementById('tab-lb-yesterday');
-    if(tabYesterday) tabYesterday.style.display = 'none';
-    
+    // HAFTALIK ÖDÜL BİLGİLENDİRMESİNİ GÖSTER/GİZLE
     const infoPanel = document.getElementById('weekly-reward-info');
-    if(infoPanel) infoPanel.style.display = (currentLbTab === 'weekly') ? 'block' : 'none';
-    
+    if (infoPanel) {
+        if (tab === 'daily' || tab === 'yesterday') infoPanel.style.display = 'block';
+        else infoPanel.style.display = 'none';
+    }
     renderLB(); 
 }
 
 function renderLB() { 
     const list = document.getElementById('leader-list'); 
-    if(!list) return;
-
-    let dataToRender = (currentLbTab === 'all') ? lbAllTime : lbWeekly; 
+    let dataToRender = []; 
+    if(currentLbTab === 'all') dataToRender = lbAllTime; 
+    else if(currentLbTab === 'daily') dataToRender = lbDaily; 
+    else dataToRender = lbYesterday; 
     
-    if(dataToRender.length === 0) { 
-        list.innerHTML = `<p style='text-align:center; padding: 30px; color: var(--text-dim); font-weight:600;'>KAYIT BULUNAMADI.</p>`; 
-        return; 
-    } 
+    if(dataToRender.length === 0) { list.innerHTML = `<p style='text-align:center; padding: 30px; color: var(--text-dim); font-weight:600;'>KAYIT BULUNAMADI.</p>`; return; } 
     
     list.innerHTML = dataToRender.map((u, i) => { 
-        let points = (currentLbTab === 'all') ? u.points : (u.dailyPoints || 0);
-        let rewardTag = (currentLbTab === 'weekly' && i < 5) ? `<span style="background: var(--success); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 6px; margin-left: 8px; font-weight: 800;">+$5 💵</span>` : '';
+        const rank = currentLbTab === 'yesterday' && u.rank ? u.rank : (i + 1); 
+        let displayPoints = u.points; 
+        if(currentLbTab === 'daily') displayPoints = u.dailyPoints || 0; 
+        
+        // İLK 5 KİŞİYE $5 NAKİT ETİKETİ
+        let rewardTag = '';
+        if ((currentLbTab === 'daily' || currentLbTab === 'yesterday') && i < 5) {
+            rewardTag = `<span style="background: var(--success); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 6px; margin-left: 8px; font-weight: 800;">+$5 💵</span>`;
+        }
 
-        return `<div class="list-row ${i < 3 ? 'rank-top' : ''}"><span style="color: ${i < 3 ? 'var(--gold)' : 'var(--text-main)'}; font-weight: ${i < 3 ? 800 : 600}; font-size:15px; display:flex; align-items:center;">${i+1}. ${u.username || u.firstName} ${rewardTag}</span><span style="font-family:'Space Grotesk'; color: ${i < 3 ? 'var(--gold)' : 'var(--cyan)'}; font-weight:700;">${Math.floor(points).toLocaleString()}</span></div>`; 
+        return `<div class="list-row ${i < 3 ? 'rank-top' : ''}"><span style="color: ${i < 3 ? 'var(--gold)' : 'var(--text-main)'}; font-weight: ${i < 3 ? 800 : 600}; font-size:15px; display:flex; align-items:center;">${rank}. ${u.username || u.firstName} ${rewardTag}</span><span style="font-family:'Space Grotesk'; color: ${i < 3 ? 'var(--gold)' : 'var(--cyan)'}; font-weight:700;">${displayPoints.toLocaleString()}</span></div>`; 
     }).join(''); 
 }
 
