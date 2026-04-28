@@ -111,6 +111,13 @@
         </div>
         
         <div class="glass-card arcade-card" style="border-color: #34d399;"><div class="arcade-icon">📦</div><h3 style="color: #34d399; margin-bottom: 5px;">Gelir Kapsülleri</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Sandıkları aç, sürprizleri yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #34d399; color:#34d399;" onclick="openGame('lootbox')">KAPSÜLLERİ GÖR</button></div>
+        
+        <div class="glass-card arcade-card" style="border-color: #f59e0b;">
+            <div class="arcade-icon">🔐</div>
+            <h3 style="color: #f59e0b; margin-bottom: 5px;">Gepçöz</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Şifreleri çöz, anında GEP kazan!</p>
+            <button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #f59e0b; color: #f59e0b;" onclick="openGame('gepcoz')">GEPÇÖZ'E GİT</button>
+        </div>
 
         <div class="glass-card arcade-card" style="opacity:0.6;"><div class="badge-soon">YAKINDA</div><div class="arcade-icon">🚀</div><h3 style="color: var(--danger);">Siber Çöküş</h3><p style="font-size: 12px; color: var(--text-dim);">Roket patlamadan çekil, kazancı al.</p></div>
     </div>
@@ -203,6 +210,18 @@
             <button id="lb-btn-3" class="game-btn btn-outline lb-box-btn" style="padding:16px; font-size:13px; border-color:var(--gold); color:var(--gold);" onclick="playLootbox(3)">💎 EFSANEVİ KAPSÜL (25K GEP)<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Max Ödül: 250.000 GEP</span></button>
         </div>
         <div id="lootbox-animation" style="display:none; flex-direction:column; align-items:center; width:100%;"><div id="lootbox-icon" style="font-size: 130px; margin-bottom: 20px; filter: drop-shadow(0 0 30px rgba(52,211,153,0.8)); animation: floatObj 2s infinite alternate;">📦</div><h3 id="lootbox-result" style="color: #fff; height: 30px;">Açılıyor...</h3><button id="btn-back-lootbox" class="game-btn btn-outline" style="max-width: 200px; margin-top:30px; display:none;" onclick="resetLootbox()">GERİ DÖN</button></div>
+    </div>
+
+    <div id="modal-gepcoz" class="game-modal">
+        <div class="close-modal" onclick="closeGame('gepcoz')">✖</div>
+        <h2 style="color: #f59e0b; text-shadow: 0 0 15px rgba(245, 158, 11, 0.5); margin-bottom: 5px;">Gepçöz</h2>
+        <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 12px;">Güvenlik duvarını aş, ödülü kap.</p>
+        
+        <div id="gepcoz-widget-area" style="min-height: 100px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+            <div id="hcaptcha-widget"></div>
+        </div>
+        
+        <h3 id="gepcoz-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Terminal Hazır.</h3>
     </div>
 
     <div class="dock-container">
