@@ -6,6 +6,10 @@ const path = require('path');
 const crypto = require('crypto');
 const TelegramBot = require('node-telegram-bot-api');
 
+// 1. MODÜLLERİ İÇERİ AKTARIYORUZ
+const models = require('./models');
+const { User, PromoCode, Task, YesterdayWinner, Settings, AirdropLink } = models;
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 const TOKEN = process.env.BOT_TOKEN;
@@ -21,7 +25,7 @@ const bot = new TelegramBot(TOKEN);
 bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v6.8 - Güvenlik ve Performans Yaması Aktif"))
+    .then(() => console.log("✅ Gelir Evreni v7.0 - Modüler Mimari Aktif"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -29,57 +33,9 @@ app.post('/webhook', (req, res) => {
     res.sendStatus(200);
 });
 
-// --- SCHEMAS ---
-const User = mongoose.model('User', new mongoose.Schema({
-    telegramId: { type: String, unique: true, index: true },
-    username: { type: String, default: '', index: true }, 
-    firstName: { type: String, default: 'Kullanıcı' }, 
-    points: { type: Number, default: 1000 },
-    dailyPoints: { type: Number, default: 0 }, 
-    lastPointDate: { type: Date, default: Date.now }, 
-    completedTasks: { type: [String], default: [] },
-    lastMining: { type: Date, default: new Date(0) },
-    lastCheckin: { type: Date, default: new Date(0) },
-    referralCount: { type: Number, default: 0 },
-    streak: { type: Number, default: 0 },
-    level: { type: String, default: 'Bronz' },
-    isBanned: { type: Boolean, default: false },
-    miningLevel: { type: Number, default: 1 },
-    adTickets: { type: Number, default: 0 },
-    lastLootbox1: { type: Date, default: new Date(0) },
-    lastLootbox2: { type: Date, default: new Date(0) },
-    lastLootbox3: { type: Date, default: new Date(0) }
-}));
-
-const PromoCode = mongoose.model('PromoCode', new mongoose.Schema({
-    code: { type: String, unique: true }, reward: Number, maxUsage: Number, usedBy: { type: [String], default: [] }, isActive: { type: Boolean, default: true }
-}));
-
-const Task = mongoose.model('Task', new mongoose.Schema({
-    taskId: { type: String, unique: true }, title: String, reward: Number, target: String, isActive: { type: Boolean, default: true }
-}));
-
-const YesterdayWinner = mongoose.model('YesterdayWinner', new mongoose.Schema({
-    rank: Number, username: String, firstName: String, points: Number, date: { type: Date, default: Date.now }
-}));
-
-const Settings = mongoose.model('Settings', new mongoose.Schema({
-    announcements: [String],
-    miningMultiplier: { type: Number, default: 1 },
-    adsgramReward: { type: Number, default: 5000 }, 
-    botUsername: { type: String, default: 'gelirevreni_bot' },
-    mainGroupId: { type: String, default: "" }
-}));
-
-const AirdropLink = mongoose.model('AirdropLink', new mongoose.Schema({
-    telegramId: { type: String, unique: true }, 
-    username: String,
-    title: String,
-    description: String,
-    url: String,
-    joinedUsers: { type: [String], default: [] },
-    updatedAt: { type: Date, default: Date.now } 
-}));
+// PAYLAŞILAN DURUM VE ORTAK FONKSİYONLAR
+const sharedState = { activeDrop: null };
+const activePredictions = new Map();
 
 function addPoints(user, amount) {
     const now = new Date();
@@ -87,13 +43,13 @@ function addPoints(user, amount) {
     user.points += amount; user.dailyPoints += amount; user.lastPointDate = now;
 }
 
-const chatCooldowns = new Map();
-const activePredictions = new Map(); // Kripto kahini için eklendi
-let activeDrop = null;
+// 2. BOT KOMUTLARINI DIŞARIDAN ÇAĞIRIYORUZ
+const botConfig = { ADMIN_ID, WEBHOOK_URL };
+require('./botCommands')(bot, models, botConfig, addPoints, sharedState);
 
+// --- OTOMATİK GÖREVLER (CRON JOBS) ---
 const morningMsgs = ["☀️ Günaydın Siber Ağ! Madenleri toplamayı unutmayın.", "🌅 Günaydın! Yeni bir gün, yeni GEP'ler...", "☕ Günaydın Gelir Evreni ailesi!"];
 const nightMsgs = ["🌙 İyi geceler millet! Bırakın sistem uyurken de sizin için çalışsın.", "🌌 Herkese iyi geceler. Yarın daha çok kazanacağız..."];
-const randomMsgs = ["🚀 Piyasalar bugün hareketli. Sence BTC ne olacak?", "💎 Unutmayın, panik yapan kaybeder, sabreden GEP kazanır.", "🎁 Buralarda bir yerlerde yakında yeni bir Promo Kod düşebilir..."];
 
 setInterval(async () => {
     try {
@@ -104,7 +60,7 @@ setInterval(async () => {
         else if (utcHour === 20 && utcMin === 30) { bot.sendMessage(s.mainGroupId, nightMsgs[Math.floor(Math.random() * nightMsgs.length)]); }
         
         if (utcMin === 0 && Math.random() < 0.10) {
-            activeDrop = { reward: 25000, claimed: false };
+            sharedState.activeDrop = { reward: 25000, claimed: false };
             bot.sendMessage(s.mainGroupId, "🎁 **DİKKAT: SİBER DROP TESPİT EDİLDİ!**\n\nAğda sahipsiz bir veri paketi bulundu. Aşağıdaki butona ilk tıklayan **25.000 GEP** kazanır!", {
                 parse_mode: 'Markdown',
                 reply_markup: { inline_keyboard: [[{ text: "💎 ÖDÜLÜ KAP", callback_data: "claim_drop" }]] }
@@ -127,6 +83,7 @@ async function archiveDailyLeaderboard() {
 }
 setInterval(() => { const now = new Date(); if (now.getHours() === 23 && now.getMinutes() === 58) archiveDailyLeaderboard(); }, 60000);
 
+// --- GÜVENLİK VE ROUTE'LAR ---
 function getTelegramUserFromInitData(telegramInitData) {
     try {
         if (!telegramInitData) return null;
@@ -234,12 +191,9 @@ app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     res.json({ success: true, prize, msg, points: user.points });
 });
 
-// KRİPTO KAHİNİ GÜNCELLEMESİ (Sunucuyu yormayan 2 aşamalı sistem)
 app.post('/api/arcade/predict/start', secureRoute, async (req, res) => {
     const { guess } = req.body; const cost = 1000; 
-    
     if (activePredictions.has(req.realTelegramId)) return res.json({ success: false, message: "Zaten devam eden bir tahminin var!" });
-
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP!" });
 
@@ -247,7 +201,6 @@ app.post('/api/arcade/predict/start', secureRoute, async (req, res) => {
         const r1 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); 
         const d1 = await r1.json(); 
         const p1 = parseFloat(d1.price);
-        
         activePredictions.set(req.realTelegramId, { guess, p1, startTime: Date.now() });
         res.json({ success: true, price1: p1, points: user.points });
     } catch (e) { 
@@ -259,22 +212,17 @@ app.post('/api/arcade/predict/start', secureRoute, async (req, res) => {
 app.post('/api/arcade/predict/result', secureRoute, async (req, res) => {
     const prediction = activePredictions.get(req.realTelegramId);
     if (!prediction) return res.json({ success: false, message: "Aktif tahmin bulunamadı." });
-
     if (Date.now() - prediction.startTime < 9000) return res.json({ success: false, message: "Henüz süre dolmadı!" });
-
     activePredictions.delete(req.realTelegramId);
 
     try {
         const r2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); 
         const d2 = await r2.json(); 
         const p2 = parseFloat(d2.price);
-        
         let won = false; 
         if ((prediction.guess === 'UP' && p2 > prediction.p1) || (prediction.guess === 'DOWN' && p2 < prediction.p1)) won = true;
-        
         let user = await User.findOne({ telegramId: req.realTelegramId });
         if (won) { addPoints(user, 2000); await user.save(); }
-        
         res.json({ success: true, won, price1: prediction.p1, price2: p2, points: user.points });
     } catch (e) { 
         let user = await User.findOneAndUpdate({ telegramId: req.realTelegramId }, { $inc: { points: 1000 } }, { new: true });
@@ -313,7 +261,6 @@ app.post('/api/airdrop/share', secureRoute, async (req, res) => {
     res.json({success: true, points: user.points, message: "Pano güncellendi!"});
 });
 
-// AİRDROP KATILIM GÜNCELLEMESİ (Hızlı Tıklama Atomik Koruma)
 app.post('/api/airdrop/join', secureRoute, async (req, res) => {
     const { projectId } = req.body;
     try {
@@ -339,7 +286,6 @@ app.get('/api/leaderboard', async (req, res) => {
     const allTime = await User.find().sort({ points: -1 }).limit(100); const today = new Date(); today.setHours(0, 0, 0, 0); const daily = await User.find({ lastPointDate: { $gte: today } }).sort({ dailyPoints: -1 }).limit(100); const yesterday = await YesterdayWinner.find({ rank: { $gt: 0 } }).sort({ rank: 1 }); res.json({ success: true, leaderboard: allTime, dailyLeaderboard: daily, yesterdayLeaderboard: yesterday }); 
 });
 
-// GÖREV TAMAMLAMA GÜNCELLEMESİ (Hızlı Tıklama Atomik Koruma)
 app.post('/api/tasks/complete', secureRoute, async (req, res) => { 
     const { taskId } = req.body; 
     const task = await Task.findOne({ taskId }); 
@@ -365,115 +311,6 @@ app.post('/api/admin/create-promo', secureRoute, adminCheck, async (req, res) =>
 app.post('/api/admin/announcement', secureRoute, adminCheck, async (req, res) => { const s = await Settings.findOne() || await Settings.create({}); if(req.body.action === 'add') s.announcements.push(req.body.text); else s.announcements.splice(req.body.index, 1); await s.save(); res.json({ success: true }); });
 app.post('/api/admin/user-manage', secureRoute, adminCheck, async (req, res) => { const { targetId, action, amount } = req.body; const user = await User.findOne({ $or: [{ telegramId: targetId }, { username: targetId }] }); if (!user) return res.json({ success: false }); if (action === 'add') addPoints(user, Number(amount)); if (action === 'set') user.points = Number(amount); if (action === 'ban') user.isBanned = true; if (action === 'unban') user.isBanned = false; await user.save(); res.json({ success: true }); });
 app.post('/api/admin/delete-airdrop', secureRoute, adminCheck, async (req, res) => { await AirdropLink.findByIdAndDelete(req.body.id); res.json({ success: true }); });
-
-bot.on('new_chat_members', async (msg) => {
-    const s = await Settings.findOne();
-    if (!s || msg.chat.id.toString() !== s.mainGroupId) return;
-    
-    const summary = `💎 **GELİR EVRENİ (GEP) SİSTEM ÖZETİ** 💎\n\n` +
-    `⛏️ **Maden:** 4 saatte bir uygulamaya girip GEP topla.\n` +
-    `📢 **Benim Projem:** Kendi projeni 1M GEP'e yayınla veya başkalarının projelerine katılıp anında **+10.000 GEP** kazan.\n` +
-    `🎮 **Oyunlar:** Kripto Kahini (Tahmin), Gelir Çarkı ve Gelir Kapsülleri ile GEP'lerini katla.\n` +
-    `💬 **Chat-Kazan:** Bu grupta sohbet ettikçe arka planda otomatik GEP kazanırsın.\n` +
-    `⚔️ **Etkileşim:** \`/duello\`, \`/zar\` ve \`/bahsis\` komutlarıyla grupta diğerleriyle kapış.\n` +
-    `🎁 **Siber Drop:** Saatte bir rastgele gruba düşen 25.000 GEP'i ilk tıklayan kapar!\n` +
-    `🎫 **Promokod:** Bilet şifrelerini yakalayıp sürpriz ödülleri aç.\n` +
-    `👥 **Davet Et:** Profil sekmesindeki linkinle gelen her arkadaşın için ikiniz de anında **10.000 GEP** kazanırsınız.`;
-
-    msg.new_chat_members.forEach(newUser => {
-        bot.sendMessage(msg.chat.id, `🌟 **Siber Ağ'a Hoş Geldin ${newUser.first_name}!**\n\n${summary}\n\nHemen aşağıdaki butona tıkla ve kazanmaya başla! 👇`, { 
-            parse_mode: 'Markdown', 
-            reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: WEBHOOK_URL } }]] } 
-        });
-    });
-});
-
-bot.on('callback_query', async (query) => {
-    if (query.data === 'claim_drop') {
-        if (!activeDrop || activeDrop.claimed) return bot.answerCallbackQuery(query.id, { text: "⚠️ Bu drop çoktan kapıldı!", show_alert: true });
-        const user = await User.findOne({ telegramId: query.from.id.toString() });
-        if (!user) return bot.answerCallbackQuery(query.id, { text: "⚠️ Önce botu başlatmalısın!", show_alert: true });
-        
-        activeDrop.claimed = true; addPoints(user, activeDrop.reward); await user.save();
-        bot.editMessageText(`🎉 **DROP KAPILDI!**\n\nVeri paketini hızlı davranan @${query.from.username || query.from.first_name} yakaladı ve **25.000 GEP** kazandı!`, { chat_id: query.message.chat.id, message_id: query.message.message_id, parse_mode: 'Markdown' });
-        bot.answerCallbackQuery(query.id, { text: "Tebrikler! 25.000 GEP hesabına eklendi." }); activeDrop = null;
-    }
-});
-
-bot.on('message', async (msg) => {
-    if (!msg.text || msg.chat.type === 'private') return;
-    const s = await Settings.findOne(); if (!s || msg.chat.id.toString() !== s.mainGroupId) return;
-    
-    const userId = msg.from.id.toString(); const text = msg.text.toLowerCase().trim();
-
-    const now = Date.now();
-    if (!chatCooldowns.has(userId) || (now - chatCooldowns.get(userId)) > 60000) {
-        const user = await User.findOne({ telegramId: userId });
-        if (user) { addPoints(user, Math.floor(Math.random() * 9) + 2); await user.save(); chatCooldowns.set(userId, now); }
-    }
-
-    if (text === "gep" || text.includes("gep nedir") || text.includes("nasil kazanilir") || text.includes("nasıl kazanılır") || text.includes("özetle")) {
-        const summary = `💎 **GELİR EVRENİ (GEP) SİSTEM ÖZETİ** 💎\n\n` +
-        `⛏️ **Maden:** 4 saatte bir uygulamaya girip GEP topla.\n` +
-        `📢 **Benim Projem:** Kendi projeni 1M GEP'e yayınla veya başkalarının projelerine katılıp anında **+10.000 GEP** kazan.\n` +
-        `🎮 **Oyunlar:** Kripto Kahini (Tahmin), Gelir Çarkı ve Gelir Kapsülleri ile GEP'lerini katla.\n` +
-        `💬 **Chat-Kazan:** Bu grupta sohbet ettikçe arka planda otomatik GEP kazanırsın.\n` +
-        `⚔️ **Etkileşim:** \`/duello\`, \`/zar\` ve \`/bahsis\` komutlarıyla grupta diğerleriyle kapış.\n` +
-        `🎁 **Siber Drop:** Saatte bir rastgele gruba düşen 25.000 GEP'i ilk tıklayan kapar!\n` +
-        `🎫 **Promokod:** Bilet şifrelerini yakalayıp sürpriz ödülleri aç.\n` +
-        `👥 **Davet Et:** Profil sekmesindeki linkinle gelen her arkadaşın için ikiniz de anında **10.000 GEP** kazanırsınız.`;
-        bot.sendMessage(msg.chat.id, summary, { parse_mode: 'Markdown' });
-    } else if (text.includes("günaydın") || text.includes("gunaydin")) {
-        bot.sendMessage(msg.chat.id, "☀️ Günaydın! Siber madenler seni bekliyor.");
-    } else if (text.includes("bot bozuk") || text.includes("calismiyor") || text.includes("çalışmıyor")) {
-        bot.sendMessage(msg.chat.id, "⚡ Sistemler %100 kapasiteyle çalışıyor. Lütfen internet bağlantınızı kontrol edin.");
-    }
-});
-
-bot.onText(/\/start(?:\s+(.*))?/, (msg, match) => {
-    if (msg.chat.type !== 'private') return;
-    const refId = match[1] ? match[1].trim() : ''; const appUrl = refId ? `${WEBHOOK_URL}?tgWebAppStartParam=${refId}` : WEBHOOK_URL;
-    bot.sendMessage(msg.chat.id, "🌟 **Gelir Evreni'ne Hoş Geldin!**", { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: appUrl } }]] } });
-});
-
-bot.onText(/\/grububagla/, async (msg) => { if (String(msg.from.id) !== String(ADMIN_ID)) return; if (msg.chat.type === 'private') return; const s = await Settings.findOne() || await Settings.create({}); s.mainGroupId = msg.chat.id.toString(); await s.save(); bot.sendMessage(msg.chat.id, "✅ **Sistem Entegre Edildi!**", { parse_mode: 'Markdown' }); });
-bot.onText(/\/yardim/, (msg) => { bot.sendMessage(msg.chat.id, `🎮 **Grup Komutları**\n\n👤 \`/profil\`\n💸 \`/bahsis <miktar>\`\n🎲 \`/zar <miktar>\`\n🏆 \`/liderler\`\n⛏️ \`/maden\`\n⚔️ \`/duello <miktar>\``, { parse_mode: 'Markdown' }); });
-bot.onText(/\/profil/, async (msg) => { const user = await User.findOne({ telegramId: msg.from.id.toString() }); if (!user) return; bot.sendMessage(msg.chat.id, `👤 **${msg.from.first_name}**\n💰 Bakiye: **${Math.floor(user.points).toLocaleString()} GEP**`, { parse_mode: 'Markdown' }); });
-bot.onText(/\/zar (\d+)/, async (msg, match) => { const amount = parseInt(match[1]); const user = await User.findOne({ telegramId: msg.from.id.toString() }); if (!user || user.points < amount || amount < 100) return; user.points -= amount; await user.save(); const diceMsg = await bot.sendDice(msg.chat.id); setTimeout(async () => { if (diceMsg.dice.value >= 4) { const win = amount * 2; addPoints(user, win); await user.save(); bot.sendMessage(msg.chat.id, `🎉 **KAZANDIN!** +${win} GEP!`, { reply_to_message_id: diceMsg.message_id }); } else { bot.sendMessage(msg.chat.id, `💀 **KAYBETTİN...**`, { reply_to_message_id: diceMsg.message_id }); } }, 4000); });
-bot.onText(/\/liderler/, async (msg) => { const topUsers = await User.find().sort({ points: -1 }).limit(5); let text = "🏆 **EN ZENGİN 5 OYUNCU**\n\n"; topUsers.forEach((u, i) => { text += `${i+1}. ${u.firstName} - **${Math.floor(u.points).toLocaleString()} GEP**\n`; }); bot.sendMessage(msg.chat.id, text, { parse_mode: 'Markdown' }); });
-bot.onText(/\/maden/, async (msg) => { const user = await User.findOne({ telegramId: msg.from.id.toString() }); if (!user) return; const diff = new Date().getTime() - new Date(user.lastMining).getTime(); const cooldown = 4 * 60 * 60 * 1000; if (diff >= cooldown) { bot.sendMessage(msg.chat.id, "⛏️ **Madenin Hazır!**\nUygulamaya gir ve ödülünü topla. 🔥"); } else { const remaining = Math.ceil((cooldown - diff) / (60 * 1000)); bot.sendMessage(msg.chat.id, `⛏️ Maden üretimde...\n⏳ **${remaining} dakika** sonra hazır.`); } });
-
-const activeDuels = new Map(); 
-bot.onText(/\/duello (\d+)/, async (msg, match) => { 
-    if (!msg.reply_to_message) return bot.sendMessage(msg.chat.id, "Meydan okumak istediğin kişinin mesajını yanıtlayarak /duello <miktar> yazmalısın.");
-    const amount = parseInt(match[1]); 
-    const challenger = await User.findOne({ telegramId: msg.from.id.toString() }); 
-    const opponent = await User.findOne({ telegramId: msg.reply_to_message.from.id.toString() }); 
-    if (!challenger || !opponent) return;
-    if (challenger.points < amount) return bot.sendMessage(msg.chat.id, "Bakiyen bu düello için yetersiz.");
-    if (opponent.points < amount) return bot.sendMessage(msg.chat.id, "Karşı tarafın bakiyesi bu düello için yetersiz.");
-    if (challenger.telegramId === opponent.telegramId) return bot.sendMessage(msg.chat.id, "Kendinle düello yapamazsın!");
-    activeDuels.set(opponent.telegramId, { challengerId: challenger.telegramId, amount: amount, chatId: msg.chat.id });
-    bot.sendMessage(msg.chat.id, `⚔️ **DÜELLO DAVETİ!**\n\n@${msg.from.username}, @${msg.reply_to_message.from.username} kullanıcısına **${amount} GEP** değerinde meydan okudu!\n\nKabul etmek için bu mesajı yanıtlayıp \`/kabul\` yazın!`); 
-});
-bot.onText(/\/kabul/, async (msg) => { 
-    if (!msg.reply_to_message || !msg.reply_to_message.text.includes("DÜELLO DAVETİ!")) return; 
-    const opponentId = msg.from.id.toString(); const duelData = activeDuels.get(opponentId);
-    if (!duelData) return bot.sendMessage(msg.chat.id, "Geçerli bir düello davetin yok veya süresi geçmiş.");
-    activeDuels.delete(opponentId); 
-    const challenger = await User.findOne({ telegramId: duelData.challengerId }); const opponent = await User.findOne({ telegramId: opponentId });
-    if (!challenger || !opponent || challenger.points < duelData.amount || opponent.points < duelData.amount) { return bot.sendMessage(msg.chat.id, "Taraflardan birinin bakiyesi yetersiz olduğu için düello iptal edildi."); }
-    bot.sendMessage(msg.chat.id, "⚔️ Kılıçlar çekildi! Sistem bir kazanan belirliyor..."); 
-    setTimeout(async () => { 
-        const isChallengerWin = Math.random() > 0.5; let winner, loser;
-        if (isChallengerWin) { winner = challenger; loser = opponent; } else { winner = opponent; loser = challenger; }
-        winner.points += duelData.amount; loser.points -= duelData.amount;
-        await winner.save(); await loser.save();
-        bot.sendMessage(msg.chat.id, `🎉 **DÜELLO BİTTİ!**\n\nKazanan: **${winner.firstName}** (+${duelData.amount} GEP)\nKaybeden: **${loser.firstName}** (-${duelData.amount} GEP)`); 
-    }, 3000); 
-});
-
-bot.onText(/\/bahsis (\d+)/, async (msg, match) => { if (!msg.reply_to_message) return; const amount = parseInt(match[1]); const sender = await User.findOne({ telegramId: msg.from.id.toString() }); const receiver = await User.findOne({ telegramId: msg.reply_to_message.from.id.toString() }); if (sender && receiver && sender.points >= amount && sender.telegramId !== receiver.telegramId) { sender.points -= amount; addPoints(receiver, amount); await sender.save(); await receiver.save(); bot.sendMessage(msg.chat.id, `💸 **Transfer Başarılı!**\n${sender.firstName} ➔ ${receiver.firstName}: **${amount} GEP**`); } });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Sunucu aktif.`));
