@@ -108,8 +108,25 @@ module.exports = function(bot, models, config, addPoints, sharedState) {
         bot.sendMessage(msg.chat.id, "🌟 **Gelir Evreni'ne Hoş Geldin!**", { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: "🚀 Uygulamayı Aç", web_app: { url: appUrl } }]] } });
     });
 
-    // GENEL KOMUTLAR
-    bot.onText(/\/yardim/, (msg) => { bot.sendMessage(msg.chat.id, `🎮 **Grup Komutları**\n\n👤 \`/profil\`\n💸 \`/bahsis <miktar>\`\n🎲 \`/zar <miktar>\`\n🏆 \`/liderler\`\n⛏️ \`/maden\`\n⚔️ \`/duello <miktar>\``, { parse_mode: 'Markdown' }); });
+    // GENEL KOMUTLAR VE DETAYLI KILAVUZ
+    bot.onText(/\/(yardim|kilavuz)/, (msg) => { 
+        const klavuz = `📚 **GELİR EVRENİ KULLANIM KILAVUZU** 📚\n\n` +
+        `🎲 **/zar <miktar>**\n` +
+        `Şansına güveniyorsan zarları at! Zar 4, 5 veya 6 gelirse yatırdığın GEP'i ikiye katlarsın. 1, 2 veya 3 gelirse kasanın olur. (Minimum bahis: 100 GEP)\n` +
+        `👉 *Örnek Kullanım:* \`/zar 500\`\n\n` +
+        `⚔️ **/duello <miktar>**\n` +
+        `Gruptaki birine meydan oku! Meydan okumak istediğin kişinin herhangi bir mesajını **yanıtlayarak** bu komutu yaz. Karşı taraf \`/kabul\` yazarsa, sistem kılıçları çarpıştırır ve şanslı olan kazanır.\n` +
+        `👉 *Örnek Kullanım:* Birinin mesajını yanıtla ve \`/duello 1000\` yaz.\n\n` +
+        `💸 **/bahsis <miktar>**\n` +
+        `Bir arkadaşına destek olmak veya borç vermek istersen mesajını yanıtlayarak GEP gönderebilirsin.\n` +
+        `👉 *Örnek Kullanım:* Birinin mesajını yanıtla ve \`/bahsis 250\` yaz.\n\n` +
+        `⛏️ **/maden**: Madeninin dolmasına ne kadar kaldığını gösterir.\n` +
+        `🏆 **/liderler**: Grubun en zengin 5 oyuncusunu listeler.\n` +
+        `👤 **/profil**: Kendi güncel bakiyeni gösterir.`;
+
+        bot.sendMessage(msg.chat.id, klavuz, { parse_mode: 'Markdown' }); 
+    });
+    
     bot.onText(/\/profil/, async (msg) => { const user = await User.findOne({ telegramId: msg.from.id.toString() }); if (!user) return; bot.sendMessage(msg.chat.id, `👤 **${msg.from.first_name}**\n💰 Bakiye: **${Math.floor(user.points).toLocaleString()} GEP**`, { parse_mode: 'Markdown' }); });
     bot.onText(/\/liderler/, async (msg) => { const topUsers = await User.find().sort({ points: -1 }).limit(5); let text = "🏆 **EN ZENGİN 5 OYUNCU**\n\n"; topUsers.forEach((u, i) => { text += `${i+1}. ${u.firstName} - **${Math.floor(u.points).toLocaleString()} GEP**\n`; }); bot.sendMessage(msg.chat.id, text, { parse_mode: 'Markdown' }); });
     bot.onText(/\/maden/, async (msg) => { const user = await User.findOne({ telegramId: msg.from.id.toString() }); if (!user) return; const diff = new Date().getTime() - new Date(user.lastMining).getTime(); const cooldown = 4 * 60 * 60 * 1000; if (diff >= cooldown) { bot.sendMessage(msg.chat.id, "⛏️ **Madenin Hazır!**\nUygulamaya gir ve ödülünü topla. 🔥"); } else { const remaining = Math.ceil((cooldown - diff) / (60 * 1000)); bot.sendMessage(msg.chat.id, `⛏️ Maden üretimde...\n⏳ **${remaining} dakika** sonra hazır.`); } });
