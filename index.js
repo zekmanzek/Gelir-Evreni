@@ -39,10 +39,8 @@ const activePredictions = new Map();
 
 function addPoints(user, amount) {
     const now = new Date();
-    // Haftalık sisteme geçildiği için günlük sıfırlama kodu KILDIRILDI.
-    // Sıfırlama işlemini sadece Pazar gecesi çalışan cron job yapacak.
     user.points += amount; 
-    user.dailyPoints += amount; // Artık "haftalık puanı" temsil ediyor
+    user.dailyPoints += amount; 
     user.lastPointDate = now;
 }
 
@@ -87,6 +85,40 @@ setInterval(async () => {
     } catch (e) { }
 }, 60000);
 
+// YENİ: OTOMATİK MADEN UYARI SİSTEMİ (Her 15 dakikada bir tarar)
+setInterval(async () => {
+    try {
+        const s = await Settings.findOne();
+        if (!s || !s.mainGroupId) return; // Ayar kapalıysa veya grup yoksa çalışmaz
+
+        const now = new Date();
+        const fourHoursAgo = new Date(now.getTime() - (4 * 60 * 60 * 1000));
+
+        // Madeni dolmuş ve henüz uyarılmamış kişileri bul (Grubu yormamak için tek seferde en fazla 15 kişi)
+        const readyMiners = await User.find({
+            lastMining: { $lte: fourHoursAgo },
+            isMiningNotified: { $ne: true }
+        }).limit(15);
+
+        if (readyMiners.length > 0) {
+            let mentions = readyMiners.map(u => u.username ? `@${u.username}` : `[${u.firstName}](tg://user?id=${u.telegramId})`).join(', ');
+
+            const msg = `⛏️ **MADENLERİNİZ DOLDU!** ⛏️\n\n${mentions}\n\nSiber madenleriniz GEP ile dolup taşıyor! Üretimin durmaması için hemen uygulamaya girip ödüllerinizi toplayın! 👇`;
+
+            bot.sendMessage(s.mainGroupId, msg, {
+                parse_mode: 'Markdown',
+                reply_markup: { inline_keyboard: [[{ text: "🚀 Madenleri Topla", web_app: { url: WEBHOOK_URL } }]] }
+            }).catch(e => console.log("Maden uyarı mesajı atılamadı:", e.message));
+
+            // Uyarıldı olarak damgala ki sürekli aynı kişilere mesaj gitmesin
+            for (let user of readyMiners) {
+                user.isMiningNotified = true;
+                await user.save();
+            }
+        }
+    } catch (err) { console.error("Maden uyarı hatası:", err); }
+}, 15 * 60 * 1000); // 15 dakika = 900.000 ms
+
 // HAFTALIK LİDERLİK SIFIRLAMA (PAZAR 23:58)
 async function archiveWeeklyLeaderboard() {
     try {
@@ -98,7 +130,6 @@ async function archiveWeeklyLeaderboard() {
         } else { await YesterdayWinner.create({ rank: 0, username: 'sistem', firstName: 'sistem', points: 0, date: new Date() }); }
     } catch (err) { }
 }
-// 0 = Pazar günü.
 setInterval(() => { const now = new Date(); if (now.getDay() === 0 && now.getHours() === 23 && now.getMinutes() === 58) archiveWeeklyLeaderboard(); }, 60000);
 
 // --- GÜVENLİK VE ROUTE'LAR ---
@@ -169,7 +200,10 @@ app.post('/api/adsgram-reward', secureRoute, async (req, res) => {
 app.post('/api/mine', secureRoute, async (req, res) => {
     const user = await User.findOne({ telegramId: req.realTelegramId }); const now = new Date();
     if (user && (now - new Date(user.lastMining)) > 4 * 60 * 60 * 1000) {
-        const reward = 1000 + ((user.miningLevel - 1) * 500); addPoints(user, reward); user.lastMining = now; await user.save(); return res.json({ success: true, points: user.points, reward: reward });
+        const reward = 1000 + ((user.miningLevel - 1) * 500); addPoints(user, reward); 
+        user.lastMining = now; 
+        user.isMiningNotified = false; // YENİ: Topladığı an uyarılma damgasını sil!
+        await user.save(); return res.json({ success: true, points: user.points, reward: reward });
     }
     res.json({ success: false });
 });
@@ -309,7 +343,6 @@ app.post('/api/airdrop/join', secureRoute, async (req, res) => {
 
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
 
-// API LİDER TABLOSU LİMİTLERİ 50'YE DÜŞÜRÜLDÜ
 app.get('/api/leaderboard', async (req, res) => { 
     const allTime = await User.find().sort({ points: -1 }).limit(50); 
     const weekly = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(50); 
