@@ -1,18 +1,18 @@
 :root { 
     /* YENİ FERAH MAVİ UZAY PALETİ */
-    --bg-dark: #0B1437; /* Çok koyu siyah yerine derin siber mavi */
+    --bg-dark: #0B1437; 
     --bg-glow: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.2) 0%, transparent 50%),
                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
                #0B1437;
-    --glass-bg: rgba(255, 255, 255, 0.04); /* Daha şeffaf ve ferah cam efekti */
+    --glass-bg: rgba(255, 255, 255, 0.04); 
     --glass-border: rgba(255, 255, 255, 0.12);
     
     /* Vurgu Renkleri */
-    --gold: #38bdf8; /* Eski sarı rengin yerini parlak gök mavisi aldı */
+    --gold: #38bdf8; 
     --gold-glow: rgba(56, 189, 248, 0.5);
     --cyan: #06b6d4; 
-    --success: #34d399; /* Daha yumuşak, açık bir yeşil */
-    --danger: #fb7185; /* Daha pastel bir kırmızı/pembe */
+    --success: #34d399; 
+    --danger: #fb7185; 
     --text-main: #f1f5f9; 
     --text-dim: #94a3b8;
     
@@ -23,7 +23,7 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body { font-family: 'Outfit', sans-serif; background: var(--bg-dark); background-image: var(--bg-glow); background-attachment: fixed; color: var(--text-main); margin: 0; padding-bottom: 120px; min-height: 100vh; overflow-x: hidden; position: relative; }
 
-/* YENİ ZARİF YILDIZ VE NEBULA EFEKTİ */
+/* CANLI YILDIZ VE NEBULA EFEKTİ */
 body::after {
     content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background-image: 
@@ -31,9 +31,22 @@ body::after {
         radial-gradient(circle at center, rgba(255,255,255,0.4) 0px, transparent 1px);
     background-size: 100px 100px, 150px 150px;
     background-position: 0 0, 50px 50px;
-    opacity: 0.3; z-index: -1; animation: drift 100s linear infinite; 
+    opacity: 0.3; z-index: -3; animation: drift 100s linear infinite; 
 }
 @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-500px); } }
+
+/* YENİ: HAREKETLİ UZAY OBJELERİ (Gezegenler, Yıldızlar) */
+#animated-bg-elements { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; pointer-events: none; overflow: hidden; }
+.space-obj { position: absolute; filter: blur(1px) drop-shadow(0 0 20px rgba(56, 189, 248, 0.4)); opacity: 0.2; }
+.planet-1 { top: 15%; left: 8%; font-size: 70px; animation: floatObj 18s ease-in-out infinite; }
+.planet-2 { top: 70%; right: -5%; font-size: 110px; animation: floatObj 25s ease-in-out infinite reverse; filter: blur(3px) drop-shadow(0 0 30px rgba(139, 92, 246, 0.5)); opacity: 0.15; }
+.star-1 { top: 35%; right: 15%; font-size: 35px; animation: pulseStar 4s infinite alternate; opacity: 0.3; filter: drop-shadow(0 0 10px #fff); }
+.star-2 { bottom: 25%; left: 15%; font-size: 25px; animation: pulseStar 6s infinite alternate; opacity: 0.2; }
+.asteroid { top: -10%; left: 40%; font-size: 40px; animation: fallObj 30s linear infinite; opacity: 0.1; filter: blur(2px); }
+
+@keyframes floatObj { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-40px) rotate(15deg); } }
+@keyframes pulseStar { 0% { transform: scale(0.8); opacity: 0.1; } 100% { transform: scale(1.3); opacity: 0.6; } }
+@keyframes fallObj { 0% { transform: translate(0, 0) rotate(0deg); } 100% { transform: translate(-400px, 120vh) rotate(360deg); } }
 
 h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; margin: 0 0 15px 0; letter-spacing: -0.5px; }
 
@@ -83,7 +96,7 @@ h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; margin: 0 0 15px 0; l
 .btn-success { background: linear-gradient(135deg, var(--success) 0%, #059669 100%); color: #fff; box-shadow: 0 4px 15px rgba(52, 211, 153, 0.3); }
 .btn-danger { background: var(--danger); color: #fff; box-shadow: none; }
 
-/* HTML İÇİNDEKİ ESKİ RENKLERİ EZMEK İÇİN OVERRIDE (HTML'i düzenlemene gerek kalmasın diye) */
+/* HTML İÇİNDEKİ ESKİ RENKLERİ EZMEK İÇİN OVERRIDE */
 [style*="linear-gradient(135deg, #f97316 0%, #ea580c 100%)"],
 [style*="linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)"] { background: var(--btn-primary) !important; box-shadow: 0 4px 15px var(--gold-glow) !important; color: #fff !important; }
 [style*="border-color: #f97316"], [style*="border-color: #8b5cf6"] { border-color: rgba(56, 189, 248, 0.3) !important; }
@@ -120,7 +133,7 @@ h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; margin: 0 0 15px 0; l
 .game-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 20, 55, 0.95); backdrop-filter: blur(15px); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
 .close-modal { position: absolute; top: 20px; right: 20px; font-size: 30px; color: var(--text-dim); cursor: pointer; }
 
-/* ÇARK YENİLEME: Mavi ve Lacivert Tonları */
+/* ÇARK YENİLEME */
 .spin-container { position: relative; width: 250px; height: 250px; margin: 0 auto 35px; z-index: 5; }
 .spin-pointer { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 45px; z-index: 20; filter: drop-shadow(0 4px 8px rgba(56, 189, 248, 0.6)); }
 .spin-wheel { width: 100%; height: 100%; border-radius: 50%; border: 6px solid #1e293b; background: conic-gradient( #0ea5e9 0deg 72deg, #3b82f6 72deg 144deg, #6366f1 144deg 216deg, #8b5cf6 216deg 288deg, #0284c7 288deg 360deg ); box-shadow: 0 0 0 4px var(--gold), 0 0 40px rgba(56, 189, 248, 0.3), inset 0 0 30px rgba(0,0,0,0.5); transition: transform 4s cubic-bezier(0.15, 0.9, 0.15, 1); position: relative; overflow: hidden; }
