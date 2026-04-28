@@ -85,16 +85,15 @@ setInterval(async () => {
     } catch (e) { }
 }, 60000);
 
-// YENİ: OTOMATİK MADEN UYARI SİSTEMİ (Her 15 dakikada bir tarar)
+// OTOMATİK MADEN UYARI SİSTEMİ
 setInterval(async () => {
     try {
         const s = await Settings.findOne();
-        if (!s || !s.mainGroupId) return; // Ayar kapalıysa veya grup yoksa çalışmaz
+        if (!s || !s.mainGroupId) return; 
 
         const now = new Date();
         const fourHoursAgo = new Date(now.getTime() - (4 * 60 * 60 * 1000));
 
-        // Madeni dolmuş ve henüz uyarılmamış kişileri bul (Grubu yormamak için tek seferde en fazla 15 kişi)
         const readyMiners = await User.find({
             lastMining: { $lte: fourHoursAgo },
             isMiningNotified: { $ne: true }
@@ -102,7 +101,6 @@ setInterval(async () => {
 
         if (readyMiners.length > 0) {
             let mentions = readyMiners.map(u => u.username ? `@${u.username}` : `[${u.firstName}](tg://user?id=${u.telegramId})`).join(', ');
-
             const msg = `⛏️ **MADENLERİNİZ DOLDU!** ⛏️\n\n${mentions}\n\nSiber madenleriniz GEP ile dolup taşıyor! Üretimin durmaması için hemen uygulamaya girip ödüllerinizi toplayın! 👇`;
 
             bot.sendMessage(s.mainGroupId, msg, {
@@ -110,19 +108,17 @@ setInterval(async () => {
                 reply_markup: { inline_keyboard: [[{ text: "🚀 Madenleri Topla", web_app: { url: WEBHOOK_URL } }]] }
             }).catch(e => console.log("Maden uyarı mesajı atılamadı:", e.message));
 
-            // Uyarıldı olarak damgala ki sürekli aynı kişilere mesaj gitmesin
             for (let user of readyMiners) {
                 user.isMiningNotified = true;
                 await user.save();
             }
         }
     } catch (err) { console.error("Maden uyarı hatası:", err); }
-}, 15 * 60 * 1000); // 15 dakika = 900.000 ms
+}, 15 * 60 * 1000); 
 
 // HAFTALIK LİDERLİK SIFIRLAMA (PAZAR 23:58) VE ŞAMPİYONLARI DUYURMA
 async function archiveWeeklyLeaderboard() {
     try {
-        // GÜNCELLEME: Limit 50'den 100'e çıkarıldı
         const winners = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(100);
         
         if (winners.length > 0) {
@@ -130,10 +126,9 @@ async function archiveWeeklyLeaderboard() {
             const archiveData = winners.map((u, i) => ({ rank: i + 1, username: u.username, firstName: u.firstName, points: u.dailyPoints, date: new Date() }));
             await YesterdayWinner.insertMany(archiveData); 
 
-            // GÜNCELLEME: Gruba İlk 5 kişiyi 5$ ödül mesajıyla duyurma
             const s = await Settings.findOne();
             if (s && s.mainGroupId) {
-                const top5 = winners.slice(0, 5); // İlk 5'i ayır
+                const top5 = winners.slice(0, 5); 
                 let broadcastMsg = `🏆 **HAFTANIN ŞAMPİYONLARI BELLİ OLDU!** 🏆\n\nGeçen haftanın en çok GEP toplayan ve **5$ Nakit Ödül** kazanan ilk 5 efsanesi:\n\n`;
                 
                 top5.forEach((winner, index) => {
@@ -148,7 +143,6 @@ async function archiveWeeklyLeaderboard() {
                    .catch(err => console.log("Haftalık liderlik duyurusu atılamadı:", err.message));
             }
 
-            // Puanları sıfırla
             await User.updateMany({}, { $set: { dailyPoints: 0 } });
         } else { 
             await YesterdayWinner.create({ rank: 0, username: 'sistem', firstName: 'sistem', points: 0, date: new Date() }); 
@@ -227,7 +221,7 @@ app.post('/api/mine', secureRoute, async (req, res) => {
     if (user && (now - new Date(user.lastMining)) > 4 * 60 * 60 * 1000) {
         const reward = 1000 + ((user.miningLevel - 1) * 500); addPoints(user, reward); 
         user.lastMining = now; 
-        user.isMiningNotified = false; // YENİ: Topladığı an uyarılma damgasını sil!
+        user.isMiningNotified = false;
         await user.save(); return res.json({ success: true, points: user.points, reward: reward });
     }
     res.json({ success: false });
@@ -249,14 +243,42 @@ app.post('/api/redeem-promo', secureRoute, async (req, res) => {
     addPoints(user, promo.reward); await user.save(); res.json({ success: true, reward: promo.reward, points: user.points });
 });
 
+// YENİ OYUN: ZARZARA (Siber Zar)
+app.post('/api/arcade/zarzara', secureRoute, async (req, res) => {
+    const { bet } = req.body;
+    const amount = parseInt(bet);
+    
+    if (!amount || isNaN(amount) || amount < 100) return res.json({ success: false, message: "Minimum bahis 100 GEP olmalıdır." });
+    
+    const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: amount } }, { $inc: { points: -amount } }, { new: true });
+    if (!user) return res.json({ success: false, message: "Yetersiz GEP bakiye!" }); 
+    
+    // Zar atılıyor (1-6 arası)
+    const diceValue = Math.floor(Math.random() * 6) + 1;
+    let winAmount = 0;
+    
+    // Kurallar: 4, 5, 6 gelirse yatırılan miktar ikiye katlanır.
+    if (diceValue >= 4) {
+        winAmount = amount * 2;
+        addPoints(user, winAmount);
+        await user.save();
+    }
+    
+    res.json({ 
+        success: true, 
+        diceValue, 
+        winAmount, 
+        points: user.points 
+    });
+});
+
 app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     const cost = 500; 
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP!" }); 
     
     const rand = Math.random() * 100; 
-    let prize = 0; 
-    let msg = "BOŞ";
+    let prize = 0; let msg = "BOŞ";
     
     if (rand <= 40) { prize = 0; msg = "Şansını Dene"; } 
     else if (rand <= 75) { prize = 250; msg = "Yarım Teselli"; } 
@@ -265,7 +287,6 @@ app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     else { prize = 5000; msg = "💥 JACKPOT! 💥"; }
     
     if (prize === 5000) broadcastBigWin(user.username, user.firstName, "Gelir Çarkı", prize);
-    
     if (prize > 0) { addPoints(user, prize); await user.save(); }
     res.json({ success: true, prize, msg, points: user.points });
 });
@@ -278,8 +299,7 @@ app.post('/api/arcade/predict/start', secureRoute, async (req, res) => {
 
     try {
         const r1 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); 
-        const d1 = await r1.json(); 
-        const p1 = parseFloat(d1.price);
+        const d1 = await r1.json(); const p1 = parseFloat(d1.price);
         activePredictions.set(req.realTelegramId, { guess, p1, startTime: Date.now() });
         res.json({ success: true, price1: p1, points: user.points });
     } catch (e) { 
@@ -296,8 +316,7 @@ app.post('/api/arcade/predict/result', secureRoute, async (req, res) => {
 
     try {
         const r2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); 
-        const d2 = await r2.json(); 
-        const p2 = parseFloat(d2.price);
+        const d2 = await r2.json(); const p2 = parseFloat(d2.price);
         let won = false; 
         if ((prediction.guess === 'UP' && p2 > prediction.p1) || (prediction.guess === 'DOWN' && p2 < prediction.p1)) won = true;
         let user = await User.findOne({ telegramId: req.realTelegramId });
@@ -368,7 +387,6 @@ app.post('/api/airdrop/join', secureRoute, async (req, res) => {
 
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
 
-// GÜNCELLEME: Liderlik tablosu limiti 100'e çıkarıldı
 app.get('/api/leaderboard', async (req, res) => { 
     const allTime = await User.find().sort({ points: -1 }).limit(100); 
     const weekly = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(100); 
