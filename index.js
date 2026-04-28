@@ -119,16 +119,41 @@ setInterval(async () => {
     } catch (err) { console.error("Maden uyarı hatası:", err); }
 }, 15 * 60 * 1000); // 15 dakika = 900.000 ms
 
-// HAFTALIK LİDERLİK SIFIRLAMA (PAZAR 23:58)
+// HAFTALIK LİDERLİK SIFIRLAMA (PAZAR 23:58) VE ŞAMPİYONLARI DUYURMA
 async function archiveWeeklyLeaderboard() {
     try {
-        const winners = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(50);
+        // GÜNCELLEME: Limit 50'den 100'e çıkarıldı
+        const winners = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(100);
+        
         if (winners.length > 0) {
             await YesterdayWinner.deleteMany({}); 
             const archiveData = winners.map((u, i) => ({ rank: i + 1, username: u.username, firstName: u.firstName, points: u.dailyPoints, date: new Date() }));
-            await YesterdayWinner.insertMany(archiveData); await User.updateMany({}, { $set: { dailyPoints: 0 } });
-        } else { await YesterdayWinner.create({ rank: 0, username: 'sistem', firstName: 'sistem', points: 0, date: new Date() }); }
-    } catch (err) { }
+            await YesterdayWinner.insertMany(archiveData); 
+
+            // GÜNCELLEME: Gruba İlk 5 kişiyi 5$ ödül mesajıyla duyurma
+            const s = await Settings.findOne();
+            if (s && s.mainGroupId) {
+                const top5 = winners.slice(0, 5); // İlk 5'i ayır
+                let broadcastMsg = `🏆 **HAFTANIN ŞAMPİYONLARI BELLİ OLDU!** 🏆\n\nGeçen haftanın en çok GEP toplayan ve **5$ Nakit Ödül** kazanan ilk 5 efsanesi:\n\n`;
+                
+                top5.forEach((winner, index) => {
+                    const safeName = winner.firstName ? winner.firstName.replace(/([_*\[\]`])/g, '\\$1') : 'Kullanıcı';
+                    const displayName = winner.username ? `@${winner.username}` : safeName;
+                    broadcastMsg += `**${index + 1}.** ${displayName} - ${winner.dailyPoints.toLocaleString()} GEP\n`;
+                });
+                
+                broadcastMsg += `\n🎁 Kazananların ödüllerini almak için yöneticilerle iletişime geçmesi rica olunur. Yeni hafta başladı, herkese bol şans! 🚀`;
+                
+                bot.sendMessage(s.mainGroupId, broadcastMsg, { parse_mode: 'Markdown' })
+                   .catch(err => console.log("Haftalık liderlik duyurusu atılamadı:", err.message));
+            }
+
+            // Puanları sıfırla
+            await User.updateMany({}, { $set: { dailyPoints: 0 } });
+        } else { 
+            await YesterdayWinner.create({ rank: 0, username: 'sistem', firstName: 'sistem', points: 0, date: new Date() }); 
+        }
+    } catch (err) { console.error("Haftalık sıfırlama hatası:", err); }
 }
 setInterval(() => { const now = new Date(); if (now.getDay() === 0 && now.getHours() === 23 && now.getMinutes() === 58) archiveWeeklyLeaderboard(); }, 60000);
 
@@ -343,9 +368,10 @@ app.post('/api/airdrop/join', secureRoute, async (req, res) => {
 
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
 
+// GÜNCELLEME: Liderlik tablosu limiti 100'e çıkarıldı
 app.get('/api/leaderboard', async (req, res) => { 
-    const allTime = await User.find().sort({ points: -1 }).limit(50); 
-    const weekly = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(50); 
+    const allTime = await User.find().sort({ points: -1 }).limit(100); 
+    const weekly = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(100); 
     const lastWeek = await YesterdayWinner.find({ rank: { $gt: 0 } }).sort({ rank: 1 }); 
     res.json({ success: true, leaderboard: allTime, dailyLeaderboard: weekly, yesterdayLeaderboard: lastWeek }); 
 });
