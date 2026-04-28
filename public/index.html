@@ -106,7 +106,9 @@
 
         <div class="glass-card arcade-card" style="border-color: var(--cyan);"><div class="arcade-icon">📈</div><h3 style="color: var(--cyan); margin-bottom: 5px;">Kripto Kahini</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">BTC fiyatını tahmin et, GEP'lerini katla.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: var(--cyan); color: var(--cyan);" onclick="openGame('predict')">TAHMİN ET (1000 GEP)</button></div>
         
-        <div class="glass-card arcade-card" style="border-color: var(--gold);"><div class="arcade-icon">🎰</div><h3 style="color: var(--gold); margin-bottom: 5px;">Gelir Çarkı</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')">ÇEVİR (500 GEP)</button></div>
+        <div class="glass-card arcade-card" style="border-color: var(--gold);"><div class="arcade-icon">🎰</div><h3 style="color: var(--gold); margin-bottom: 5px;">Gelir Çarkı</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p>
+            <button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')">ÇEVİR (5.000 GEP)</button>
+        </div>
         
         <div class="glass-card arcade-card" style="border-color: #34d399;"><div class="arcade-icon">📦</div><h3 style="color: #34d399; margin-bottom: 5px;">Gelir Kapsülleri</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Sandıkları aç, sürprizleri yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #34d399; color:#34d399;" onclick="openGame('lootbox')">KAPSÜLLERİ GÖR</button></div>
 
@@ -179,18 +181,18 @@
 
     <div id="modal-predict" class="game-modal"><div class="close-modal" onclick="closeGame('predict')">✖</div><h2 style="color: var(--cyan); margin-bottom:10px;">Kripto Kahini</h2><div id="tv_chart_container" style="width: 100%; max-width:400px; height: 220px; border-radius: 12px; margin-bottom: 15px; border:1px solid rgba(6,182,212,0.3); box-shadow: 0 0 20px rgba(6,182,212,0.1);"></div><p style="color: var(--text-dim); margin-bottom: 15px;">10 saniye sonra BTC fiyatı ne olacak?</p><h1 id="predict-price" style="font-size: 30px; color: #fff; margin-bottom: 10px; text-shadow: 0 0 10px rgba(255,255,255,0.5);">Bekleniyor...</h1><div id="predict-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-top: 10px;"><button class="game-btn btn-success" style="flex:1;" onclick="playPredict('UP')">YÜKSELECEK</button><button class="game-btn btn-danger" style="flex:1;" onclick="playPredict('DOWN')">DÜŞECEK</button></div><div id="predict-loading" style="display:none; margin-top:10px;"><div class="loader-ring" style="width:40px; height:40px; border-top-color: var(--cyan);"></div><p style="color:var(--cyan); font-weight:bold; margin-top:10px;">Piyasa Analiz Ediliyor...</p></div></div>
     
-    <div id="modal-spin" class="game-modal"><div class="close-modal" onclick="closeGame('spin')">✖</div><h2 style="color: var(--gold); text-shadow: 0 0 15px var(--gold-glow);">Gelir Çarkı</h2><p style="color: var(--text-dim); margin-bottom: 30px;">Bedel: 500 GEP</p>
+    <div id="modal-spin" class="game-modal"><div class="close-modal" onclick="closeGame('spin')">✖</div><h2 style="color: var(--gold); text-shadow: 0 0 15px var(--gold-glow);">Gelir Çarkı</h2><p style="color: var(--text-dim); margin-bottom: 30px;">Bedel: 5.000 GEP</p>
         <div class="spin-container">
             <div class="spin-pointer"></div>
             <div id="spin-wheel" class="spin-wheel" data-rotation="0">
                 <span class="wheel-segment-text" style="transform: rotate(36deg);">BOŞ</span>
-                <span class="wheel-segment-text" style="transform: rotate(108deg);">250</span>
-                <span class="wheel-segment-text" style="transform: rotate(180deg);">500</span>
-                <span class="wheel-segment-text" style="transform: rotate(252deg);">1K</span>
-                <span class="wheel-segment-text" style="transform: rotate(324deg);">5K</span>
+                <span class="wheel-segment-text" style="transform: rotate(108deg);">2.5K</span>
+                <span class="wheel-segment-text" style="transform: rotate(180deg);">5K</span>
+                <span class="wheel-segment-text" style="transform: rotate(252deg);">10K</span>
+                <span class="wheel-segment-text" style="transform: rotate(324deg);">50K</span>
             </div>
         </div>
-        <h3 id="spin-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Şansını Dene!</h3><button id="btn-do-spin" class="game-btn" style="max-width: 300px;" onclick="playSpin()">ÇEVİR (500 GEP)</button>
+        <h3 id="spin-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Şansını Dene!</h3><button id="btn-do-spin" class="game-btn" style="max-width: 300px;" onclick="playSpin()">ÇEVİR (5.000 GEP)</button>
     </div>
     
     <div id="modal-lootbox" class="game-modal">
