@@ -193,12 +193,15 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
+// GÜNCELLEME: Günlük Seri Ödülü 10 Katına Çıktı
 app.post('/api/daily-reward', secureRoute, async (req, res) => {
     const user = await User.findOne({ telegramId: req.realTelegramId }); if (!user) return res.json({ success: false });
     const now = new Date(); const diffHours = (now - new Date(user.lastCheckin)) / (1000 * 60 * 60);
     if (diffHours < 24) return res.json({ success: false, message: "24 saat bekleyin." });
     if (diffHours >= 48) user.streak = 1; else user.streak = user.streak >= 7 ? 1 : user.streak + 1;
-    const reward = 100 * Math.pow(2, user.streak - 1); addPoints(user, reward); user.lastCheckin = now; await user.save();
+    // Temel ödül 100 yerine 1000 yapıldı. (1000, 2000, 4000...)
+    const reward = 1000 * Math.pow(2, user.streak - 1); 
+    addPoints(user, reward); user.lastCheckin = now; await user.save();
     res.json({ success: true, points: user.points, streak: user.streak, reward });
 });
 
@@ -243,7 +246,6 @@ app.post('/api/redeem-promo', secureRoute, async (req, res) => {
     addPoints(user, promo.reward); await user.save(); res.json({ success: true, reward: promo.reward, points: user.points });
 });
 
-// YENİ OYUN: ZARZARA (Siber Zar)
 app.post('/api/arcade/zarzara', secureRoute, async (req, res) => {
     const { bet } = req.body;
     const amount = parseInt(bet);
@@ -253,40 +255,35 @@ app.post('/api/arcade/zarzara', secureRoute, async (req, res) => {
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: amount } }, { $inc: { points: -amount } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP bakiye!" }); 
     
-    // Zar atılıyor (1-6 arası)
     const diceValue = Math.floor(Math.random() * 6) + 1;
     let winAmount = 0;
     
-    // Kurallar: 4, 5, 6 gelirse yatırılan miktar ikiye katlanır.
     if (diceValue >= 4) {
         winAmount = amount * 2;
         addPoints(user, winAmount);
         await user.save();
     }
     
-    res.json({ 
-        success: true, 
-        diceValue, 
-        winAmount, 
-        points: user.points 
-    });
+    res.json({ success: true, diceValue, winAmount, points: user.points });
 });
 
+// GÜNCELLEME: Çark Bedeli ve Ödülleri 10 Katına Çıktı
 app.post('/api/arcade/spin', secureRoute, async (req, res) => {
-    const cost = 500; 
+    const cost = 5000; // 500'den 5000'e çıkarıldı
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP!" }); 
     
     const rand = Math.random() * 100; 
     let prize = 0; let msg = "BOŞ";
     
+    // Ödüller 10X yapıldı
     if (rand <= 40) { prize = 0; msg = "Şansını Dene"; } 
-    else if (rand <= 75) { prize = 250; msg = "Yarım Teselli"; } 
-    else if (rand <= 92) { prize = 500; msg = "Amorti!"; } 
-    else if (rand <= 99) { prize = 1000; msg = "İKİYE KATLADIN!"; } 
-    else { prize = 5000; msg = "💥 JACKPOT! 💥"; }
+    else if (rand <= 75) { prize = 2500; msg = "Yarım Teselli"; } 
+    else if (rand <= 92) { prize = 5000; msg = "Amorti!"; } 
+    else if (rand <= 99) { prize = 10000; msg = "İKİYE KATLADIN!"; } 
+    else { prize = 50000; msg = "💥 JACKPOT! 💥"; }
     
-    if (prize === 5000) broadcastBigWin(user.username, user.firstName, "Gelir Çarkı", prize);
+    if (prize === 50000) broadcastBigWin(user.username, user.firstName, "Gelir Çarkı", prize);
     if (prize > 0) { addPoints(user, prize); await user.save(); }
     res.json({ success: true, prize, msg, points: user.points });
 });
