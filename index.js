@@ -39,23 +39,24 @@ const activePredictions = new Map();
 
 function addPoints(user, amount) {
     const now = new Date();
-    if (user.lastPointDate.toDateString() !== now.toDateString()) { user.dailyPoints = 0; }
-    user.points += amount; user.dailyPoints += amount; user.lastPointDate = now;
+    // Haftalık sisteme geçildiği için günlük sıfırlama kodu KILDIRILDI.
+    // Sıfırlama işlemini sadece Pazar gecesi çalışan cron job yapacak.
+    user.points += amount; 
+    user.dailyPoints += amount; // Artık "haftalık puanı" temsil ediyor
+    user.lastPointDate = now;
 }
 
 // BÜYÜK ÖDÜL DUYURU FONKSİYONU (BUTONLU)
 async function broadcastBigWin(username, firstName, gameName, prize) {
     try {
         const s = await Settings.findOne();
-        if (!s || !s.mainGroupId) return; // Grup bağlı değilse iptal et
+        if (!s || !s.mainGroupId) return;
         const displayName = username ? `@${username}` : firstName;
         const msg = `🎉 **BÜYÜK VURGUN!**\n\n${displayName}, **${gameName}** oyunundan tam **${prize.toLocaleString()} GEP** kazandı! 🤑\n\nSen de şansını denemek için hemen aşağıdaki butona tıkla! 🚀`;
         
         bot.sendMessage(s.mainGroupId, msg, { 
             parse_mode: 'Markdown',
-            reply_markup: { 
-                inline_keyboard: [[{ text: "🚀 Sen De Kazan", web_app: { url: WEBHOOK_URL } }]] 
-            }
+            reply_markup: { inline_keyboard: [[{ text: "🚀 Sen De Kazan", web_app: { url: WEBHOOK_URL } }]] }
         });
     } catch (err) { console.error("Duyuru hatası:", err); }
 }
@@ -86,11 +87,10 @@ setInterval(async () => {
     } catch (e) { }
 }, 60000);
 
-async function archiveDailyLeaderboard() {
+// HAFTALIK LİDERLİK SIFIRLAMA (PAZAR 23:58)
+async function archiveWeeklyLeaderboard() {
     try {
-        const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const existing = await YesterdayWinner.findOne({ date: { $gte: today } }); if (existing) return;
-        const winners = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(100);
+        const winners = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(50);
         if (winners.length > 0) {
             await YesterdayWinner.deleteMany({}); 
             const archiveData = winners.map((u, i) => ({ rank: i + 1, username: u.username, firstName: u.firstName, points: u.dailyPoints, date: new Date() }));
@@ -98,7 +98,8 @@ async function archiveDailyLeaderboard() {
         } else { await YesterdayWinner.create({ rank: 0, username: 'sistem', firstName: 'sistem', points: 0, date: new Date() }); }
     } catch (err) { }
 }
-setInterval(() => { const now = new Date(); if (now.getHours() === 23 && now.getMinutes() === 58) archiveDailyLeaderboard(); }, 60000);
+// 0 = Pazar günü.
+setInterval(() => { const now = new Date(); if (now.getDay() === 0 && now.getHours() === 23 && now.getMinutes() === 58) archiveWeeklyLeaderboard(); }, 60000);
 
 // --- GÜVENLİK VE ROUTE'LAR ---
 function getTelegramUserFromInitData(telegramInitData) {
@@ -204,10 +205,7 @@ app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     else if (rand <= 99) { prize = 1000; msg = "İKİYE KATLADIN!"; } 
     else { prize = 5000; msg = "💥 JACKPOT! 💥"; }
     
-    // DUYURU SİSTEMİ
-    if (prize === 5000) {
-        broadcastBigWin(user.username, user.firstName, "Gelir Çarkı", prize);
-    }
+    if (prize === 5000) broadcastBigWin(user.username, user.firstName, "Gelir Çarkı", prize);
     
     if (prize > 0) { addPoints(user, prize); await user.save(); }
     res.json({ success: true, prize, msg, points: user.points });
@@ -264,7 +262,6 @@ app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
     let prize = 0; const rand = Math.random() * 100;
     if (boxType === 1) prize = rand > 90 ? 10000 : 500; else if (boxType === 2) prize = rand > 90 ? 50000 : 3000; else prize = rand > 95 ? 250000 : 15000;
     
-    // DUYURU SİSTEMİ
     if ((boxType === 1 && prize === 10000) || (boxType === 2 && prize === 50000) || (boxType === 3 && prize === 250000)) {
         let boxName = boxType === 1 ? "Standart Kapsül" : (boxType === 2 ? "Nadir Kapsül" : "Efsanevi Kapsül");
         broadcastBigWin(updatedUser.username, updatedUser.firstName, boxName, prize);
@@ -311,8 +308,13 @@ app.post('/api/airdrop/join', secureRoute, async (req, res) => {
 });
 
 app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
+
+// API LİDER TABLOSU LİMİTLERİ 50'YE DÜŞÜRÜLDÜ
 app.get('/api/leaderboard', async (req, res) => { 
-    const allTime = await User.find().sort({ points: -1 }).limit(100); const today = new Date(); today.setHours(0, 0, 0, 0); const daily = await User.find({ lastPointDate: { $gte: today } }).sort({ dailyPoints: -1 }).limit(100); const yesterday = await YesterdayWinner.find({ rank: { $gt: 0 } }).sort({ rank: 1 }); res.json({ success: true, leaderboard: allTime, dailyLeaderboard: daily, yesterdayLeaderboard: yesterday }); 
+    const allTime = await User.find().sort({ points: -1 }).limit(50); 
+    const weekly = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(50); 
+    const lastWeek = await YesterdayWinner.find({ rank: { $gt: 0 } }).sort({ rank: 1 }); 
+    res.json({ success: true, leaderboard: allTime, dailyLeaderboard: weekly, yesterdayLeaderboard: lastWeek }); 
 });
 
 app.post('/api/tasks/complete', secureRoute, async (req, res) => { 
