@@ -109,7 +109,7 @@
             <input type="text" id="ad-title" class="glass-input" placeholder="Proje Adı (Max 20)" maxlength="20">
             <input type="text" id="ad-desc" class="glass-input" placeholder="Açıklama (Max 100)" maxlength="100">
             <input type="text" id="ad-link" class="glass-input" placeholder="Referans Linki (https://...)">
-            <button id="btn-post-ad" class="game-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color:#fff; padding: 14px; font-size:13px;" onclick="postAirdrop()">YAYINLA (1M GEP)</button>
+            <button id="btn-post-ad" class="game-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color:#fff; padding: 14px; font-size:13px;" onclick="postAirdrop()">YAYINLA (<span id="ui-cost-airdrop">1.000.000</span> GEP)</button>
             <div id="airdrop-list" style="margin-top:20px; max-height:350px; overflow-y:auto; padding-right:5px;"></div>
         </div>
 
@@ -163,14 +163,14 @@
             <div class="arcade-icon">📈</div>
             <h3 style="color: var(--cyan); margin-bottom: 5px;">Kripto Kahini</h3>
             <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">BTC fiyatını tahmin et, GEP'lerini katla.</p>
-            <button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: var(--cyan); color: var(--cyan);" onclick="openGame('predict')">TAHMİN ET (1000 GEP)</button>
+            <button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: var(--cyan); color: var(--cyan);" onclick="openGame('predict')">TAHMİN ET (<span id="ui-cost-predict">1.000</span> GEP)</button>
         </div>
         
         <div class="glass-card arcade-card" style="border-color: var(--gold);">
             <div class="arcade-icon">🎰</div>
             <h3 style="color: var(--gold); margin-bottom: 5px;">Gelir Çarkı</h3>
             <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p>
-            <button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')">ÇEVİR (5.000 GEP)</button>
+            <button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')">ÇEVİR (<span id="ui-cost-spin">5.000</span> GEP)</button>
         </div>
         
         <div class="glass-card arcade-card" style="border-color: #34d399;">
@@ -336,9 +336,9 @@
         <h2 style="color: var(--success); text-shadow: 0 0 15px rgba(52,211,153,0.5); margin-bottom:5px;">Gelir Kapsülleri</h2>
         <p style="color: var(--danger); font-weight:bold; font-size:12px; margin-bottom: 20px;">⚠️ Her kapsül türü günde sadece 1 kez açılabilir!</p>
         <div id="lootbox-selection" style="display:flex; flex-direction:column; gap:12px; width:100%; max-width:320px; margin-top:10px;">
-            <button id="lb-btn-1" class="game-btn btn-outline lb-box-btn" style="padding:16px; font-size:13px; border-color:var(--text-main); color:var(--text-main);" onclick="playLootbox(1)">📦 STANDART KAPSÜL<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Max Ödül: 10.000 GEP</span></button>
-            <button id="lb-btn-2" class="game-btn btn-outline lb-box-btn" style="padding:16px; font-size:13px; border-color:var(--cyan); color:var(--cyan);" onclick="playLootbox(2)">🎁 NADİR KAPSÜL<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Max Ödül: 50.000 GEP</span></button>
-            <button id="lb-btn-3" class="game-btn btn-outline lb-box-btn" style="padding:16px; font-size:13px; border-color:var(--gold); color:var(--gold);" onclick="playLootbox(3)">💎 EFSANEVİ KAPSÜL<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Max Ödül: 250.000 GEP</span></button>
+            <button id="lb-btn-1" class="game-btn btn-outline lb-box-btn" style="padding:16px; font-size:13px; border-color:var(--text-main); color:var(--text-main);" onclick="playLootbox(1)">📦 STANDART KAPSÜL<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Maliyet: <span id="ui-cost-lb1">1.000</span> GEP</span></button>
+            <button id="lb-btn-2" class="game-btn btn-outline lb-box-btn" style="padding:16px; font-size:13px; border-color:var(--cyan); color:var(--cyan);" onclick="playLootbox(2)">🎁 NADİR KAPSÜL<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Maliyet: <span id="ui-cost-lb2">5.000</span> GEP</span></button>
+            <button id="lb-btn-3" class="game-btn btn-outline lb-box-btn" style="padding:16px; font-size:13px; border-color:var(--gold); color:var(--gold);" onclick="playLootbox(3)">💎 EFSANEVİ KAPSÜL<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Maliyet: <span id="ui-cost-lb3">25.000</span> GEP</span></button>
         </div>
         <div id="lootbox-animation" style="display:none; flex-direction:column; align-items:center; width:100%;">
             <div id="lootbox-icon" style="font-size: 130px; margin-bottom: 20px; filter: drop-shadow(0 0 30px rgba(52,211,153,0.8));">📦</div>
