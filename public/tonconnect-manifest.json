@@ -1,1 +1,5 @@
-walletAddress: { type: String, default: "" },
+{
+  "url": "https://gelir-evreni.onrender.com",
+  "name": "Gelir Evreni",
+  "iconUrl": "https://ton.org/download/ton_symbol.png"
+}
