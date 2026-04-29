@@ -31,31 +31,33 @@ function triggerHaptic(type = 'light') { if(tg.HapticFeedback) { if(type === 'su
 function spawnFloatingText(e, text, color) { let x = window.innerWidth / 2; let y = window.innerHeight / 2; if(e && e.touches && e.touches.length > 0) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else if (e && e.clientX) { x = e.clientX; y = e.clientY; } const el = document.createElement("div"); el.className = "floating-text"; el.innerText = text; el.style.left = (x - 40) + "px"; el.style.top = (y - 20) + "px"; el.style.color = color || "var(--gold)"; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 function checkLockdown(data) { if (data && data.isLocked) { document.getElementById('lockdown-screen').style.display = 'flex'; triggerHaptic('error'); return true; } return false; }
 
-// --- ROKET İÇİN GÖRSEL TEPKİ MOTORU ---
-function showCrashReaction(text, color, left, top) {
+// 🔥 YENİ: GENEL OYUN TEPKİ (REAKSİYON) MOTORU 🔥
+function showGameReaction(text, color, parentId) {
+    let parent = document.getElementById(parentId);
+    if(!parent) return;
     let el = document.createElement("div");
     el.innerText = text;
     el.style.position = "absolute";
-    el.style.left = left;
-    el.style.top = top;
+    el.style.left = "50%";
+    el.style.top = "40%";
     el.style.color = color;
     el.style.fontWeight = "900";
-    el.style.fontSize = "22px";
+    el.style.fontSize = "32px";
     el.style.fontFamily = "'Space Grotesk'";
-    el.style.textShadow = `0 0 10px ${color}, 0 0 20px #000`;
-    el.style.transform = "translate(-50%, -50%)";
-    el.style.zIndex = "30";
+    el.style.textShadow = `0 0 15px ${color}, 0 0 20px #000`;
+    el.style.transform = "translate(-50%, -50%) scale(0.5)";
+    el.style.zIndex = "100";
     el.style.pointerEvents = "none";
-    el.style.transition = "all 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)"; 
+    el.style.transition = "all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275)"; 
     
-    document.getElementById('rocket-ship').parentElement.appendChild(el);
+    parent.appendChild(el);
     
     setTimeout(() => {
-        el.style.transform = "translate(-50%, -200%) scale(1.3)";
+        el.style.transform = "translate(-50%, -150%) scale(1.3)";
         el.style.opacity = "0";
     }, 50);
     
-    setTimeout(() => el.remove(), 1500);
+    setTimeout(() => el.remove(), 1000);
 }
 
 async function init() {
@@ -121,6 +123,17 @@ async function redeemPromo() { const btn = document.getElementById('btn-redeem-p
 
 let hcaptchaWidgetId;
 
+function closeGame(game) { 
+    triggerHaptic('light'); 
+    document.getElementById(`modal-${game}`).style.display = 'none'; 
+    if(game === 'gepcoz') { document.getElementById('hcaptcha-widget').innerHTML = ''; }
+    if(game === 'crash') { 
+        clearInterval(crashInterval); 
+        if(!isCrashed && crashBet > 0) { fetch(`${API}/api/arcade/crash/notify-loss`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }).catch(()=>{}); }
+        isCrashed = true; 
+    } 
+}
+
 function openGame(game) { 
     triggerHaptic('light'); document.getElementById(`modal-${game}`).style.display = 'flex'; 
     if(game === 'predict') { if(!tvWidgetCreated) { new TradingView.widget({ "width": "100%", "height": 220, "symbol": "BINANCE:BTCUSDT", "interval": "1", "timezone": "Etc/UTC", "theme": "dark", "style": "2", "locale": "tr", "enable_publishing": false, "backgroundColor": "rgba(0, 1, 9, 0)", "gridColor": "rgba(255, 255, 255, 0.05)", "hide_top_toolbar": true, "hide_legend": true, "save_image": false, "container_id": "tv_chart_container" }); tvWidgetCreated = true; } document.getElementById('predict-price').innerHTML = '<div class="loader-ring" style="width:25px;height:25px;border-width:2px;display:inline-block;"></div> Çekiliyor...'; document.getElementById('predict-buttons').style.display = 'none'; fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT').then(r => r.json()).then(d => { document.getElementById('predict-price').innerText = `Anlık: $${parseFloat(d.price).toFixed(2)}`; document.getElementById('predict-buttons').style.display = 'flex'; }).catch(e => { document.getElementById('predict-price').innerText = "Bağlantı Hatası"; }); } 
@@ -128,7 +141,6 @@ function openGame(game) {
     if(game === 'lootbox') { resetLootbox(); } 
     if(game === 'zarzara') { document.getElementById('zarzara-result').innerText = "Bahsini Gir ve At!"; document.getElementById('zarzara-display').innerText = "🎲"; }
     if(game === 'gepcoz') { document.getElementById('gepcoz-result').innerText = "Terminal Hazır. Şifreyi Çöz."; document.getElementById('gepcoz-result').style.color = "#fff"; document.getElementById('hcaptcha-widget').innerHTML = ''; if(window.hcaptcha) { hcaptchaWidgetId = hcaptcha.render('hcaptcha-widget', { 'sitekey': '10b4d376-fcd6-43a0-a0ac-6388f0c418a4', 'theme': 'dark', 'callback': function(token) { verifyGepcoz(token); } }); } else { document.getElementById('gepcoz-result').innerText = "Güvenlik ağı yüklenemedi."; } }
-    
     if(game === 'crash') {
         clearInterval(crashInterval);
         isCrashed = false;
@@ -152,24 +164,6 @@ function openGame(game) {
         document.getElementById('rocket-fire').style.display = 'none'; 
         document.getElementById('explosion-icon').style.display = 'none';
     }
-}
-
-// 🔥 YENİDEN EKLENEN EKSİK FONKSİYON (ÇIKIŞ BUTONU) 🔥
-function closeGame(game) { 
-    triggerHaptic('light'); 
-    document.getElementById(`modal-${game}`).style.display = 'none'; 
-    if(game === 'gepcoz') {
-        document.getElementById('hcaptcha-widget').innerHTML = ''; 
-    }
-    if(game === 'crash') { 
-        clearInterval(crashInterval); 
-        // Eğer roket uçarken çarpı tuşuna basıp kaçmaya çalışırsa, kaybetmiş say! (Anti-Hile)
-        if(!isCrashed && crashBet > 0) {
-            fetch(`${API}/api/arcade/crash/notify-loss`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }).catch(()=>{});
-        }
-        isCrashed = true; 
-        document.getElementById('rocket-fire').style.display = 'none';
-    } 
 }
 
 // --- YATAY GEP ROKETİ (CRASH) MOTORU ---
@@ -200,42 +194,23 @@ async function playCrash() {
         const data = await res.json();
         if (checkLockdown(data)) return;
         
-        if (!data.success) { 
-            resText.innerText = "Hata!"; tg.showAlert(data.message); btnStart.disabled = false; return; 
-        }
+        if (!data.success) { resText.innerText = "Hata!"; tg.showAlert(data.message); btnStart.disabled = false; return; }
 
-        user.points = data.points;
-        updateUI();
+        user.points = data.points; updateUI();
+        crashPoint = parseFloat(data.crashPoint); currentCrashMultiplier = 1.00; isCrashed = false; crashPath = [];
         
-        crashPoint = parseFloat(data.crashPoint);
-        currentCrashMultiplier = 1.00;
-        isCrashed = false;
-        crashPath = [];
+        btnStart.style.display = 'none'; btnCashout.style.display = 'block'; btnCashout.disabled = false; btnCashout.innerText = `ÇEKİL (${crashBet} GEP)`;
+        resText.innerText = "Uçuş başladı!"; display.style.color = "var(--success)";
         
-        btnStart.style.display = 'none';
-        btnCashout.style.display = 'block';
-        btnCashout.disabled = false;
-        btnCashout.innerText = `ÇEKİL (${crashBet} GEP)`;
-        resText.innerText = "Uçuş başladı!";
-        display.style.color = "var(--success)";
+        let canvas = document.getElementById('rocket-canvas'); let ctx = canvas.getContext('2d'); let cw = canvas.width; let ch = canvas.height;
+        let rocket = document.getElementById('rocket-ship'); let explosion = document.getElementById('explosion-icon');
+        rocket.style.display = 'flex'; explosion.style.display = 'none'; document.getElementById('rocket-fire').style.display = 'block'; 
         
-        let canvas = document.getElementById('rocket-canvas');
-        let ctx = canvas.getContext('2d');
-        let cw = canvas.width; let ch = canvas.height;
-        let rocket = document.getElementById('rocket-ship');
-        let explosion = document.getElementById('explosion-icon');
-        
-        rocket.style.display = 'flex'; 
-        explosion.style.display = 'none'; 
-        document.getElementById('rocket-fire').style.display = 'block'; 
-        
-        let tick = 0;
-        clearInterval(crashInterval);
+        let tick = 0; clearInterval(crashInterval);
         
         crashInterval = setInterval(() => {
             if (isCrashed) return;
             tick += 0.05;
-            
             currentCrashMultiplier = Math.exp(0.15 * tick);
             
             let currentX = Math.min((tick / 20) * (cw * 0.9), cw * 0.9) + 20; 
@@ -244,125 +219,64 @@ async function playCrash() {
             
             crashPath.push({x: currentX, y: currentY});
             
-            ctx.clearRect(0, 0, cw, ch);
-            ctx.beginPath();
-            ctx.strokeStyle = "#ef4444";
-            ctx.lineWidth = 3;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = "#ef4444";
-            for(let i=0; i<crashPath.length; i++) {
-                if(i===0) ctx.moveTo(crashPath[i].x, crashPath[i].y);
-                else ctx.lineTo(crashPath[i].x, crashPath[i].y);
-            }
-            ctx.stroke();
-            ctx.shadowBlur = 0; 
+            ctx.clearRect(0, 0, cw, ch); ctx.beginPath(); ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 3; ctx.shadowBlur = 10; ctx.shadowColor = "#ef4444";
+            for(let i=0; i<crashPath.length; i++) { if(i===0) ctx.moveTo(crashPath[i].x, crashPath[i].y); else ctx.lineTo(crashPath[i].x, crashPath[i].y); }
+            ctx.stroke(); ctx.shadowBlur = 0; 
             
-            rocket.style.left = currentX + "px";
-            rocket.style.top = currentY + "px";
-            
-            let angle = (progressY * -30); 
-            rocket.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+            rocket.style.left = currentX + "px"; rocket.style.top = currentY + "px";
+            let angle = (progressY * -30); rocket.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
 
             if (currentCrashMultiplier >= crashPoint) {
-                currentCrashMultiplier = crashPoint;
-                processCrash(currentX, currentY);
-            } else {
-                display.innerText = currentCrashMultiplier.toFixed(2) + "x";
-                btnCashout.innerText = `ÇEKİL (${Math.floor(crashBet * currentCrashMultiplier)} GEP)`;
-            }
+                currentCrashMultiplier = crashPoint; processCrash(currentX, currentY);
+            } else { display.innerText = currentCrashMultiplier.toFixed(2) + "x"; btnCashout.innerText = `ÇEKİL (${Math.floor(crashBet * currentCrashMultiplier)} GEP)`; }
         }, 50);
-
     } catch (e) { resText.innerText = "Bağlantı Hatası!"; btnStart.disabled = false; }
 }
 
 async function processCrash(x, y) {
-    isCrashed = true;
-    clearInterval(crashInterval);
-    triggerHaptic('heavy');
-    
-    try {
-        await fetch(`${API}/api/arcade/crash/notify-loss`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) });
-    } catch (e) { }
+    isCrashed = true; clearInterval(crashInterval); triggerHaptic('heavy');
+    try { await fetch(`${API}/api/arcade/crash/notify-loss`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); } catch (e) { }
 
-    let display = document.getElementById('crash-display');
-    display.innerText = crashPoint.toFixed(2) + "x";
-    display.style.color = "var(--danger)";
+    let display = document.getElementById('crash-display'); display.innerText = crashPoint.toFixed(2) + "x"; display.style.color = "var(--danger)";
+    let resText = document.getElementById('crash-result'); resText.innerText = "💥 GEP ROKETİ PATLADI!"; resText.style.color = "var(--danger)";
     
-    let resText = document.getElementById('crash-result');
-    resText.innerText = "💥 GEP ROKETİ PATLADI!";
-    resText.style.color = "var(--danger)";
-    
-    let rocket = document.getElementById('rocket-ship');
-    let explosion = document.getElementById('explosion-icon');
-    
-    rocket.style.display = 'none'; 
-    explosion.style.left = rocket.style.left; 
-    explosion.style.top = rocket.style.top;
-    explosion.style.display = 'block'; 
+    let rocket = document.getElementById('rocket-ship'); let explosion = document.getElementById('explosion-icon');
+    rocket.style.display = 'none'; explosion.style.left = rocket.style.left; explosion.style.top = rocket.style.top; explosion.style.display = 'block'; 
 
-    showCrashReaction(`-${crashBet} GEP`, "var(--danger)", explosion.style.left, explosion.style.top);
-    crashBet = 0; // Bet sıfırlanıyor
+    showGameReaction(`-${crashBet} GEP`, "var(--danger)", "modal-crash");
+    crashBet = 0; 
     
-    document.getElementById('btn-cashout-crash').style.display = 'none';
-    const btnStart = document.getElementById('btn-start-crash');
-    btnStart.style.display = 'block';
-    btnStart.disabled = false;
+    document.getElementById('btn-cashout-crash').style.display = 'none'; const btnStart = document.getElementById('btn-start-crash'); btnStart.style.display = 'block'; btnStart.disabled = false;
 }
 
 async function cashoutCrash() {
     if (isCrashed) return;
-    isCrashed = true;
-    clearInterval(crashInterval);
-    triggerHaptic('success');
-    
-    const btnCashout = document.getElementById('btn-cashout-crash');
-    btnCashout.disabled = true;
-    btnCashout.innerText = "BEKLENİYOR...";
-    
-    const display = document.getElementById('crash-display');
-    display.style.color = "var(--gold)";
+    isCrashed = true; clearInterval(crashInterval); triggerHaptic('success');
+    const btnCashout = document.getElementById('btn-cashout-crash'); btnCashout.disabled = true; btnCashout.innerText = "BEKLENİYOR...";
+    const display = document.getElementById('crash-display'); display.style.color = "var(--gold)";
     
     try {
-        const res = await fetch(`${API}/api/arcade/crash/cashout`, { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ multiplier: currentCrashMultiplier.toFixed(2), initData: tg.initData }) 
-        });
-        const data = await res.json();
-        if (checkLockdown(data)) return;
+        const res = await fetch(`${API}/api/arcade/crash/cashout`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ multiplier: currentCrashMultiplier.toFixed(2), initData: tg.initData }) });
+        const data = await res.json(); if (checkLockdown(data)) return;
         
         if (data.success) {
-            user.points = data.points;
-            updateUI();
-            document.getElementById('crash-result').innerText = `✅ ÇEKİLDİN! +${data.winAmount} GEP`;
-            document.getElementById('crash-result').style.color = "var(--success)";
-            
-            let rocket = document.getElementById('rocket-ship');
-            showCrashReaction(`+${data.winAmount} GEP`, "var(--success)", rocket.style.left, rocket.style.top);
-            
-            document.getElementById('rocket-fire').style.display = 'none';
-            crashBet = 0;
-        } else {
-            processCrash(0, 0); 
-            document.getElementById('crash-result').innerText = "💥 ZATEN PATLAMIŞTI!";
-            display.style.color = "var(--danger)";
-            return;
-        }
+            user.points = data.points; updateUI(); document.getElementById('crash-result').innerText = `✅ ÇEKİLDİN! +${data.winAmount} GEP`; document.getElementById('crash-result').style.color = "var(--success)";
+            showGameReaction(`+${data.winAmount} GEP`, "var(--success)", "modal-crash");
+            document.getElementById('rocket-fire').style.display = 'none'; crashBet = 0;
+        } else { processCrash(0, 0); document.getElementById('crash-result').innerText = "💥 ZATEN PATLAMIŞTI!"; display.style.color = "var(--danger)"; return; }
     } catch (e) { document.getElementById('crash-result').innerText = "Bağlantı Hatası!"; }
     
-    document.getElementById('btn-cashout-crash').style.display = 'none';
-    const btnStart = document.getElementById('btn-start-crash');
-    btnStart.style.display = 'block';
-    btnStart.disabled = false;
+    document.getElementById('btn-cashout-crash').style.display = 'none'; const btnStart = document.getElementById('btn-start-crash'); btnStart.style.display = 'block'; btnStart.disabled = false;
 }
-// ----------------------------------------
+
+async function playZarzara() { const amount = parseInt(document.getElementById('zarzara-bet').value); if (!amount || isNaN(amount) || amount < 100) return tg.showAlert("Min bahis 100 GEP."); const btn = document.getElementById('btn-do-zarzara'); const display = document.getElementById('zarzara-display'); const resultText = document.getElementById('zarzara-result'); btn.disabled = true; resultText.innerText = "Zar atılıyor..."; resultText.style.color = "#fff"; display.classList.add('shake-box'); triggerHaptic('heavy'); try { const res = await fetch(`${API}/api/arcade/zarzara`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ bet: amount, initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; if (!data.success) { display.classList.remove('shake-box'); resultText.innerText = "Hata!"; tg.showAlert(data.message); btn.disabled = false; return; } setTimeout(() => { display.classList.remove('shake-box'); user.points = data.points; updateUI(); const diceEmojis = { 1: "⚀", 2: "⚁", 3: "⚂", 4: "⚃", 5: "⚄", 6: "⚅" }; display.innerText = diceEmojis[data.diceValue] || "🎲"; if (data.winAmount > 0) { resultText.innerText = `KAZANDIN! (+${data.winAmount} GEP)`; resultText.style.color = "var(--success)"; triggerHaptic('success'); showGameReaction(`+${data.winAmount} GEP`, "var(--success)", "modal-zarzara"); } else { resultText.innerText = "KAYBETTİN!"; resultText.style.color = "var(--danger)"; triggerHaptic('error'); showGameReaction(`-${amount} GEP`, "var(--danger)", "modal-zarzara"); } btn.disabled = false; }, 1500); } catch(e) { display.classList.remove('shake-box'); resultText.innerText = "Bağlantı Hatası!"; btn.disabled = false; } }
+
+async function playSpin() { const btn = document.getElementById('btn-do-spin'); const wheel = document.getElementById('spin-wheel'); const resText = document.getElementById('spin-result'); btn.disabled = true; resText.style.color = "#fff"; resText.innerText = "Dönüyor..."; triggerHaptic('heavy'); wheel.style.transition = 'none'; let currentRotation = parseFloat(wheel.getAttribute('data-rotation') || 0); let normalized = currentRotation % 360; wheel.style.transform = `rotate(${normalized}deg)`; void wheel.offsetWidth; wheel.style.transition = 'transform 4s cubic-bezier(0.15, 0.9, 0.15, 1)'; try { const res = await fetch(`${API}/api/arcade/spin`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; if(!data.success) { resText.innerText = "Hata oluştu."; tg.showAlert(data.message); btn.disabled = false; return; } const prizeAngles = { 0: 36, 2500: 108, 5000: 180, 10000: 252, 50000: 324 }; const targetAngle = prizeAngles[data.prize]; const offset = 360 - targetAngle; const jitter = Math.floor(Math.random() * 40) - 20; const newRotation = currentRotation + (360 * 5) + offset + jitter - normalized; wheel.style.transform = `rotate(${newRotation}deg)`; wheel.setAttribute('data-rotation', newRotation); setTimeout(() => { user.points = data.points; updateUI(); resText.innerText = data.msg; if(data.prize > 0) { resText.style.color = "var(--success)"; triggerHaptic('success'); showGameReaction(`+${data.prize} GEP`, "var(--success)", "modal-spin"); } else { resText.style.color = "var(--danger)"; triggerHaptic('error'); showGameReaction(`BOŞ!`, "var(--danger)", "modal-spin"); } btn.disabled = false; }, 4000); } catch(e) { resText.innerText = "Bağlantı Hatası!"; btn.disabled = false; } }
+
+function resetLootbox() { document.getElementById('lootbox-selection').style.display = 'flex'; document.getElementById('lootbox-animation').style.display = 'none'; document.getElementById('btn-back-lootbox').style.display = 'none'; updateUI(); }
+async function playLootbox(boxType) { const icons = { 1: "📦", 2: "🎁", 3: "💎" }; const colors = { 1: "var(--text-main)", 2: "#3b82f6", 3: "#f59e0b" }; document.getElementById('lootbox-selection').style.display = 'none'; const animDiv = document.getElementById('lootbox-animation'); const boxIcon = document.getElementById('lootbox-icon'); const resText = document.getElementById('lootbox-result'); const backBtn = document.getElementById('btn-back-lootbox'); animDiv.style.display = 'flex'; boxIcon.innerText = icons[boxType]; boxIcon.style.filter = `drop-shadow(0 0 20px ${colors[boxType]})`; resText.style.color = colors[boxType]; resText.innerText = "Kilit Çözülüyor..."; boxIcon.classList.add('shake-box'); triggerHaptic('heavy'); const res = await fetch(`${API}/api/arcade/lootbox`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ boxType, initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; setTimeout(() => { boxIcon.classList.remove('shake-box'); if(data.success) { user.points = data.points; if(data.lastLootbox1) user.lastLootbox1 = data.lastLootbox1; if(data.lastLootbox2) user.lastLootbox2 = data.lastLootbox2; if(data.lastLootbox3) user.lastLootbox3 = data.lastLootbox3; updateUI(); resText.innerText = `KAZANDIN: +${data.prize}`; boxIcon.innerText = "✨"; if(data.prize > 0) { resText.style.color = "var(--success)"; triggerHaptic('success'); showGameReaction(`+${data.prize} GEP`, "var(--success)", "modal-lootbox"); } else { resText.style.color = "var(--danger)"; boxIcon.innerText = "🗑️"; triggerHaptic('error'); } } else { resText.innerText = "KİLİTLİ!"; tg.showAlert(data.message); } backBtn.style.display = 'block'; }, 1500); }
 
 async function verifyGepcoz(token) { const resText = document.getElementById('gepcoz-result'); resText.innerText = "Doğrulanıyor..."; resText.style.color = "var(--cyan)"; try { const res = await fetch(`${API}/api/arcade/gepcoz`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ token, initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; if (data.success) { user.points = data.points; updateUI(); triggerHaptic('success'); resText.innerText = `✅ AĞ KIRILDI! +${data.reward} GEP`; resText.style.color = "var(--success)"; spawnFloatingText(null, `+${data.reward} GEP`, "var(--success)"); setTimeout(() => { if(hcaptchaWidgetId !== undefined && window.hcaptcha) hcaptcha.reset(hcaptchaWidgetId); resText.innerText = "Yeni şifre bekleniyor..."; resText.style.color = "#fff"; }, 3000); } else { triggerHaptic('error'); resText.innerText = `❌ HATA: ${data.message || "Bilinmiyor"}`; resText.style.color = "var(--danger)"; setTimeout(() => { if(hcaptchaWidgetId !== undefined && window.hcaptcha) hcaptcha.reset(hcaptchaWidgetId); }, 2000); } } catch(e) { resText.innerText = "❌ Bağlantı koptu."; resText.style.color = "var(--danger)"; } }
-async function playZarzara() { const amount = parseInt(document.getElementById('zarzara-bet').value); if (!amount || isNaN(amount) || amount < 100) return tg.showAlert("Min bahis 100 GEP."); const btn = document.getElementById('btn-do-zarzara'); const display = document.getElementById('zarzara-display'); const resultText = document.getElementById('zarzara-result'); btn.disabled = true; resultText.innerText = "Zar atılıyor..."; resultText.style.color = "#fff"; display.classList.add('shake-box'); triggerHaptic('heavy'); try { const res = await fetch(`${API}/api/arcade/zarzara`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ bet: amount, initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; if (!data.success) { display.classList.remove('shake-box'); resultText.innerText = "Hata!"; tg.showAlert(data.message); btn.disabled = false; return; } setTimeout(() => { display.classList.remove('shake-box'); user.points = data.points; updateUI(); const diceEmojis = { 1: "⚀", 2: "⚁", 3: "⚂", 4: "⚃", 5: "⚄", 6: "⚅" }; display.innerText = diceEmojis[data.diceValue] || "🎲"; if (data.winAmount > 0) { resultText.innerText = `KAZANDIN! (+${data.winAmount} GEP)`; resultText.style.color = "var(--success)"; triggerHaptic('success'); spawnFloatingText(null, `+${data.winAmount} GEP`, "var(--success)"); } else { resultText.innerText = "KAYBETTİN!"; resultText.style.color = "var(--danger)"; triggerHaptic('error'); } btn.disabled = false; }, 1500); } catch(e) { display.classList.remove('shake-box'); resultText.innerText = "Bağlantı Hatası!"; btn.disabled = false; } }
-async function playSpin() { const btn = document.getElementById('btn-do-spin'); const wheel = document.getElementById('spin-wheel'); const resText = document.getElementById('spin-result'); btn.disabled = true; resText.style.color = "#fff"; resText.innerText = "Dönüyor..."; triggerHaptic('heavy'); wheel.style.transition = 'none'; let currentRotation = parseFloat(wheel.getAttribute('data-rotation') || 0); let normalized = currentRotation % 360; wheel.style.transform = `rotate(${normalized}deg)`; void wheel.offsetWidth; wheel.style.transition = 'transform 4s cubic-bezier(0.15, 0.9, 0.15, 1)'; try { const res = await fetch(`${API}/api/arcade/spin`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; if(!data.success) { resText.innerText = "Hata oluştu."; tg.showAlert(data.message); btn.disabled = false; return; } const prizeAngles = { 0: 36, 2500: 108, 5000: 180, 10000: 252, 50000: 324 }; const targetAngle = prizeAngles[data.prize]; const offset = 360 - targetAngle; const jitter = Math.floor(Math.random() * 40) - 20; const newRotation = currentRotation + (360 * 5) + offset + jitter - normalized; wheel.style.transform = `rotate(${newRotation}deg)`; wheel.setAttribute('data-rotation', newRotation); setTimeout(() => { user.points = data.points; updateUI(); resText.innerText = data.msg; if(data.prize > 0) { resText.style.color = "var(--success)"; triggerHaptic('success'); spawnFloatingText(null, `+${data.prize} GEP`, "var(--success)"); } else { resText.style.color = "var(--danger)"; triggerHaptic('error'); } btn.disabled = false; }, 4000); } catch(e) { resText.innerText = "Bağlantı Hatası!"; btn.disabled = false; } }
-async function playPredict(guess) { document.getElementById('predict-buttons').style.display = 'none'; document.getElementById('predict-loading').style.display = 'flex'; document.getElementById('predict-price').innerText = "Fiyat Alınıyor..."; triggerHaptic('medium'); const resStart = await fetch(`${API}/api/arcade/predict/start`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ guess, initData: tg.initData }) }); const dataStart = await resStart.json(); if (checkLockdown(dataStart)) return; if(!dataStart.success) { document.getElementById('predict-loading').style.display = 'none'; document.getElementById('predict-buttons').style.display = 'flex'; document.getElementById('predict-price').innerText = "Tekrar Dene"; return tg.showAlert(dataStart.message || "Hata oluştu."); } user.points = dataStart.points; updateUI(); let timeLeft = 10; document.getElementById('predict-price').innerHTML = `<span style="color:var(--cyan); font-size:24px;">Giriş: $${dataStart.price1}</span><br>Sonuç bekleniyor: ${timeLeft}s`; const timer = setInterval(() => { timeLeft--; document.getElementById('predict-price').innerHTML = `<span style="color:var(--cyan); font-size:24px;">Giriş: $${dataStart.price1}</span><br>Sonuç bekleniyor: ${timeLeft}s`; }, 1000); setTimeout(async () => { clearInterval(timer); document.getElementById('predict-price').innerText = "Sonuç Analiz Ediliyor..."; const resResult = await fetch(`${API}/api/arcade/predict/result`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const dataResult = await resResult.json(); if (checkLockdown(dataResult)) return; document.getElementById('predict-loading').style.display = 'none'; if(dataResult.success) { user.points = dataResult.points; updateUI(); const emoji = dataResult.won ? '🎉' : '💀'; const color = dataResult.won ? 'var(--success)' : 'var(--danger)'; document.getElementById('predict-price').innerHTML = `<span style="color:${color}; font-size:24px;">Giriş: $${dataResult.price1}<br>Kapanış: $${dataResult.price2}</span><br>${emoji}`; if(dataResult.won) { triggerHaptic('success'); spawnFloatingText(null, "+ Kazanıldı", "var(--success)"); } else { triggerHaptic('error'); } } else { if(dataResult.points) { user.points = dataResult.points; updateUI(); } document.getElementById('predict-price').innerText = "HATA!"; tg.showAlert(dataResult.message); } setTimeout(() => { document.getElementById('predict-buttons').style.display = 'flex'; document.getElementById('predict-price').innerText = "Tekrar Dene"; }, 4000); }, 10000); }
-function resetLootbox() { document.getElementById('lootbox-selection').style.display = 'flex'; document.getElementById('lootbox-animation').style.display = 'none'; document.getElementById('btn-back-lootbox').style.display = 'none'; updateUI(); }
-async function playLootbox(boxType) { const icons = { 1: "📦", 2: "🎁", 3: "💎" }; const colors = { 1: "var(--text-main)", 2: "#3b82f6", 3: "#f59e0b" }; document.getElementById('lootbox-selection').style.display = 'none'; const animDiv = document.getElementById('lootbox-animation'); const boxIcon = document.getElementById('lootbox-icon'); const resText = document.getElementById('lootbox-result'); const backBtn = document.getElementById('btn-back-lootbox'); animDiv.style.display = 'flex'; boxIcon.innerText = icons[boxType]; boxIcon.style.filter = `drop-shadow(0 0 20px ${colors[boxType]})`; resText.style.color = colors[boxType]; resText.innerText = "Kilit Çözülüyor..."; boxIcon.classList.add('shake-box'); triggerHaptic('heavy'); const res = await fetch(`${API}/api/arcade/lootbox`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ boxType, initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; setTimeout(() => { boxIcon.classList.remove('shake-box'); if(data.success) { user.points = data.points; if(data.lastLootbox1) user.lastLootbox1 = data.lastLootbox1; if(data.lastLootbox2) user.lastLootbox2 = data.lastLootbox2; if(data.lastLootbox3) user.lastLootbox3 = data.lastLootbox3; updateUI(); resText.innerText = `KAZANDIN: +${data.prize}`; boxIcon.innerText = "✨"; if(data.prize > 0) { resText.style.color = "var(--success)"; triggerHaptic('success'); spawnFloatingText(null, `+${data.prize} GEP`, "var(--success)"); } else { resText.style.color = "var(--danger)"; boxIcon.innerText = "🗑️"; triggerHaptic('error'); } } else { resText.innerText = "KİLİTLİ!"; tg.showAlert(data.message); } backBtn.style.display = 'block'; }, 1500); }
 async function startMining(event) { triggerHaptic('heavy'); const btn = document.getElementById('btn-mine'); if(btn.disabled) return; btn.disabled = true; const res = await fetch(`${API}/api/mine`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; if(data.success) { user.points = data.points; user.lastMining = new Date().toISOString(); updateUI(); triggerHaptic('success'); spawnFloatingText(event, "+" + data.reward, "var(--cyan)"); runTimer(4 * 60 * 60 * 1000); } else { triggerHaptic('error'); if(event.target && event.target.id === 'btn-mine') tg.showAlert(data.message); btn.disabled = false; } }
 function checkMiningTimer() { if (!user.lastMining || new Date(user.lastMining).getTime() === 0) return; const diff = new Date().getTime() - new Date(user.lastMining).getTime(); if (diff < 4*60*60*1000) runTimer(4*60*60*1000 - diff); }
 function runTimer(timeLeft) { const btn = document.getElementById('btn-mine'); const timerDiv = document.getElementById('mining-timer'); const statusText = document.getElementById('mine-status-text'); const glow = document.getElementById('core-glow'); const icon = document.getElementById('mine-icon'); btn.disabled = true; timerDiv.style.display = "block"; statusText.innerText = "ÜRETİM DEVAM EDİYOR"; statusText.style.color = "var(--text-dim)"; glow.style.animation = "none"; icon.style.filter = "grayscale(100%) opacity(0.5)"; clearInterval(miningInterval); miningInterval = setInterval(() => { timeLeft -= 1000; if (timeLeft <= 0) { clearInterval(miningInterval); btn.disabled = false; timerDiv.style.display = "none"; statusText.innerText = "SİSTEM HAZIR"; statusText.style.color = "#fff"; glow.style.animation = "pulse 3s infinite"; icon.style.filter = "drop-shadow(0 10px 20px rgba(0,0,0,0.5))"; triggerHaptic('notification'); return; } const h = Math.floor(timeLeft / 3600000); const m = Math.floor((timeLeft % 3600000) / 60000); const s = Math.floor((timeLeft % 60000) / 1000); timerDiv.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }, 1000); }
