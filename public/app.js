@@ -40,10 +40,9 @@ async function init() {
         const res = await fetch(`${API}/api/user/auth`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ username: tgUser.username || "", firstName: tgUser.first_name || "Kullanıcı", referrerId: refId, initData: tg.initData }) });
         const data = await res.json();
         if (data.success) {
-            user = data.user; user.isAdmin = data.isAdmin;
+            user = data.user;
             if(user.isBanned) { document.body.innerHTML = "<h1>🚫 HESAP YASAKLANDI</h1>"; return; }
             document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
-            if(user.isAdmin) document.getElementById('admin-panel-btn').style.display = 'block';
             document.getElementById('header-name').innerText = (user.username ? '@'+user.username : user.firstName).toUpperCase();
             await refreshTasks(); updateUI(); checkMiningTimer(); renderStreak(); loadAirdrops(); 
             if (data.announcements) renderAnnouncements(data.announcements);
@@ -89,7 +88,6 @@ function showPage(p, el) {
     document.getElementById(`page-${p}`).classList.add('active'); 
     if(el) el.classList.add('active'); 
     if(p === 'network') loadLeaderboard();
-    if(p === 'admin') loadAdminStats(); 
 }
 
 async function joinProject(projectId, url) {
@@ -134,7 +132,7 @@ async function loadAirdrops() {
                 if (l.isOwner) { btnHtml = `<button class="btn-join" style="background:#475569; cursor:not-allowed;" disabled>SENİN PROJEN</button>`; } 
                 else if (l.hasJoined) { btnHtml = `<button class="btn-join" style="background:#10b981; cursor:not-allowed; opacity:0.6;" disabled>✅ KATILINDI</button>`; } 
                 else { btnHtml = `<button class="btn-join" onclick="joinProject('${l._id}', '${l.url}')">🚀 KATIL (+10.000 GEP)</button>`; }
-                return `<div class="airdrop-item" id="ad-${l._id}"><div style="flex:1;"><div class="ad-user">@${l.username}</div><div class="ad-title">${l.title}</div><div class="ad-desc">${l.description}</div>${btnHtml}</div>${user.isAdmin ? `<button class="btn-delete-ad" onclick="deleteAirdrop('${l._id}')">SİL</button>` : ''}</div>`;
+                return `<div class="airdrop-item" id="ad-${l._id}"><div style="flex:1;"><div class="ad-user">@${l.username}</div><div class="ad-title">${l.title}</div><div class="ad-desc">${l.description}</div>${btnHtml}</div></div>`;
             }).join('');
         } else { listDiv.innerHTML = "<div style='text-align:center; color:var(--text-dim); font-size:12px; padding:10px;'>Henüz hiç proje eklenmemiş. İlk sen ol!</div>"; }
     } catch(e) {}
@@ -156,8 +154,6 @@ async function postAirdrop() {
         else { triggerHaptic('error'); tg.showAlert(data.message); }
     } catch(e) { tg.showAlert("Bağlantı hatası oluştu!"); } finally { if(btn) { btn.disabled = false; btn.style.opacity = "1"; btn.innerText = "YAYINLA (1M GEP)"; } }
 }
-
-async function deleteAirdrop(id) { if(!user.isAdmin) return; await fetch(`${API}/api/admin/delete-airdrop`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, initData: tg.initData }) }); document.getElementById(`ad-${id}`).remove(); }
 
 async function refreshTasks() { const tRes = await fetch(`${API}/api/tasks`); const tData = await tRes.json(); tasks = tData.tasks || []; renderTasks(); }
 
@@ -251,7 +247,7 @@ function openGame(game) {
     }
 }
 
-// GEPÇÖZ DOĞRULAMA (Arka plandan gelecek yanıtı burası işleyecek)
+// GEPÇÖZ DOĞRULAMA 
 async function verifyGepcoz(token) {
     const resText = document.getElementById('gepcoz-result');
     resText.innerText = "Doğrulanıyor...";
@@ -547,13 +543,5 @@ function renderLB() {
 }
 
 function copyRef(e) { triggerHaptic('success'); document.getElementById('ref-link').select(); document.execCommand('copy'); spawnFloatingText(e, "KOPYALANDI!", "var(--success)"); }
-
-async function loadAdminStats() { const res = await fetch(`${API}/api/admin/stats`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); document.getElementById('adm-stat-users').innerText = data.totalUsers; document.getElementById('adm-stat-points').innerText = data.totalPoints.toLocaleString(); document.getElementById('adm-task-list').innerHTML = data.tasks.map(t => `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass-border); padding:12px 0;"><span style="font-size:13px; font-weight:600;">${t.title}</span><button class="game-btn btn-danger" style="padding:6px 12px; width:auto; font-size:10px; border-radius:8px;" onclick="deleteTask('${t.taskId}')">SİL</button></div>`).join('') || "<div style='padding:10px; color:var(--text-dim)'>Görev yok.</div>"; document.getElementById('adm-ann-list').innerHTML = data.announcements.map((a, i) => `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass-border); padding:12px 0;"><span style="font-size:12px; color:var(--text-dim);">${a.substring(0,30)}...</span><button class="game-btn btn-danger" style="padding:6px 12px; width:auto; font-size:10px; border-radius:8px;" onclick="deleteAnnouncement(${i})">SİL</button></div>`).join('') || "<div style='padding:10px; color:var(--text-dim)'>Duyuru yok.</div>"; }
-async function createPromo() { const code = document.getElementById('adm-promo-code').value; const reward = document.getElementById('adm-promo-reward').value; const maxUsage = document.getElementById('adm-promo-usage').value; if(!code || !reward || !maxUsage) return tg.showAlert("Tüm alanları doldurun."); const res = await fetch(`${API}/api/admin/create-promo`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ code, reward, maxUsage, initData: tg.initData }) }); const data = await res.json(); if(data.success) { tg.showAlert(`Kod oluşturuldu!`); document.getElementById('adm-promo-code').value = ''; document.getElementById('adm-promo-reward').value = ''; document.getElementById('adm-promo-usage').value = ''; } else { tg.showAlert(data.message); } }
-async function addTask() { const title = document.getElementById('adm-task-title').value; const reward = document.getElementById('adm-task-reward').value; const target = document.getElementById('adm-task-target').value; if(!title || !reward || !target) return tg.showAlert("Zorunlu."); await fetch(`${API}/api/admin/add-task`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ title, reward, target, initData: tg.initData }) }); document.getElementById('adm-task-title').value = ''; document.getElementById('adm-task-reward').value = ''; document.getElementById('adm-task-target').value = ''; loadAdminStats(); refreshTasks(); }
-async function deleteTask(taskId) { await fetch(`${API}/api/admin/delete-task`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ taskId, initData: tg.initData }) }); loadAdminStats(); refreshTasks(); }
-async function addAnnouncement() { const text = document.getElementById('adm-ann-text').value; if(!text) return; await fetch(`${API}/api/admin/announcement`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: 'add', text, initData: tg.initData }) }); document.getElementById('adm-ann-text').value = ''; loadAdminStats(); }
-async function deleteAnnouncement(index) { await fetch(`${API}/api/admin/announcement`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: 'delete', index, initData: tg.initData }) }); loadAdminStats(); }
-async function manageUser(action) { const targetId = document.getElementById('adm-target-id').value; const amount = document.getElementById('adm-amount').value; if(!targetId) return; await fetch(`${API}/api/admin/user-manage`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ targetId, action, amount, initData: tg.initData }) }); tg.showAlert("Tamamlandı"); }
 
 window.onload = init;
