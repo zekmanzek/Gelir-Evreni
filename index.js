@@ -6,7 +6,7 @@ const path = require('path');
 const crypto = require('crypto');
 const TelegramBot = require('node-telegram-bot-api');
 
-// 1. MODÜLLERİ İÇERİ AKTARIYORUZ
+// 1. MODÜLLER VE VERİTABANI
 const models = require('./models');
 const { User, PromoCode, Task, YesterdayWinner, Settings, AirdropLink } = models;
 
@@ -14,6 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const TOKEN = process.env.BOT_TOKEN;
 const MONGODB_URI = process.env.MONGODB_URI;
+
 // PATRON ID'Sİ KİLİTLENDİ (TANRI MODU)
 const ADMIN_ID = "1469411131"; 
 const WEBHOOK_URL = "https://gelir-evreni.onrender.com"; 
@@ -25,7 +26,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const bot = new TelegramBot(TOKEN);
 bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
-// --- YENİ: DİNAMİK EKONOMİ VE SİSTEM TABLOSU (GAME CONFIG) ---
+// --- DİNAMİK EKONOMİ VE SİSTEM TABLOSU (GAME CONFIG) ---
 const gameConfigSchema = new mongoose.Schema({
     gepcozReward: { type: Number, default: 25000 },
     spinCost: { type: Number, default: 5000 },
@@ -35,15 +36,14 @@ const gameConfigSchema = new mongoose.Schema({
     lootbox3Cost: { type: Number, default: 25000 },
     airdropCost: { type: Number, default: 1000000 },
     refReward: { type: Number, default: 10000 },
-    // TANRI MODU YETENEKLERİ
-    isLocked: { type: Boolean, default: false }, // Panik Butonu
+    isLocked: { type: Boolean, default: false }, // Panik Butonu Kilidi
     boostMultiplier: { type: Number, default: 1 }, // Happy Hour Çarpanı
-    boostEndTime: { type: Date, default: null } // Happy Hour Bitiş Süresi
+    boostEndTime: { type: Date, default: null } // Happy Hour Bitiş Zamanı
 });
 const GameConfig = mongoose.models.GameConfig || mongoose.model('GameConfig', gameConfigSchema);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v9.0 - SİBER KARARGAH AKTİF"))
+    .then(() => console.log("✅ Gelir Evreni v10.0 - SİBER KARARGAH (MASTER) AKTİF"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -51,16 +51,15 @@ app.post('/webhook', (req, res) => {
     res.sendStatus(200);
 });
 
-// PAYLAŞILAN DURUM VE ORTAK FONKSİYONLAR
+// ORTAK FONKSİYONLAR VE RADAR SİSTEMİ
 const sharedState = { activeDrop: null };
 const activePredictions = new Map();
 
-// CANLI RADAR İSTİHBARAT SİSTEMİ
 const radarLogs = [];
 function addRadarLog(action) {
     const time = new Date().toLocaleTimeString('tr-TR', { hour12: false, timeZone: 'Europe/Istanbul' });
     radarLogs.unshift(`[${time}] ${action}`);
-    if (radarLogs.length > 20) radarLogs.pop();
+    if (radarLogs.length > 20) radarLogs.pop(); // Son 20 işlemi tutar
 }
 
 function addPoints(user, amount) {
@@ -70,7 +69,6 @@ function addPoints(user, amount) {
     user.lastPointDate = now;
 }
 
-// BÜYÜK ÖDÜL DUYURU FONKSİYONU
 async function broadcastBigWin(username, firstName, gameName, prize) {
     try {
         const s = await Settings.findOne();
@@ -85,7 +83,7 @@ const botConfig = { ADMIN_ID, WEBHOOK_URL };
 require('./botCommands')(bot, models, botConfig, addPoints, sharedState);
 
 // =====================================================================
-// 🛡️ SİBER KOMUTA MERKEZİ (TELEGRAM BOT ADMIN KONTROLLERİ) 🛡️
+// 🛡️ SİBER KOMUTA MERKEZİ (TÜM BOT KOMUTLARI EKSİKSİZ) 🛡️
 // =====================================================================
 bot.on('message', async (msg) => {
     if (!msg.text) return;
@@ -95,62 +93,81 @@ bot.on('message', async (msg) => {
     const cmd = args[0].toLowerCase();
 
     try {
-        // 1. REHBER
+        // --- 1. KOMUT REHBERİ ---
         if (cmd === '/admin') {
-            const adminText = `🛡️ **SİBER KOMUTA MERKEZİ V9.0**\n\n` +
-            `🚨 *ACİL DURUM:*\n` +
+            const adminText = `🛡️ **SİBER KOMUTA MERKEZİ (MASTER)**\n\n` +
+            `🚨 *ACİL DURUM KONTROLLERİ:*\n` +
             `\`/kilit aktif\` | \`/kilit kapat\`\n\n` +
-            `💸 *EKONOMİ & BÜYÜME:*\n` +
+            `💸 *EKONOMİ & PROMOSYON:*\n` +
             `\`/boost Çarpan Dakika\` (Örn: /boost 2 60)\n` +
-            `\`/ayar Oyun Fiyat\` (Örn: /ayar cark 10000)\n` +
+            `\`/ayar [oyun] [fiyat]\` (Örn: /ayar cark 10000)\n` +
             `\`/promo KOD Ödül Limit\`\n\n` +
-            `📢 *İLETİŞİM & GÖREV:*\n` +
-            `\`/yayin Mesaj\` (Butonlu gider)\n` +
-            `\`/duyuru ekle/sil/liste\`\n` +
-            `\`/gorev ekle/sil/liste\`\n\n` +
-            `👤 *İSTİHBARAT & CEZA:*\n` +
-            `\`/radar\` (Canlı İşlemler)\n` +
-            `\`/bilgi @user\` | \`/canta @user\` (X-Ray)\n` +
-            `\`/bakiye @user Miktar\`\n` +
-            `\`/ceza @user\` (Bakiyeyi Sıfırlar)\n` +
+            `📢 *İLETİŞİM & SİSTEM GÖREVLERİ:*\n` +
+            `\`/yayin Mesaj\` (Tüm ağa butonlu mesaj)\n` +
+            `\`/duyuru ekle/sil/liste\` (Kayan Yazı)\n` +
+            `\`/gorev ekle/sil/liste\` (Görev Merkezi)\n\n` +
+            `👤 *İSTİHBARAT & CEZA MODÜLLERİ:*\n` +
+            `\`/radar\` (Ağdaki son 20 canlı işlem)\n` +
+            `\`/bilgi @user\` (Temel İstihbarat)\n` +
+            `\`/canta @user\` (Derin Röntgen / Loglar)\n` +
+            `\`/bakiye @user Miktar\` (GEP Ekle/Sil)\n` +
+            `\`/ceza @user\` (Bakiyeyi Sıfırla)\n` +
             `\`/ban @user\` | \`/unban @user\`\n\n` +
-            `📊 \`/rapor\` (Genel Durum)`;
+            `📊 \`/rapor\` (Genel Sistem Durumu)`;
             return bot.sendMessage(ADMIN_ID, adminText, { parse_mode: 'Markdown' });
         }
 
-        // 2. PANİK BUTONU (KİLİT)
+        // --- 2. ACİL DURUM (PANİK BUTONU) ---
         if (cmd === '/kilit') {
             let config = await GameConfig.findOne() || await GameConfig.create({});
-            if (args[1] === 'aktif') { config.isLocked = true; await config.save(); return bot.sendMessage(ADMIN_ID, `🚨 **SİSTEM KİLİTLENDİ!** Tüm girişler ve API istekleri durduruldu.`); }
-            if (args[1] === 'kapat') { config.isLocked = false; await config.save(); return bot.sendMessage(ADMIN_ID, `✅ **KİLİT AÇILDI!** Sistem normale döndü.`); }
+            if (args[1] === 'aktif') { 
+                config.isLocked = true; await config.save(); 
+                return bot.sendMessage(ADMIN_ID, `🚨 **SİSTEM KİLİTLENDİ!** Oyuncuların ekranı karartıldı.`); 
+            }
+            if (args[1] === 'kapat') { 
+                config.isLocked = false; await config.save(); 
+                return bot.sendMessage(ADMIN_ID, `✅ **KİLİT AÇILDI!** Sistem normale döndü.`); 
+            }
         }
 
-        // 3. HAPPY HOUR (KÜRESEL ÇARPAN)
+        // --- 3. HAPPY HOUR (KÜRESEL ÇARPAN) ---
         if (cmd === '/boost') {
             const mult = parseFloat(args[1]); const mins = parseInt(args[2]);
-            if (!mult || isNaN(mins)) return bot.sendMessage(ADMIN_ID, "❌ /boost [Çarpan] [Dakika]");
+            if (!mult || isNaN(mins)) return bot.sendMessage(ADMIN_ID, "❌ Format: /boost [Çarpan] [Dakika]");
             let config = await GameConfig.findOne() || await GameConfig.create({});
-            config.boostMultiplier = mult; config.boostEndTime = new Date(Date.now() + mins * 60000); await config.save();
+            config.boostMultiplier = mult; 
+            config.boostEndTime = new Date(Date.now() + mins * 60000); 
+            await config.save();
             bot.sendMessage(ADMIN_ID, `🔥 **HAPPY HOUR AKTİF!** Çarpan: ${mult}x | Süre: ${mins} Dk`);
-            // Herkese DM bildirimi
+            
             const users = await User.find({ telegramId: { $exists: true } });
-            users.forEach(u => { bot.sendMessage(u.telegramId, `🔥 **SİBER ETKİNLİK BAŞLADI!**\n\nÖnümüzdeki ${mins} dakika boyunca sistemdeki tüm maden, görev ve Gepçöz kazançları tam **${mult} KATINA** çıkarıldı! Fırsatı kaçırmadan hemen topla! 👇`, { reply_markup: { inline_keyboard: [[{ text: "🚀 2X KAZAN", web_app: { url: WEBHOOK_URL } }]] } }).catch(()=>console.log("Boost mesajı gitmedi")); });
+            users.forEach(u => { 
+                bot.sendMessage(u.telegramId, `🔥 **SİBER ETKİNLİK BAŞLADI!**\n\nÖnümüzdeki ${mins} dakika boyunca sistemdeki maden, görev ve Gepçöz kazançları tam **${mult} KATINA** çıkarıldı! Fırsatı kaçırma! 👇`, { reply_markup: { inline_keyboard: [[{ text: "🚀 2X KAZAN", web_app: { url: WEBHOOK_URL } }]] } }).catch(()=>{}); 
+            });
             return;
         }
 
-        // 4. CANLI RADAR
+        // --- 4. CANLI RADAR ---
         if (cmd === '/radar') {
             if (radarLogs.length === 0) return bot.sendMessage(ADMIN_ID, "📡 Radar şu an boş. Hareket yok.");
             return bot.sendMessage(ADMIN_ID, `📡 **CANLI SİBER RADAR (Son 20 İşlem)**\n\n` + radarLogs.join('\n'));
         }
 
-        // 5. DERİN RÖNTGEN (X-RAY)
+        // --- 5. İSTİHBARAT: BİLGİ & ÇANTA ---
+        if (cmd === '/bilgi') {
+            const target = args[1]?.replace('@', '');
+            if (!target) return bot.sendMessage(ADMIN_ID, "❌ Kullanıcı adı girin.");
+            const u = await User.findOne({ $or: [{ username: target.toLowerCase() }, { telegramId: target }] });
+            if (!u) return bot.sendMessage(ADMIN_ID, "❌ Kullanıcı bulunamadı.");
+            return bot.sendMessage(ADMIN_ID, `👤 **İstihbarat:** @${u.username || "Yok"} (ID: ${u.telegramId})\n💰 **Bakiye:** ${u.points.toLocaleString()} GEP\n🏆 **Davet:** ${u.referralCount || 0} Kişi\n⚠️ **Ban Durumu:** ${u.isBanned ? 'Evet' : 'Hayır'}`, { parse_mode: 'Markdown' });
+        }
+
         if (cmd === '/canta') {
             const target = args[1]?.replace('@', '');
-            if (!target) return bot.sendMessage(ADMIN_ID, "❌ Kullanıcı gir.");
+            if (!target) return bot.sendMessage(ADMIN_ID, "❌ Kullanıcı adı girin.");
             const u = await User.findOne({ $or: [{ username: target.toLowerCase() }, { telegramId: target }] });
-            if (!u) return bot.sendMessage(ADMIN_ID, "❌ Bulunamadı.");
-            const info = `🩻 **X-RAY TARAMASI:** @${u.username || "Gizli"} (${u.telegramId})\n\n` +
+            if (!u) return bot.sendMessage(ADMIN_ID, "❌ Kullanıcı bulunamadı.");
+            const info = `🩻 **DERİN X-RAY:** @${u.username || "Gizli"} (${u.telegramId})\n\n` +
             `💰 **Bakiye:** ${u.points.toLocaleString()}\n` +
             `📈 **Günlük Seri:** ${u.streak} Gün (Son: ${new Date(u.lastCheckin).toLocaleString('tr-TR')})\n` +
             `⛏️ **Son Maden:** ${new Date(u.lastMining).toLocaleString('tr-TR')}\n` +
@@ -160,66 +177,111 @@ bot.on('message', async (msg) => {
             return bot.sendMessage(ADMIN_ID, info, { parse_mode: 'Markdown' });
         }
 
-        // 6. EKONOMİ CEZALANDIRICISI
-        if (cmd === '/ceza') {
-            const target = args[1]?.replace('@', '');
-            if (!target) return bot.sendMessage(ADMIN_ID, "❌ Kullanıcı gir.");
+        // --- 6. BAKİYE VE CEZA (İNFAZ) ---
+        if (cmd === '/bakiye') {
+            const target = args[1]?.replace('@', ''); const amount = parseInt(args[2]);
+            if (!target || isNaN(amount)) return bot.sendMessage(ADMIN_ID, "❌ Format: /bakiye @kullaniciadi miktar");
             const u = await User.findOne({ $or: [{ username: target.toLowerCase() }, { telegramId: target }] });
-            if (!u) return bot.sendMessage(ADMIN_ID, "❌ Bulunamadı.");
-            const oldBalance = u.points; u.points = 0; u.streak = 1; await u.save();
-            addRadarLog(`⚡ DİKKAT: @${u.username} yöneticiler tarafından infaz edildi. (-${oldBalance} GEP)`);
-            return bot.sendMessage(ADMIN_ID, `⚡ **İNFAZ BAŞARILI!** @${u.username} adlı kullanıcının ${oldBalance.toLocaleString()} GEP bakiyesi SIFIRLANDI ve serisi bozuldu.`);
+            if (!u) return bot.sendMessage(ADMIN_ID, "❌ Kullanıcı bulunamadı.");
+            addPoints(u, amount); await u.save();
+            return bot.sendMessage(ADMIN_ID, `✅ @${u.username} hesabına müdahale edildi. Yeni Bakiye: ${u.points.toLocaleString()} GEP`);
         }
 
-        // 7. DUYURU YÖNETİMİ
+        if (cmd === '/ceza') {
+            const target = args[1]?.replace('@', '');
+            if (!target) return bot.sendMessage(ADMIN_ID, "❌ Kullanıcı adı girin.");
+            const u = await User.findOne({ $or: [{ username: target.toLowerCase() }, { telegramId: target }] });
+            if (!u) return bot.sendMessage(ADMIN_ID, "❌ Kullanıcı bulunamadı.");
+            const oldBalance = u.points; u.points = 0; u.streak = 1; await u.save();
+            addRadarLog(`⚡ DİKKAT: @${u.username} yöneticiler tarafından infaz edildi. (-${oldBalance} GEP)`);
+            return bot.sendMessage(ADMIN_ID, `⚡ **İNFAZ BAŞARILI!** @${u.username} adlı kullanıcının ${oldBalance.toLocaleString()} GEP bakiyesi SIFIRLANDI.`);
+        }
+
+        if (cmd === '/ban') {
+            const u = await User.findOneAndUpdate({ username: args[1]?.replace('@', '').toLowerCase() }, { isBanned: true });
+            if (!u) return bot.sendMessage(ADMIN_ID, "❌ Kullanıcı bulunamadı.");
+            return bot.sendMessage(ADMIN_ID, `🚫 @${u.username} sistemden uzaklaştırıldı.`);
+        }
+
+        if (cmd === '/unban') {
+            const u = await User.findOneAndUpdate({ username: args[1]?.replace('@', '').toLowerCase() }, { isBanned: false });
+            if (!u) return bot.sendMessage(ADMIN_ID, "❌ Kullanıcı bulunamadı.");
+            return bot.sendMessage(ADMIN_ID, `✅ @${u.username} yasağı kaldırıldı.`);
+        }
+
+        // --- 7. EKONOMİ (AYAR) VE PROMOSYON KODU ---
+        if (cmd === '/ayar') {
+            const game = args[1]?.toLowerCase(); const newPrice = parseInt(args[2]);
+            if (!game || isNaN(newPrice)) return bot.sendMessage(ADMIN_ID, "❌ Format: /ayar [oyun] [fiyat]");
+            let config = await GameConfig.findOne() || await GameConfig.create({});
+            let fieldMap = { 'gepcoz': 'gepcozReward', 'cark': 'spinCost', 'tahmin': 'predictCost', 'kapsul1': 'lootbox1Cost', 'kapsul2': 'lootbox2Cost', 'kapsul3': 'lootbox3Cost', 'airdrop': 'airdropCost', 'referans': 'refReward' };
+            if (!fieldMap[game]) return bot.sendMessage(ADMIN_ID, "❌ Hatalı oyun adı.");
+            config[fieldMap[game]] = newPrice; await config.save();
+            return bot.sendMessage(ADMIN_ID, `⚙️ Başarılı! ${game.toUpperCase()} yeni değeri: ${newPrice.toLocaleString()} GEP`);
+        }
+
+        if (cmd === '/promo') {
+            const code = args[1]; const reward = parseInt(args[2]); const maxUsage = parseInt(args[3]);
+            if (!code || isNaN(reward) || isNaN(maxUsage)) return bot.sendMessage(ADMIN_ID, "❌ Format: /promo KOD Ödül Kişi");
+            await PromoCode.create({ code: code.toUpperCase(), reward, maxUsage });
+            return bot.sendMessage(ADMIN_ID, `✅ Kod Üretildi:\n🎁 ${code.toUpperCase()} | 💰 ${reward} GEP | 👥 ${maxUsage} Kişi`);
+        }
+
+        // --- 8. DUYURU YÖNETİMİ ---
         if (cmd === '/duyuru') {
             const action = args[1]; const text = msg.text.replace(`/duyuru ${action} `, '');
             const s = await Settings.findOne() || await Settings.create({});
             if (action === 'ekle') { s.announcements.push(text); await s.save(); return bot.sendMessage(ADMIN_ID, "✅ Kayan duyuru eklendi."); }
-            if (action === 'liste') { return bot.sendMessage(ADMIN_ID, `📢 **Duyurular:**\n` + s.announcements.map((a,i) => `${i+1}. ${a}`).join('\n') || "Boş"); }
+            if (action === 'liste') { return bot.sendMessage(ADMIN_ID, `📢 **Kayan Duyurular:**\n` + s.announcements.map((a,i) => `${i+1}. ${a}`).join('\n') || "Duyuru Yok"); }
             if (action === 'sil') { s.announcements.splice(parseInt(args[2])-1, 1); await s.save(); return bot.sendMessage(ADMIN_ID, "✅ Duyuru silindi."); }
         }
 
-        // 8. GÖREV YÖNETİMİ
+        // --- 9. GÖREV YÖNETİMİ ---
         if (cmd === '/gorev') {
             const action = args[1];
-            if (action === 'liste') { const tasks = await Task.find(); return bot.sendMessage(ADMIN_ID, `🎯 **Görevler:**\n` + tasks.map(t => `ID: ${t.taskId} | ${t.title} | ${t.reward}`).join('\n') || "Görev Yok"); }
-            if (action === 'ekle') { await Task.create({ taskId: Date.now().toString(), title: args[2], reward: parseInt(args[3]), target: args[4] }); return bot.sendMessage(ADMIN_ID, "✅ Görev Eklendi."); }
-            if (action === 'sil') { await Task.deleteOne({ taskId: args[2] }); return bot.sendMessage(ADMIN_ID, "✅ Görev Silindi."); }
+            if (action === 'liste') { 
+                const tasks = await Task.find(); 
+                return bot.sendMessage(ADMIN_ID, `🎯 **Sistemdeki Görevler:**\n` + tasks.map(t => `ID: ${t.taskId} | ${t.title} | ${t.reward} GEP`).join('\n') || "Görev Yok"); 
+            }
+            if (action === 'ekle') { 
+                await Task.create({ taskId: Date.now().toString(), title: args[2].replace(/_/g, ' '), reward: parseInt(args[3]), target: args[4] }); 
+                return bot.sendMessage(ADMIN_ID, "✅ Görev Eklendi. (Not: Başlıktaki '_' işaretleri boşluğa çevrilir)"); 
+            }
+            if (action === 'sil') { 
+                await Task.deleteOne({ taskId: args[2] }); 
+                return bot.sendMessage(ADMIN_ID, "✅ Görev Silindi."); 
+            }
         }
 
-        // 9. YAYIN (BUTONLU)
+        // --- 10. KÜRESEL YAYIN (BUTONLU) VE RAPOR ---
         if (cmd === '/yayin') {
             const message = msg.text.replace('/yayin ', '');
-            if (!message || message === '/yayin') return bot.sendMessage(ADMIN_ID, "❌ Mesaj gir.");
+            if (!message || message === '/yayin') return bot.sendMessage(ADMIN_ID, "❌ Mesaj girmediniz.");
             const users = await User.find({ telegramId: { $exists: true } });
             bot.sendMessage(ADMIN_ID, `⏳ Yayın başladı...`);
-            for (let u of users) { try { await bot.sendMessage(u.telegramId, `📢 **SİBER AĞ DUYURUSU**\n\n${message}`, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: "🚀 HEMEN OYNA", web_app: { url: WEBHOOK_URL } }]] } }); } catch (e) { } }
+            for (let u of users) { 
+                try { 
+                    await bot.sendMessage(u.telegramId, `📢 **SİBER AĞ DUYURUSU**\n\n${message}`, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: "🚀 HEMEN OYNA", web_app: { url: WEBHOOK_URL } }]] } }); 
+                } catch (e) {} 
+            }
             return bot.sendMessage(ADMIN_ID, `✅ Yayın tamamlandı!`);
         }
 
-        // 10. ESKİ KOMUTLAR (Bilgi, Bakiye, Promo, Rapor, Ayar)
-        if (cmd === '/bilgi') {
-            const target = args[1]?.replace('@', ''); const u = await User.findOne({ $or: [{ username: target?.toLowerCase() }, { telegramId: target }] });
-            if(!u) return bot.sendMessage(ADMIN_ID, "❌ Bulunamadı.");
-            return bot.sendMessage(ADMIN_ID, `👤 @${u.username} (ID: ${u.telegramId})\n💰 ${u.points} GEP\n🏆 Davet: ${u.referralCount}\n⚠️ Ban: ${u.isBanned}`);
-        }
-        if (cmd === '/bakiye') {
-            const target = args[1]?.replace('@', ''); const amount = parseInt(args[2]); const u = await User.findOne({ $or: [{ username: target?.toLowerCase() }, { telegramId: target }] });
-            if(!u) return bot.sendMessage(ADMIN_ID, "❌ Bulunamadı."); addPoints(u, amount); await u.save(); return bot.sendMessage(ADMIN_ID, `✅ Yeni Bakiye: ${u.points}`);
-        }
-        if (cmd === '/promo') { await PromoCode.create({ code: args[1].toUpperCase(), reward: parseInt(args[2]), maxUsage: parseInt(args[3]) }); return bot.sendMessage(ADMIN_ID, `✅ Kod Üretildi!`); }
-        if (cmd === '/ayar') {
-            let config = await GameConfig.findOne() || await GameConfig.create({});
-            let fieldMap = { 'gepcoz': 'gepcozReward', 'cark': 'spinCost', 'tahmin': 'predictCost', 'kapsul1': 'lootbox1Cost', 'kapsul2': 'lootbox2Cost', 'kapsul3': 'lootbox3Cost', 'airdrop': 'airdropCost', 'referans': 'refReward' };
-            config[fieldMap[args[1]?.toLowerCase()]] = parseInt(args[2]); await config.save(); return bot.sendMessage(ADMIN_ID, `⚙️ Başarılı. Yeni değer: ${args[2]}`);
-        }
         if (cmd === '/rapor') {
-            const count = await User.countDocuments(); const total = (await User.aggregate([{$group: {_id:null, total:{$sum:"$points"}}}]))[0]?.total || 0;
-            return bot.sendMessage(ADMIN_ID, `📊 **RAPOR**\n👥 Oyuncu: ${count}\n💎 GEP: ${total}`);
+            const userCount = await User.countDocuments();
+            const totalGep = (await User.aggregate([{$group: {_id:null, total:{$sum:"$points"}}}]))[0]?.total || 0;
+            const config = await GameConfig.findOne() || await GameConfig.create({});
+            const isBoost = config.boostEndTime && config.boostEndTime > new Date();
+            const report = `📊 **SİBER AĞ DURUM RAPORU** 📊\n\n` +
+                           `👥 **Toplam Oyuncu:** ${userCount.toLocaleString()}\n` +
+                           `💎 **Dolaşımdaki GEP:** ${totalGep.toLocaleString()}\n` +
+                           `🔥 **Happy Hour:** ${isBoost ? 'Aktif (' + config.boostMultiplier + 'x)' : 'Kapalı'}\n` +
+                           `🚨 **Sistem Kilidi:** ${config.isLocked ? 'KİLİTLİ' : 'Açık'}\n\n` +
+                           `⚙️ **Güncel Fiyatlar:**\n` +
+                           `Gepçöz Ödülü: ${config.gepcozReward} | Ref Ödülü: ${config.refReward}\n` +
+                           `Çark Bedeli: ${config.spinCost} | Tahmin: ${config.predictCost}`;
+            return bot.sendMessage(ADMIN_ID, report, { parse_mode: 'Markdown' });
         }
-        if (cmd === '/ban') { const u = await User.findOneAndUpdate({ username: args[1]?.replace('@', '') }, { isBanned: true }); return bot.sendMessage(ADMIN_ID, "🚫 Banlandı."); }
-        if (cmd === '/unban') { const u = await User.findOneAndUpdate({ username: args[1]?.replace('@', '') }, { isBanned: false }); return bot.sendMessage(ADMIN_ID, "✅ Ban açıldı."); }
 
     } catch (error) { bot.sendMessage(ADMIN_ID, `❌ Sistem Hatası: ${error.message}`); }
 });
@@ -239,7 +301,7 @@ setInterval(async () => {
     } catch (e) { }
 }, 60000);
 
-// HAFTALIK SIFIRLAMA
+// HAFTALIK LİDERLİK SIFIRLAMA
 setInterval(async () => {
     const now = new Date(); if (now.getDay() === 0 && now.getHours() === 23 && now.getMinutes() === 58) {
         const winners = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(100);
@@ -305,13 +367,8 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
         } else { if (username) user.username = username.toLowerCase(); if (firstName) user.firstName = firstName; }
         await user.save(); let settings = await Settings.findOne() || await Settings.create({});
         
-        // BOOST DURUMUNU FRONTEND'E GÖNDER
         const isBoostActive = config.boostEndTime && config.boostEndTime > new Date();
-        
-        res.json({ 
-            success: true, user, botUsername: settings.botUsername, isAdmin: String(telegramId) === String(ADMIN_ID), 
-            announcements: settings.announcements, isBoostActive, boostMultiplier: config.boostMultiplier 
-        });
+        res.json({ success: true, user, botUsername: settings.botUsername, isAdmin: String(telegramId) === String(ADMIN_ID), announcements: settings.announcements, isBoostActive, boostMultiplier: config.boostMultiplier });
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
@@ -321,7 +378,7 @@ app.post('/api/daily-reward', secureRoute, async (req, res) => {
     if (diffHours < 24) return res.json({ success: false, message: "24 saat bekleyin." });
     if (diffHours >= 48) user.streak = 1; else user.streak = user.streak >= 7 ? 1 : user.streak + 1;
     const baseReward = 1000 * Math.pow(2, user.streak - 1); 
-    const finalReward = baseReward * req.boostMult; // ÇARPAN UYGULANDI
+    const finalReward = baseReward * req.boostMult;
     
     addPoints(user, finalReward); user.lastCheckin = now; await user.save();
     addRadarLog(`🎁 @${user.username} Günlük Ödül aldı. (+${finalReward})`);
@@ -339,7 +396,7 @@ app.post('/api/buy-ad-package', secureRoute, async (req, res) => {
 app.post('/api/adsgram-reward', secureRoute, async (req, res) => {
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, adTickets: { $gt: 0 } }, { $inc: { adTickets: -1 } }, { new: true });
     if (!user) return res.json({ success: false });
-    const finalReward = 5000 * req.boostMult; // ÇARPAN UYGULANDI
+    const finalReward = 5000 * req.boostMult; 
     addPoints(user, finalReward); await user.save();
     addRadarLog(`📺 @${user.username} Reklam izledi. (+${finalReward})`);
     res.json({ success: true, points: user.points, adTickets: user.adTickets, reward: finalReward });
@@ -349,7 +406,7 @@ app.post('/api/mine', secureRoute, async (req, res) => {
     const user = await User.findOne({ telegramId: req.realTelegramId }); const now = new Date();
     if (user && (now - new Date(user.lastMining)) > 4 * 60 * 60 * 1000) {
         const baseReward = 1000 + ((user.miningLevel - 1) * 500); 
-        const finalReward = baseReward * req.boostMult; // ÇARPAN UYGULANDI
+        const finalReward = baseReward * req.boostMult;
         addPoints(user, finalReward); user.lastMining = now; user.isMiningNotified = false; await user.save(); 
         addRadarLog(`⛏️ @${user.username} Maden topladı. (+${finalReward})`);
         return res.json({ success: true, points: user.points, reward: finalReward });
@@ -417,9 +474,9 @@ app.post('/api/arcade/gepcoz', secureRoute, async (req, res) => {
         if (data.success) {
             const config = await GameConfig.findOne() || await GameConfig.create({});
             const user = await User.findOne({ telegramId: req.realTelegramId });
-            const finalReward = config.gepcozReward * req.boostMult; // ÇARPAN UYGULANDI
+            const finalReward = config.gepcozReward * req.boostMult;
             addPoints(user, finalReward); await user.save();
-            addRadarLog(`🔓 @${user.username} Gepçöz şifresini kırdı. (+${finalReward})`);
+            addRadarLog(`🔓 @${user.username} Gepçöz çözdü. (+${finalReward})`);
             res.json({ success: true, points: user.points, reward: finalReward });
         } else { res.json({ success: false, message: "Doğrulama başarısız." }); }
     } catch (e) { res.json({ success: false, message: "Sistem hatası." }); }
@@ -524,7 +581,7 @@ app.post('/api/tasks/complete', secureRoute, async (req, res) => {
     const { taskId } = req.body; const task = await Task.findOne({ taskId }); if (!task) return res.json({ success: false }); 
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, completedTasks: { $ne: taskId } }, { $addToSet: { completedTasks: taskId } }, { new: true });
     if (!user) return res.json({ success: false }); 
-    const finalReward = task.reward * req.boostMult; // ÇARPAN UYGULANDI
+    const finalReward = task.reward * req.boostMult; 
     addPoints(user, finalReward); await user.save(); 
     addRadarLog(`🎯 @${user.username} Görev tamamladı: ${task.title}`);
     res.json({ success: true, points: user.points }); 
