@@ -43,7 +43,7 @@ const gameConfigSchema = new mongoose.Schema({
 const GameConfig = mongoose.models.GameConfig || mongoose.model('GameConfig', gameConfigSchema);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v10.0 - SİBER KARARGAH (MASTER) AKTİF"))
+    .then(() => console.log("✅ Gelir Evreni v10.1 - Cüzdan Entegrasyonlu Master Aktif"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -106,13 +106,14 @@ bot.on('message', async (msg) => {
             `\`/yayin Mesaj\` (Tüm ağa butonlu mesaj)\n` +
             `\`/duyuru ekle/sil/liste\` (Kayan Yazı)\n` +
             `\`/gorev ekle/sil/liste\` (Görev Merkezi)\n\n` +
-            `👤 *İSTİHBARAT & CEZA MODÜLLERİ:*\n` +
+            `👤 *İSTİHBARAT, CEZA VE ÖDEME:*\n` +
             `\`/radar\` (Ağdaki son 20 canlı işlem)\n` +
             `\`/bilgi @user\` (Temel İstihbarat)\n` +
             `\`/canta @user\` (Derin Röntgen / Loglar)\n` +
             `\`/bakiye @user Miktar\` (GEP Ekle/Sil)\n` +
             `\`/ceza @user\` (Bakiyeyi Sıfırla)\n` +
-            `\`/ban @user\` | \`/unban @user\`\n\n` +
+            `\`/ban @user\` | \`/unban @user\`\n` +
+            `\`/odemelist\` (Kazanan Cüzdanlar)\n\n` +
             `📊 \`/rapor\` (Genel Sistem Durumu)`;
             return bot.sendMessage(ADMIN_ID, adminText, { parse_mode: 'Markdown' });
         }
@@ -159,7 +160,7 @@ bot.on('message', async (msg) => {
             if (!target) return bot.sendMessage(ADMIN_ID, "❌ Kullanıcı adı girin.");
             const u = await User.findOne({ $or: [{ username: target.toLowerCase() }, { telegramId: target }] });
             if (!u) return bot.sendMessage(ADMIN_ID, "❌ Kullanıcı bulunamadı.");
-            return bot.sendMessage(ADMIN_ID, `👤 **İstihbarat:** @${u.username || "Yok"} (ID: ${u.telegramId})\n💰 **Bakiye:** ${u.points.toLocaleString()} GEP\n🏆 **Davet:** ${u.referralCount || 0} Kişi\n⚠️ **Ban Durumu:** ${u.isBanned ? 'Evet' : 'Hayır'}`, { parse_mode: 'Markdown' });
+            return bot.sendMessage(ADMIN_ID, `👤 **İstihbarat:** @${u.username || "Yok"} (ID: ${u.telegramId})\n💰 **Bakiye:** ${u.points.toLocaleString()} GEP\n🏆 **Davet:** ${u.referralCount || 0} Kişi\n⚠️ **Ban Durumu:** ${u.isBanned ? 'Evet' : 'Hayır'}\n👛 **Cüzdan:** ${u.walletAddress ? 'Bağlı' : 'Bağlı Değil'}`, { parse_mode: 'Markdown' });
         }
 
         if (cmd === '/canta') {
@@ -173,7 +174,8 @@ bot.on('message', async (msg) => {
             `⛏️ **Son Maden:** ${new Date(u.lastMining).toLocaleString('tr-TR')}\n` +
             `📦 **Kutu 1:** ${new Date(u.lastLootbox1 || 0).toLocaleString('tr-TR')}\n` +
             `📦 **Kutu 2:** ${new Date(u.lastLootbox2 || 0).toLocaleString('tr-TR')}\n` +
-            `📦 **Kutu 3:** ${new Date(u.lastLootbox3 || 0).toLocaleString('tr-TR')}`;
+            `📦 **Kutu 3:** ${new Date(u.lastLootbox3 || 0).toLocaleString('tr-TR')}\n` +
+            `👛 **Cüzdan:** \`${u.walletAddress || 'Yok'}\``;
             return bot.sendMessage(ADMIN_ID, info, { parse_mode: 'Markdown' });
         }
 
@@ -283,6 +285,21 @@ bot.on('message', async (msg) => {
             return bot.sendMessage(ADMIN_ID, report, { parse_mode: 'Markdown' });
         }
 
+        // --- 11. ÖDEME LİSTESİ (CÜZDANLAR) ---
+        if (cmd === '/odemelist') {
+            const topWinners = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(5);
+            if (topWinners.length === 0) return bot.sendMessage(ADMIN_ID, "⚠️ Liderlik tablosu şu an boş.");
+            let msgText = `💰 **HAFTALIK ÖDEME LİSTESİ (TOP 5)** 💰\n\n`;
+            
+            topWinners.forEach((u, i) => {
+                msgText += `${i+1}. @${u.username || u.firstName} - ${u.dailyPoints.toLocaleString()} GEP\n`;
+                msgText += `📍 Adres: \`${u.walletAddress || 'Bağlamamış'}\`\n`;
+                msgText += `------------------------\n`;
+            });
+            
+            return bot.sendMessage(ADMIN_ID, msgText, { parse_mode: 'Markdown' });
+        }
+
     } catch (error) { bot.sendMessage(ADMIN_ID, `❌ Sistem Hatası: ${error.message}`); }
 });
 // =====================================================================
@@ -313,7 +330,7 @@ setInterval(async () => {
     } 
 }, 60000);
 
-// --- GÜVENLİK VE ROUTE'LAR (PANİK BUTONU VE BOOST DESTEKLİ) ---
+// --- GÜVENLİK VE ROUTE'LAR ---
 function getTelegramUserFromInitData(telegramInitData) {
     try {
         if (!telegramInitData) return null;
@@ -346,6 +363,20 @@ const secureRoute = async (req, res, next) => {
     req.realTelegramId = realId; 
     next();
 };
+
+// --- CÜZDAN KAYDETME ROTASI EKLENDİ ---
+app.post('/api/user/save-wallet', secureRoute, async (req, res) => {
+    try {
+        const { walletAddress } = req.body;
+        const user = await User.findOneAndUpdate(
+            { telegramId: req.realTelegramId },
+            { walletAddress: walletAddress },
+            { new: true }
+        );
+        if (user) addRadarLog(`👛 @${user.username} cüzdanını bağladı.`);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
 
 app.post('/api/user/auth', secureRoute, async (req, res) => {
     const { username, firstName, referrerId } = req.body;
