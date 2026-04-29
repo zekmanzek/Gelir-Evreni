@@ -12,6 +12,41 @@ const hScript = document.createElement('script');
 hScript.src = 'https://js.hcaptcha.com/1/api.js?render=explicit';
 hScript.async = true; hScript.defer = true; document.head.appendChild(hScript);
 
+// --- TON CONNECT ENTEGRASYONU ---
+let tonConnectUI;
+try {
+    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: 'https://gelir-evreni.onrender.com/tonconnect-manifest.json',
+        buttonRootId: 'ton-connect'
+    });
+
+    // Cüzdan durumunu izle
+    tonConnectUI.onStatusChange(async (wallet) => {
+        if (wallet) {
+            const address = wallet.account.address;
+            // Sunucuya kaydet
+            try {
+                const res = await fetch(`${API}/api/user/save-wallet`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        walletAddress: address,
+                        initData: tg.initData 
+                    })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    triggerHaptic('success');
+                    tg.showAlert("✅ Siber cüzdan başarıyla ağa bağlandı!");
+                }
+            } catch (e) { console.error("Cüzdan kayıt hatası:", e); }
+        }
+    });
+} catch (e) {
+    console.error("TON Connect başlatılamadı:", e);
+}
+// --------------------------------
+
 function triggerHaptic(type = 'light') { 
     if(tg.HapticFeedback) { 
         if(type === 'success') tg.HapticFeedback.notificationOccurred('success'); 
