@@ -241,7 +241,7 @@ function openGame(game) {
         document.getElementById('hcaptcha-widget').innerHTML = ''; 
         if(window.hcaptcha) {
             hcaptchaWidgetId = hcaptcha.render('hcaptcha-widget', {
-                'sitekey': '8884df46-4562-4640-945c-f4666ab26556',
+                'sitekey': '10b4d376-fcd6-43a0-a0ac-6388f0c418a4',
                 'theme': 'dark',
                 'callback': function(token) { verifyGepcoz(token); }
             });
