@@ -218,20 +218,6 @@
             <div class="stat-box"><div class="balance-label">DAVET ETTİKLERİN</div><div id="stat-ref-count" class="stat-val" style="color: var(--gold);">0</div></div>
             <div class="stat-box"><div class="balance-label">HESAP DURUMU</div><div id="user-status-text" class="stat-val" style="color: var(--success); font-size: 18px; margin-top: 8px;">AKTİF</div></div>
         </div>
-
-        <div id="admin-panel-btn" class="glass-card" style="display:none; text-align:center; border-color:var(--danger); cursor:pointer;" onclick="showPage('admin', null)">
-            <h3 style="color: var(--danger); margin:0;">🛡️ YÖNETİCİ TERMİNALİ</h3>
-        </div>
-    </div>
-
-    <div id="page-admin" class="page">
-        <button class="game-btn btn-outline" style="margin-bottom: 15px; padding: 10px;" onclick="showPage('profile', null)">⬅ GERİ DÖN</button>
-        <h3 style="color: var(--danger);">🛡️ YÖNETİCİ TERMİNALİ</h3>
-        <div class="stat-grid"><div class="stat-box"><div class="balance-label">TOPLAM OYUNCU</div><div id="adm-stat-users" class="stat-val" style="color:var(--cyan)">0</div></div><div class="stat-box"><div class="balance-label">TOPLAM GEP</div><div id="adm-stat-points" class="stat-val" style="color:var(--gold)">0</div></div></div>
-        <div class="glass-card" style="border-color: var(--danger);"><h4 style="color: var(--danger);">🧧 Promo Kod Oluştur</h4><input type="text" id="adm-promo-code" class="glass-input" placeholder="KOD (Örn: VIP2026)"><input type="number" id="adm-promo-reward" class="glass-input" placeholder="Ödül Miktarı (GEP)"><input type="number" id="adm-promo-usage" class="glass-input" placeholder="Kaç Kişi Kullanabilir?"><button class="game-btn btn-danger" onclick="createPromo()">KOD OLUŞTUR</button></div>
-        <div class="glass-card"><h4>Duyuru Yayınla</h4><input type="text" id="adm-ann-text" class="glass-input" placeholder="Sistem mesajı..."><button class="game-btn btn-outline" onclick="addAnnouncement()">YAYINLA</button><div id="adm-ann-list" style="margin-top:15px; max-height:150px; overflow-y:auto; padding-right:5px;"></div></div>
-        <div class="glass-card"><h4>Görev Ekle</h4><input type="text" id="adm-task-title" class="glass-input" placeholder="Görev Başlığı"><input type="number" id="adm-task-reward" class="glass-input" placeholder="Ödül (GEP)"><input type="text" id="adm-task-target" class="glass-input" placeholder="Link (https://...)"><button class="game-btn btn-success" onclick="addTask()">EKLE</button><div id="adm-task-list" style="margin-top:15px; max-height: 150px; overflow-y: auto; padding-right:5px;"></div></div>
-        <div class="glass-card"><h4>Kullanıcı Yönetimi</h4><input type="text" id="adm-target-id" class="glass-input" placeholder="ID veya @Username"><input type="number" id="adm-amount" class="glass-input" placeholder="Miktar"><div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"><button class="game-btn btn-success" style="padding: 12px; font-size: 12px;" onclick="manageUser('add')">EKLE</button><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="manageUser('set')">EŞİTLE</button><button class="game-btn btn-danger" style="padding: 12px; font-size: 12px;" onclick="manageUser('ban')">BAN</button><button class="game-btn" style="padding: 12px; font-size: 12px; background: #1e293b; color:#fff;" onclick="manageUser('unban')">KALDIR</button></div></div>
     </div>
 
     <div id="modal-zarzara" class="game-modal">
