@@ -31,7 +31,7 @@ function triggerHaptic(type = 'light') { if(tg.HapticFeedback) { if(type === 'su
 function spawnFloatingText(e, text, color) { let x = window.innerWidth / 2; let y = window.innerHeight / 2; if(e && e.touches && e.touches.length > 0) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else if (e && e.clientX) { x = e.clientX; y = e.clientY; } const el = document.createElement("div"); el.className = "floating-text"; el.innerText = text; el.style.left = (x - 40) + "px"; el.style.top = (y - 20) + "px"; el.style.color = color || "var(--gold)"; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 function checkLockdown(data) { if (data && data.isLocked) { document.getElementById('lockdown-screen').style.display = 'flex'; triggerHaptic('error'); return true; } return false; }
 
-// --- YENİ: ROKET İÇİN GÖRSEL TEPKİ (REAKSİYON) MOTORU ---
+// --- ROKET İÇİN GÖRSEL TEPKİ MOTORU ---
 function showCrashReaction(text, color, left, top) {
     let el = document.createElement("div");
     el.innerText = text;
@@ -40,23 +40,22 @@ function showCrashReaction(text, color, left, top) {
     el.style.top = top;
     el.style.color = color;
     el.style.fontWeight = "900";
-    el.style.fontSize = "26px";
+    el.style.fontSize = "22px";
     el.style.fontFamily = "'Space Grotesk'";
-    el.style.textShadow = `0 0 15px ${color}`;
+    el.style.textShadow = `0 0 10px ${color}, 0 0 20px #000`;
     el.style.transform = "translate(-50%, -50%)";
     el.style.zIndex = "30";
     el.style.pointerEvents = "none";
-    el.style.transition = "all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275)"; // Zıplama efekti
+    el.style.transition = "all 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)"; 
     
     document.getElementById('rocket-ship').parentElement.appendChild(el);
     
-    // Animasyonu Tetikle
     setTimeout(() => {
-        el.style.transform = "translate(-50%, -150%) scale(1.2)";
+        el.style.transform = "translate(-50%, -200%) scale(1.3)";
         el.style.opacity = "0";
     }, 50);
     
-    setTimeout(() => el.remove(), 1000);
+    setTimeout(() => el.remove(), 1500);
 }
 
 async function init() {
@@ -130,7 +129,7 @@ function openGame(game) {
     if(game === 'zarzara') { document.getElementById('zarzara-result').innerText = "Bahsini Gir ve At!"; document.getElementById('zarzara-display').innerText = "🎲"; }
     if(game === 'gepcoz') { document.getElementById('gepcoz-result').innerText = "Terminal Hazır. Şifreyi Çöz."; document.getElementById('gepcoz-result').style.color = "#fff"; document.getElementById('hcaptcha-widget').innerHTML = ''; if(window.hcaptcha) { hcaptchaWidgetId = hcaptcha.render('hcaptcha-widget', { 'sitekey': '10b4d376-fcd6-43a0-a0ac-6388f0c418a4', 'theme': 'dark', 'callback': function(token) { verifyGepcoz(token); } }); } else { document.getElementById('gepcoz-result').innerText = "Güvenlik ağı yüklenemedi."; } }
     
-    // --- GEP ROKETİ SIFIRLAMA VE GÖRSEL HAZIRLIK ---
+    // --- GEP ROKETİ SIFIRLAMA (YATAY HİZALAMA) ---
     if(game === 'crash') {
         clearInterval(crashInterval);
         isCrashed = false;
@@ -149,16 +148,16 @@ function openGame(game) {
         
         let rocket = document.getElementById('rocket-ship');
         rocket.style.display = 'flex';
-        rocket.style.left = '10px';
-        rocket.style.top = '160px'; 
-        rocket.style.transform = 'translate(-50%, -50%) rotate(45deg)'; // ROKET YÖNÜ DÜZELTİLDİ (Yukarı/Sağa)
+        rocket.style.left = '30px'; 
+        rocket.style.top = '150px'; 
+        rocket.style.transform = 'translate(-50%, -50%) rotate(0deg)'; // Tamamen düz başlıyor
         document.getElementById('rocket-fire').style.display = 'none'; 
         
         document.getElementById('explosion-icon').style.display = 'none';
     }
 }
 
-// --- YENİ: GEP ROKETİ (CRASH) ANİMASYON ---
+// --- YENİ: YATAY GEP ROKETİ (CRASH) MOTORU ---
 let crashInterval;
 let currentCrashMultiplier = 1.00;
 let crashPoint = 1.00;
@@ -224,9 +223,10 @@ async function playCrash() {
             
             currentCrashMultiplier = Math.exp(0.15 * tick);
             
-            let currentX = Math.min((tick / 20) * (cw * 0.8), cw * 0.9) + 10; 
+            // YATAY YÖRÜNGE HESAPLAMASI (X ekseninde daha hızlı gider, Y'de hafifçe yükselir)
+            let currentX = Math.min((tick / 20) * (cw * 0.9), cw * 0.9) + 20; 
             let progressY = 1 - (1 / currentCrashMultiplier); 
-            let currentY = ch - (progressY * ch * 0.8) - 20; 
+            let currentY = ch - (progressY * ch * 0.7) - 20; 
             
             crashPath.push({x: currentX, y: currentY});
             
@@ -246,13 +246,13 @@ async function playCrash() {
             rocket.style.left = currentX + "px";
             rocket.style.top = currentY + "px";
             
-            // 🔥 ROKET YÖNÜ DÜZELTİLDİ: 60 Dereceden (sağ) başlayıp 15 Dereceye (Yukarı) dikleşir
-            let angle = 60 - (progressY * 45); 
+            // BURNUNU YUKARI KALDIRMA (0'dan başlayıp maksimum -30 dereceye kadar kalkar)
+            let angle = (progressY * -30); 
             rocket.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
 
             if (currentCrashMultiplier >= crashPoint) {
                 currentCrashMultiplier = crashPoint;
-                processCrash();
+                processCrash(currentX, currentY);
             } else {
                 display.innerText = currentCrashMultiplier.toFixed(2) + "x";
                 btnCashout.innerText = `ÇEKİL (${Math.floor(crashBet * currentCrashMultiplier)} GEP)`;
@@ -262,7 +262,7 @@ async function playCrash() {
     } catch (e) { resText.innerText = "Bağlantı Hatası!"; btnStart.disabled = false; }
 }
 
-async function processCrash() {
+async function processCrash(x, y) {
     isCrashed = true;
     clearInterval(crashInterval);
     triggerHaptic('heavy');
@@ -287,7 +287,7 @@ async function processCrash() {
     explosion.style.top = rocket.style.top;
     explosion.style.display = 'block'; 
 
-    // 🔥 YENİ: KAYBETME REAKSİYONU 🔥
+    // 🔥 KAYBETME REAKSİYONU 🔥
     showCrashReaction(`-${crashBet} GEP`, "var(--danger)", explosion.style.left, explosion.style.top);
     
     document.getElementById('btn-cashout-crash').style.display = 'none';
@@ -324,13 +324,13 @@ async function cashoutCrash() {
             document.getElementById('crash-result').innerText = `✅ ÇEKİLDİN! +${data.winAmount} GEP`;
             document.getElementById('crash-result').style.color = "var(--success)";
             
-            // 🔥 YENİ: KAZANMA REAKSİYONU 🔥
+            // 🔥 KAZANMA REAKSİYONU 🔥
             let rocket = document.getElementById('rocket-ship');
             showCrashReaction(`+${data.winAmount} GEP`, "var(--success)", rocket.style.left, rocket.style.top);
             
             document.getElementById('rocket-fire').style.display = 'none';
         } else {
-            processCrash(); 
+            processCrash(0, 0); 
             document.getElementById('crash-result').innerText = "💥 ZATEN PATLAMIŞTI!";
             display.style.color = "var(--danger)";
             return;
