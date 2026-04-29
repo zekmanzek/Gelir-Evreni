@@ -5,6 +5,33 @@ module.exports = function(context) {
     const { bot, models, GameConfig, ADMIN_ID, WEBHOOK_URL, radarLogs, addPoints, addRadarLog } = context;
     const { User, PromoCode, Task, YesterdayWinner, Settings, AirdropLink } = models;
 
+    // 🔥 YENİ: SADECE PATRONA ÖZEL AÇILIR MENÜ (AUTOCOMPLETE) 🔥
+    const adminCommands = [
+        { command: 'admin', description: '🛡️ Siber Komuta Merkezini açar' },
+        { command: 'rapor', description: '📊 Ağ durum raporunu gösterir' },
+        { command: 'radar', description: '📡 Canlı siber radar (Son 20 işlem)' },
+        { command: 'odemelist', description: '💰 Haftalık cüzdan ve ödeme listesi' },
+        { command: 'kilit', description: '🚨 Sistemi kilitle/aç (Örn: /kilit aktif)' },
+        { command: 'boost', description: '🔥 Happy Hour başlat (Örn: /boost 2 60)' },
+        { command: 'ayar', description: '⚙️ Oyun fiyatı güncelle (Örn: /ayar cark 1000)' },
+        { command: 'promo', description: '🎫 Kod üret (Örn: /promo KOD 100 5)' },
+        { command: 'bilgi', description: '👤 Kullanıcı istihbaratı (/bilgi @user)' },
+        { command: 'canta', description: '🩻 Derin analiz ve loglar (/canta @user)' },
+        { command: 'bakiye', description: '💵 Bakiye ayarla (/bakiye @user 500)' },
+        { command: 'ceza', description: '⚡ Hesabı sıfırla (İnfaz) (/ceza @user)' },
+        { command: 'ban', description: '🚫 Kullanıcıyı yasakla (/ban @user)' },
+        { command: 'unban', description: '✅ Kullanıcı yasağını kaldır (/unban @user)' },
+        { command: 'yayin', description: '📢 Tüm ağa mesaj gönder (/yayin Mesaj)' },
+        { command: 'duyuru', description: '📝 Kayan yazı (/duyuru ekle/sil/liste)' },
+        { command: 'gorev', description: '🎯 Görev merkezi (/gorev ekle/sil/liste)' }
+    ];
+
+    // Telegram API'ye menüyü sadece senin ID'n için kaydetmesini söylüyoruz
+    bot.setMyCommands(adminCommands, { scope: JSON.stringify({ type: 'chat', chat_id: ADMIN_ID }) })
+        .then(() => console.log("✅ Patron Telegram Menüsü başarıyla senkronize edildi."))
+        .catch(err => console.error("Menü yükleme hatası:", err));
+
+
     // --- YARDIMCI MESAJ FONKSİYONU ---
     const sendMsg = (text, markup = null) => {
         const options = { parse_mode: 'Markdown' };
@@ -55,7 +82,6 @@ module.exports = function(context) {
                 case '/gorev':   return await manageTasks(args);
 
                 default:
-                    // Bilinmeyen komutlar sessizce yoksayılır
                     break;
             }
         } catch (error) {
