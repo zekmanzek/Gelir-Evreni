@@ -5,9 +5,9 @@ module.exports = function(context) {
     const { bot, models, GameConfig, ADMIN_ID, WEBHOOK_URL, radarLogs, addPoints, addRadarLog } = context;
     const { User, PromoCode, Task, YesterdayWinner, Settings, AirdropLink } = models;
 
-    // 🔥 YENİ: SADECE PATRONA ÖZEL AÇILIR MENÜ (AUTOCOMPLETE) 🔥
+    // 🔥 SADECE PATRONA ÖZEL AÇILIR MENÜ (AUTOCOMPLETE) 🔥
+    // "/admin" komutu gereksiz kalabalık yaptığı için silindi!
     const adminCommands = [
-        { command: 'admin', description: '🛡️ Siber Komuta Merkezini açar' },
         { command: 'rapor', description: '📊 Ağ durum raporunu gösterir' },
         { command: 'radar', description: '📡 Canlı siber radar (Son 20 işlem)' },
         { command: 'odemelist', description: '💰 Haftalık cüzdan ve ödeme listesi' },
@@ -51,7 +51,6 @@ module.exports = function(context) {
                 // ==========================================
                 // ⚙️ SİSTEM VE GÜVENLİK
                 // ==========================================
-                case '/admin':   return await showAdminMenu();
                 case '/kilit':   return await handleLockdown(args);
                 case '/rapor':   return await showReport();
                 case '/radar':   return await showRadar();
@@ -90,32 +89,8 @@ module.exports = function(context) {
     });
 
     // =====================================================================
-    // 🛠️ İŞLEVSEL FONKSİYONLAR (HER KOMUTUN KENDİ ODASI)
+    // 🛠️ İŞLEVSEL FONKSİYONLAR
     // =====================================================================
-
-    async function showAdminMenu() {
-        const text = `🛡️ **SİBER KOMUTA MERKEZİ (MASTER)**\n\n` +
-        `🚨 *ACİL DURUM KONTROLLERİ:*\n` +
-        `\`/kilit aktif\` | \`/kilit kapat\`\n\n` +
-        `💸 *EKONOMİ & PROMOSYON:*\n` +
-        `\`/boost Çarpan Dakika\` (Örn: /boost 2 60)\n` +
-        `\`/ayar [oyun] [fiyat]\` (Örn: /ayar cark 10000)\n` +
-        `\`/promo KOD Ödül Limit\`\n\n` +
-        `📢 *İLETİŞİM & SİSTEM GÖREVLERİ:*\n` +
-        `\`/yayin Mesaj\` (Tüm ağa butonlu mesaj)\n` +
-        `\`/duyuru ekle/sil/liste\` (Kayan Yazı)\n` +
-        `\`/gorev ekle/sil/liste\` (Görev Merkezi)\n\n` +
-        `👤 *İSTİHBARAT, CEZA VE ÖDEME:*\n` +
-        `\`/radar\` (Ağdaki son 20 canlı işlem)\n` +
-        `\`/bilgi @user\` (Temel İstihbarat)\n` +
-        `\`/canta @user\` (Derin Röntgen / Loglar)\n` +
-        `\`/bakiye @user Miktar\` (GEP Ekle/Sil)\n` +
-        `\`/ceza @user\` (Bakiyeyi Sıfırla)\n` +
-        `\`/ban @user\` | \`/unban @user\`\n` +
-        `\`/odemelist\` (Kazanan Cüzdanlar)\n\n` +
-        `📊 \`/rapor\` (Genel Sistem Durumu)`;
-        return sendMsg(text);
-    }
 
     async function handleLockdown(args) {
         let config = await GameConfig.findOne() || await GameConfig.create({});
