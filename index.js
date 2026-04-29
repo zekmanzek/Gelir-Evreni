@@ -43,7 +43,7 @@ const gameConfigSchema = new mongoose.Schema({
 const GameConfig = mongoose.models.GameConfig || mongoose.model('GameConfig', gameConfigSchema);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v10.2 - CRASH MOTORU AKTİF"))
+    .then(() => console.log("✅ Gelir Evreni v10.3 - CRASH MOTORU BUG FIX'Lİ AKTİF"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -618,7 +618,7 @@ app.post('/api/tasks/complete', secureRoute, async (req, res) => {
     res.json({ success: true, points: user.points }); 
 });
 
-// --- YENİ: SİBER ÇÖKÜŞ (CRASH) ROTASI ---
+// --- SİBER ÇÖKÜŞ (CRASH) ROTASI ---
 app.post('/api/arcade/crash/start', secureRoute, async (req, res) => {
     const { bet } = req.body; 
     const amount = parseInt(bet);
@@ -640,7 +640,6 @@ app.post('/api/arcade/crash/start', secureRoute, async (req, res) => {
     } else {
         // Crash Matematiği
         cPoint = (1.00 / (1.00 - (Math.random() * 0.99))).toFixed(2);
-        // Çok uçuk değerleri tırpanla
         if (cPoint > 50.00) cPoint = (15.00 + Math.random() * 20.00).toFixed(2); 
     }
 
@@ -662,12 +661,21 @@ app.post('/api/arcade/crash/cashout', secureRoute, async (req, res) => {
         const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId }, { $inc: { points: winAmount } }, { new: true });
         
         addRadarLog(`🪂 @${user.username} Çöküşten çekildi! Kazanç: ${winAmount} GEP (${requestedMult}x)`);
-        if (winAmount >= 50000) broadcastBigWin(user.username, user.firstName, "Siber Çöküş", winAmount);
+        if (winAmount >= 50000) broadcastBigWin(user.username, user.firstName, "GEP Roketi", winAmount);
         
         return res.json({ success: true, winAmount, points: user.points });
     } else {
         return res.json({ success: false, message: "Roket zaten patladı!" });
     }
+});
+
+// 🔥 YENİ: KAYIP BİLDİRİMİ (BUG FIX) 🔥
+app.post('/api/arcade/crash/notify-loss', secureRoute, async (req, res) => {
+    // Roket patladığında frontend buraya istek atar, sunucu oturumu temizler.
+    if (activeCrashSessions.has(req.realTelegramId)) {
+        activeCrashSessions.delete(req.realTelegramId);
+    }
+    res.json({ success: true });
 });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
