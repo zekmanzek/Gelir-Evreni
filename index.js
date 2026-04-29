@@ -26,20 +26,34 @@ app.use(express.static(path.join(__dirname, 'public')));
 const bot = new TelegramBot(TOKEN);
 bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
-// --- 🔥 GENİŞLETİLMİŞ DİNAMİK EKONOMİ TABLOSU 🔥 ---
+// --- 🔥 %100 DİNAMİK EKONOMİ TABLOSU 🔥 ---
 const gameConfigSchema = new mongoose.Schema({
-    gepcozReward: { type: Number, default: 25000 },
+    // Maliyetler
     spinCost: { type: Number, default: 5000 },
     predictCost: { type: Number, default: 1000 },
     lootbox1Cost: { type: Number, default: 1000 },
     lootbox2Cost: { type: Number, default: 5000 },
     lootbox3Cost: { type: Number, default: 25000 },
     airdropCost: { type: Number, default: 1000000 },
+    
+    // Temel Ödüller
+    gepcozReward: { type: Number, default: 25000 },
     refReward: { type: Number, default: 10000 },
-    mineBaseReward: { type: Number, default: 1000 },    // YENİ: Maden Başlangıç Ödülü
-    mineLevelStep: { type: Number, default: 500 },      // YENİ: Maden Seviye Artışı
-    adReward: { type: Number, default: 5000 },          // YENİ: Reklam İzleme Ödülü
-    dailyBaseReward: { type: Number, default: 1000 },   // YENİ: Günlük Seri Başlangıcı
+    mineBaseReward: { type: Number, default: 1000 },
+    mineLevelStep: { type: Number, default: 500 },
+    adReward: { type: Number, default: 5000 },
+    dailyBaseReward: { type: Number, default: 1000 },
+    
+    // Oyun İçi Ödüller
+    spinJackpot: { type: Number, default: 50000 },
+    spinMid: { type: Number, default: 10000 },
+    spinLow: { type: Number, default: 2500 },
+    lootBig: { type: Number, default: 250000 }, 
+    lootMid: { type: Number, default: 50000 },  
+    lootSmall: { type: Number, default: 10000 },
+    predictReward: { type: Number, default: 2000 },
+
+    // Sistem Durumu
     isLocked: { type: Boolean, default: false }, 
     boostMultiplier: { type: Number, default: 1 }, 
     boostEndTime: { type: Date, default: null } 
@@ -47,7 +61,7 @@ const gameConfigSchema = new mongoose.Schema({
 const GameConfig = mongoose.models.GameConfig || mongoose.model('GameConfig', gameConfigSchema);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v10.6 - SİBER KARARGAH & DİNAMİK EKONOMİ AKTİF"))
+    .then(() => console.log("✅ Gelir Evreni v10.7 - %100 DİNAMİK EKONOMİ AKTİF"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -107,7 +121,6 @@ setInterval(async () => {
     } catch (e) { }
 }, 60000);
 
-// HAFTALIK LİDERLİK SIFIRLAMA
 setInterval(async () => {
     const now = new Date(); if (now.getDay() === 0 && now.getHours() === 23 && now.getMinutes() === 58) {
         const winners = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(100);
@@ -276,14 +289,15 @@ app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP!" }); 
     const rand = Math.random() * 100; let prize = 0; let msg = "BOŞ";
+    
     if (rand <= 40) { prize = 0; msg = "Şansını Dene"; } 
-    else if (rand <= 75) { prize = 2500; msg = "Yarım Teselli"; } 
-    else if (rand <= 92) { prize = 5000; msg = "Amorti!"; } 
-    else if (rand <= 99) { prize = 10000; msg = "İKİYE KATLADIN!"; } 
-    else { prize = 50000; msg = "💥 JACKPOT! 💥"; }
+    else if (rand <= 75) { prize = config.spinLow; msg = "Yarım Teselli"; } 
+    else if (rand <= 92) { prize = config.spinCost; msg = "Amorti!"; } 
+    else if (rand <= 99) { prize = config.spinMid; msg = "İKİYE KATLADIN!"; } 
+    else { prize = config.spinJackpot; msg = "💥 JACKPOT! 💥"; }
     
     addRadarLog(`🎰 @${user.username} Çark çevirdi. Ödül: ${prize}`);
-    if (prize === 50000) broadcastBigWin(user.username, user.firstName, "Gelir Çarkı", prize);
+    if (prize === config.spinJackpot) broadcastBigWin(user.username, user.firstName, "Gelir Çarkı", prize);
     if (prize > 0) { addPoints(user, prize); await user.save(); }
     res.json({ success: true, prize, msg, points: user.points });
 });
@@ -334,7 +348,7 @@ app.post('/api/arcade/predict/result', secureRoute, async (req, res) => {
         const d2 = await r2.json(); const p2 = parseFloat(d2.price);
         let won = false; if ((prediction.guess === 'UP' && p2 > prediction.p1) || (prediction.guess === 'DOWN' && p2 < prediction.p1)) won = true;
         let user = await User.findOne({ telegramId: req.realTelegramId });
-        if (won) { addPoints(user, config.predictReward || 2000); await user.save(); }
+        if (won) { addPoints(user, config.predictReward); await user.save(); }
         addRadarLog(`📈 @${user.username} Kripto Tahmini: ${won ? 'BAŞARILI' : 'BAŞARISIZ'}`);
         res.json({ success: true, won, price1: prediction.p1, price2: p2, points: user.points });
     } catch (e) { 
@@ -349,16 +363,21 @@ app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
     const now = new Date(); let lastOpenDate;
     if (boxType === 1) lastOpenDate = user.lastLootbox1; else if (boxType === 2) lastOpenDate = user.lastLootbox2; else if (boxType === 3) lastOpenDate = user.lastLootbox3;
     if ((now - new Date(lastOpenDate || 0)) < 24 * 60 * 60 * 1000) return res.json({ success: false });
+    
     let cost = boxType === 1 ? config.lootbox1Cost : (boxType === 2 ? config.lootbox2Cost : config.lootbox3Cost);
     const updatedUser = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
     if (!updatedUser) return res.json({ success: false });
+    
     if (boxType === 1) updatedUser.lastLootbox1 = now; else if (boxType === 2) updatedUser.lastLootbox2 = now; else updatedUser.lastLootbox3 = now;
+    
     let prize = 0; const rand = Math.random() * 100;
-    if (boxType === 1) prize = rand > 90 ? 10000 : 500; else if (boxType === 2) prize = rand > 90 ? 50000 : 3000; else prize = rand > 95 ? 250000 : 15000;
+    if (boxType === 1) prize = rand > 90 ? config.lootSmall : 500; 
+    else if (boxType === 2) prize = rand > 90 ? config.lootMid : 3000; 
+    else prize = rand > 95 ? config.lootBig : 15000;
     
     let boxName = boxType === 1 ? "Standart Kapsül" : (boxType === 2 ? "Nadir Kapsül" : "Efsanevi Kapsül");
     addRadarLog(`📦 @${updatedUser.username} ${boxName} açtı. Ödül: ${prize}`);
-    if ((boxType === 1 && prize === 10000) || (boxType === 2 && prize === 50000) || (boxType === 3 && prize === 250000)) broadcastBigWin(updatedUser.username, updatedUser.firstName, boxName, prize);
+    if ((boxType === 1 && prize === config.lootSmall) || (boxType === 2 && prize === config.lootMid) || (boxType === 3 && prize === config.lootBig)) broadcastBigWin(updatedUser.username, updatedUser.firstName, boxName, prize);
     
     addPoints(updatedUser, prize); await updatedUser.save();
     res.json({ success: true, prize, points: updatedUser.points });
@@ -411,7 +430,6 @@ app.post('/api/tasks/complete', secureRoute, async (req, res) => {
     res.json({ success: true, points: user.points }); 
 });
 
-// --- SİBER ÇÖKÜŞ (CRASH) ROTASI ---
 app.post('/api/arcade/crash/start', secureRoute, async (req, res) => {
     const { bet } = req.body; 
     const amount = parseInt(bet);
@@ -427,15 +445,12 @@ app.post('/api/arcade/crash/start', secureRoute, async (req, res) => {
     let cPoint = 1.00;
     const rand = Math.random();
     
-    if (rand < 0.05) {
-        cPoint = 1.00;
-    } else {
+    if (rand < 0.05) { cPoint = 1.00; } else {
         cPoint = (1.00 / (1.00 - (Math.random() * 0.99))).toFixed(2);
         if (cPoint > 50.00) cPoint = (15.00 + Math.random() * 20.00).toFixed(2); 
     }
 
     activeCrashSessions.set(req.realTelegramId, { bet: amount, crashPoint: parseFloat(cPoint) });
-    
     addRadarLog(`🚀 @${user.username} Çöküş oyunu başlattı. (Bahis: ${amount})`);
     res.json({ success: true, points: user.points, crashPoint: cPoint });
 });
@@ -461,9 +476,7 @@ app.post('/api/arcade/crash/cashout', secureRoute, async (req, res) => {
 });
 
 app.post('/api/arcade/crash/notify-loss', secureRoute, async (req, res) => {
-    if (activeCrashSessions.has(req.realTelegramId)) {
-        activeCrashSessions.delete(req.realTelegramId);
-    }
+    if (activeCrashSessions.has(req.realTelegramId)) { activeCrashSessions.delete(req.realTelegramId); }
     res.json({ success: true });
 });
 
