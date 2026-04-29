@@ -129,12 +129,10 @@ function openGame(game) {
     if(game === 'zarzara') { document.getElementById('zarzara-result').innerText = "Bahsini Gir ve At!"; document.getElementById('zarzara-display').innerText = "🎲"; }
     if(game === 'gepcoz') { document.getElementById('gepcoz-result').innerText = "Terminal Hazır. Şifreyi Çöz."; document.getElementById('gepcoz-result').style.color = "#fff"; document.getElementById('hcaptcha-widget').innerHTML = ''; if(window.hcaptcha) { hcaptchaWidgetId = hcaptcha.render('hcaptcha-widget', { 'sitekey': '10b4d376-fcd6-43a0-a0ac-6388f0c418a4', 'theme': 'dark', 'callback': function(token) { verifyGepcoz(token); } }); } else { document.getElementById('gepcoz-result').innerText = "Güvenlik ağı yüklenemedi."; } }
     
-    // --- GEP ROKETİ SIFIRLAMA (YATAY HİZALAMA) ---
     if(game === 'crash') {
         clearInterval(crashInterval);
         isCrashed = false;
         crashPath = [];
-        
         document.getElementById('crash-display').innerText = "1.00x";
         document.getElementById('crash-display').style.color = "#fff";
         document.getElementById('crash-result').innerText = "Bahsini Gir ve Uç!";
@@ -150,14 +148,31 @@ function openGame(game) {
         rocket.style.display = 'flex';
         rocket.style.left = '30px'; 
         rocket.style.top = '150px'; 
-        rocket.style.transform = 'translate(-50%, -50%) rotate(0deg)'; // Tamamen düz başlıyor
+        rocket.style.transform = 'translate(-50%, -50%) rotate(0deg)'; 
         document.getElementById('rocket-fire').style.display = 'none'; 
-        
         document.getElementById('explosion-icon').style.display = 'none';
     }
 }
 
-// --- YENİ: YATAY GEP ROKETİ (CRASH) MOTORU ---
+// 🔥 YENİDEN EKLENEN EKSİK FONKSİYON (ÇIKIŞ BUTONU) 🔥
+function closeGame(game) { 
+    triggerHaptic('light'); 
+    document.getElementById(`modal-${game}`).style.display = 'none'; 
+    if(game === 'gepcoz') {
+        document.getElementById('hcaptcha-widget').innerHTML = ''; 
+    }
+    if(game === 'crash') { 
+        clearInterval(crashInterval); 
+        // Eğer roket uçarken çarpı tuşuna basıp kaçmaya çalışırsa, kaybetmiş say! (Anti-Hile)
+        if(!isCrashed && crashBet > 0) {
+            fetch(`${API}/api/arcade/crash/notify-loss`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }).catch(()=>{});
+        }
+        isCrashed = true; 
+        document.getElementById('rocket-fire').style.display = 'none';
+    } 
+}
+
+// --- YATAY GEP ROKETİ (CRASH) MOTORU ---
 let crashInterval;
 let currentCrashMultiplier = 1.00;
 let crashPoint = 1.00;
@@ -223,7 +238,6 @@ async function playCrash() {
             
             currentCrashMultiplier = Math.exp(0.15 * tick);
             
-            // YATAY YÖRÜNGE HESAPLAMASI (X ekseninde daha hızlı gider, Y'de hafifçe yükselir)
             let currentX = Math.min((tick / 20) * (cw * 0.9), cw * 0.9) + 20; 
             let progressY = 1 - (1 / currentCrashMultiplier); 
             let currentY = ch - (progressY * ch * 0.7) - 20; 
@@ -246,7 +260,6 @@ async function playCrash() {
             rocket.style.left = currentX + "px";
             rocket.style.top = currentY + "px";
             
-            // BURNUNU YUKARI KALDIRMA (0'dan başlayıp maksimum -30 dereceye kadar kalkar)
             let angle = (progressY * -30); 
             rocket.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
 
@@ -287,8 +300,8 @@ async function processCrash(x, y) {
     explosion.style.top = rocket.style.top;
     explosion.style.display = 'block'; 
 
-    // 🔥 KAYBETME REAKSİYONU 🔥
     showCrashReaction(`-${crashBet} GEP`, "var(--danger)", explosion.style.left, explosion.style.top);
+    crashBet = 0; // Bet sıfırlanıyor
     
     document.getElementById('btn-cashout-crash').style.display = 'none';
     const btnStart = document.getElementById('btn-start-crash');
@@ -324,11 +337,11 @@ async function cashoutCrash() {
             document.getElementById('crash-result').innerText = `✅ ÇEKİLDİN! +${data.winAmount} GEP`;
             document.getElementById('crash-result').style.color = "var(--success)";
             
-            // 🔥 KAZANMA REAKSİYONU 🔥
             let rocket = document.getElementById('rocket-ship');
             showCrashReaction(`+${data.winAmount} GEP`, "var(--success)", rocket.style.left, rocket.style.top);
             
             document.getElementById('rocket-fire').style.display = 'none';
+            crashBet = 0;
         } else {
             processCrash(0, 0); 
             document.getElementById('crash-result').innerText = "💥 ZATEN PATLAMIŞTI!";
