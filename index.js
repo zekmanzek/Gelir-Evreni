@@ -185,7 +185,7 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
             user = new User({ telegramId, username: (username || '').toLowerCase(), firstName, points: 1000 });
             if (referrerId && String(referrerId) !== String(telegramId)) {
                 const referrer = await User.findOne({ telegramId: referrerId });
-                if (referrer) { addPoints(referrer, 10000); referrer.referralCount += 1; await referrer.save(); addPoints(user, 10000); }
+                if (referrer) { addPoints(referrer, 100000); referrer.referralCount += 1; await referrer.save(); addPoints(user, 10000); }
             }
         } else { if (username) user.username = username.toLowerCase(); if (firstName) user.firstName = firstName; }
         await user.save(); let settings = await Settings.findOne() || await Settings.create({});
