@@ -7,6 +7,7 @@ let lbAllTime = [], lbDaily = [];
 let currentLbTab = 'all'; 
 const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "28938" }) : null; 
 let tvWidgetCreated = false;
+let isBuyingPkg = false; // 🔥 BUTONU KİLİTLEYEN EKSİK DEĞİŞKEN EKLENDİ 🔥
 
 const hScript = document.createElement('script');
 hScript.src = 'https://js.hcaptcha.com/1/api.js?render=explicit';
