@@ -22,34 +22,11 @@
         @keyframes sat-spin-reverse { 100% { transform: rotate(-360deg); } }
         @keyframes sat-pulse { 0% { transform: scale(0.85); box-shadow: 0 0 10px var(--cyan); } 100% { transform: scale(1.15); box-shadow: 0 0 25px var(--cyan), 0 0 45px var(--cyan); } }
 
-        /* YENİ: CSS Art YATAY GEP ROKETİ (Küçük ve Detaylı) */
+        /* YENİ: VEKTÖREL (SVG) 3D GEP ROKETİ KONTEYNERİ */
         #rocket-ship {
-            position: absolute; width: 65px; height: 18px; bottom: 20px; left: 20px; z-index: 10;
-            display: flex; flex-direction: row; align-items: center; /* Yatay dizilim */
+            position: absolute; width: 90px; height: 35px; bottom: 20px; left: 20px; z-index: 10;
             transform: translate(-50%, -50%); transition: transform 0.1s linear, left 0.1s linear, top 0.1s linear;
         }
-        .rocket-fire-container { width: 10px; height: 10px; position: relative; }
-        #rocket-fire { 
-            position: absolute; right: 0; top: 50%; transform: translateY(-50%); 
-            width: 25px; height: 10px; background: linear-gradient(90deg, transparent 0%, #ef4444 50%, #fbd38d 100%); 
-            border-radius: 50% 20% 20% 50%; box-shadow: -5px 0 15px #ef4444; 
-            animation: rocket-thrust 0.1s ease-in-out infinite; display: none; 
-        }
-        @keyframes rocket-thrust { 0% { width: 15px; opacity: 0.8; } 50% { width: 25px; opacity: 1; } 100% { width: 15px; opacity: 0.8; } }
-        .rocket-body { 
-            width: 45px; height: 18px; background: linear-gradient(180deg, #71717a 0%, #3f3f46 50%, #27272a 100%); 
-            border-radius: 4px 0 0 4px; position: relative; display: flex; align-items: center; justify-content: center; 
-            box-shadow: inset 0 2px 2px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.8); 
-        }
-        .rocket-text { 
-            color: var(--gold); font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 6px; letter-spacing: 0.5px; 
-            margin-right: 2px; text-shadow: 0 0 2px rgba(250, 204, 21, 0.5); 
-        }
-        .rocket-window { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; background: #22d3ee; border-radius: 50%; border: 1.5px solid #18181b; box-shadow: inset 0 0 2px #fff, 0 0 5px #22d3ee; }
-        .rocket-fin-t { position: absolute; top: -5px; left: 0; width: 12px; height: 5px; background: linear-gradient(90deg, #18181b, #3f3f46); transform: skewX(30deg); border-radius: 2px 2px 0 0; }
-        .rocket-fin-b { position: absolute; bottom: -5px; left: 0; width: 12px; height: 5px; background: linear-gradient(90deg, #18181b, #3f3f46); transform: skewX(-30deg); border-radius: 0 0 2px 2px; }
-        .rocket-nose { width: 0; height: 0; border-top: 9px solid transparent; border-bottom: 9px solid transparent; border-left: 12px solid var(--danger); position: relative; }
-        .rocket-nose::after { content:''; position:absolute; top:-9px; left:-12px; border-top: 9px solid transparent; border-bottom: 9px solid transparent; border-left: 12px solid rgba(255,255,255,0.2); pointer-events:none; }
     </style>
 </head>
 <body>
@@ -220,14 +197,54 @@
             <canvas id="rocket-canvas" width="320" height="180" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 5;"></canvas>
             
             <div id="rocket-ship">
-                <div class="rocket-fire-container"><div id="rocket-fire"></div></div>
-                <div class="rocket-body">
-                    <div class="rocket-fin-t"></div>
-                    <div class="rocket-text">GEPROKET</div>
-                    <div class="rocket-window"></div>
-                    <div class="rocket-fin-b"></div>
-                </div>
-                <div class="rocket-nose"></div>
+                <svg viewBox="0 0 120 40" width="100%" height="100%">
+                    <defs>
+                        <linearGradient id="rocketGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#f4f4f5" />
+                            <stop offset="50%" stop-color="#a1a1aa" />
+                            <stop offset="100%" stop-color="#3f3f46" />
+                        </linearGradient>
+                        <linearGradient id="noseGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#fca5a5" />
+                            <stop offset="50%" stop-color="#ef4444" />
+                            <stop offset="100%" stop-color="#7f1d1d" />
+                        </linearGradient>
+                        <linearGradient id="finGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#52525b" />
+                            <stop offset="100%" stop-color="#18181b" />
+                        </linearGradient>
+                        <linearGradient id="fireGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#fde047" />
+                            <stop offset="50%" stop-color="#ea580c" />
+                            <stop offset="100%" stop-color="#be123c" />
+                        </linearGradient>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+
+                    <g id="rocket-fire" style="display: none;">
+                        <path d="M 25 20 Q 5 15 0 20 Q 5 25 25 20" fill="url(#fireGrad)" filter="url(#glow)">
+                            <animate attributeName="d" values="M 25 20 Q 5 15 0 20 Q 5 25 25 20; M 25 20 Q 0 10 -5 20 Q 0 30 25 20; M 25 20 Q 5 15 0 20 Q 5 25 25 20" dur="0.1s" repeatCount="indefinite"/>
+                        </path>
+                    </g>
+
+                    <path d="M 25 12 L 35 2 L 55 12 Z" fill="url(#finGrad)" />
+                    <path d="M 25 28 L 35 38 L 55 28 Z" fill="url(#finGrad)" />
+
+                    <path d="M 25 12 L 85 12 Q 115 20 85 28 L 25 28 Z" fill="url(#rocketGrad)" stroke="#27272a" stroke-width="0.5"/>
+
+                    <path d="M 85 12 Q 120 20 85 28 Z" fill="url(#noseGrad)" />
+
+                    <circle cx="75" cy="20" r="4" fill="#06b6d4" stroke="#27272a" stroke-width="1" filter="url(#glow)" />
+                    <circle cx="74" cy="19" r="1.5" fill="#fff" opacity="0.8" />
+
+                    <text x="32" y="23" font-family="'Outfit', sans-serif" font-weight="900" font-size="9" fill="#facc15" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">GEP</text>
+                </svg>
             </div>
             
             <div id="explosion-icon" style="position: absolute; display: none; font-size: 30px; transform: translate(-50%, -50%); z-index: 11; filter: drop-shadow(0 0 10px #ef4444); text-shadow:none;">💥</div>
