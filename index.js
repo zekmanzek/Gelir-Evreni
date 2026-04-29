@@ -305,7 +305,7 @@ app.post('/api/arcade/gepcoz', secureRoute, async (req, res) => {
 
         if (data.success) {
             const user = await User.findOne({ telegramId: req.realTelegramId });
-            const reward = 2500; // Kullanıcıya verilecek ödül
+            const reward = 25000; // Kullanıcıya verilecek ödül
             addPoints(user, reward);
             await user.save();
             res.json({ success: true, points: user.points, reward: reward });
