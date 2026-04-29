@@ -21,6 +21,20 @@
         @keyframes sat-spin { 100% { transform: rotate(360deg); } }
         @keyframes sat-spin-reverse { 100% { transform: rotate(-360deg); } }
         @keyframes sat-pulse { 0% { transform: scale(0.85); box-shadow: 0 0 10px var(--cyan); } 100% { transform: scale(1.15); box-shadow: 0 0 25px var(--cyan), 0 0 45px var(--cyan); } }
+
+        /* YENİ: CSS Art GEP ROKETİ (3D Efektli) */
+        #rocket-ship {
+            position: absolute; width: 30px; height: 50px; bottom: 20px; left: 10px; z-index: 10;
+            display: flex; flex-direction: column; align-items: center;
+            transform: translate(-50%, -50%); transition: transform 0.1s linear, left 0.1s linear, top 0.1s linear;
+        }
+        .rocket-nose { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-bottom: 20px solid var(--danger); box-shadow: 0 -5px 15px rgba(239,68,68,0.5); }
+        .rocket-body { width: 30px; height: 35px; background: linear-gradient(180deg, #52525b 0%, #27272a 100%); border-radius: 2px; position: relative; border: 1px solid rgba(255,255,255,0.1); }
+        .rocket-window { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: cyan; border-radius: 50%; border: 2px solid #52525b; box-shadow: inset 0 0 5px #fff, 0 0 10px cyan; }
+        .rocket-fin-l { position: absolute; bottom: -5px; left: -10px; width: 0; height: 0; border-right: 12px solid #1f2937; border-top: 15px solid transparent; }
+        .rocket-fin-r { position: absolute; bottom: -5px; right: -10px; width: 0; height: 0; border-left: 12px solid #1f2937; border-top: 15px solid transparent; }
+        #rocket-fire { position: absolute; bottom: -18px; width: 12px; height: 20px; background: linear-gradient(180deg, #fb923c 0%, #ef4444 100%); border-radius: 50% 50% 20% 20%; box-shadow: 0 0 15px #ef4444; animation: rocket-thrust 0.15s ease-in-out infinite; display: none; }
+        @keyframes rocket-thrust { 0% { height: 18px; opacity: 0.8; } 50% { height: 25px; opacity: 1; } 100% { height: 18px; opacity: 0.8; } }
     </style>
 </head>
 <body>
@@ -126,11 +140,11 @@
     <div id="page-arcade" class="page">
         <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px; filter: drop-shadow(0 0 8px #fff);">🕹️</div><div><h3 style="margin: 0; color: #fff;">SİBER ARCADE</h3><p style="font-size: 12px; margin: 0; color: var(--text-dim);">Yeni nesil mini oyunlar.</p></div></div>
         
-        <div class="glass-card arcade-card" style="border-color: var(--danger); background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(11,20,55,0.6) 100%);">
-            <div class="arcade-icon" style="filter: drop-shadow(0 0 10px var(--danger));">🚀</div>
-            <h3 style="color: var(--danger); margin-bottom: 5px;">GEP Roketi</h3>
-            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Grafik yükselir, roket patlamadan önce kazancı al!</p>
-            <button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: var(--danger); color: var(--danger);" onclick="openGame('crash')">FIRLAT (MİN 100 GEP)</button>
+        <div class="glass-card arcade-card" style="border-color: var(--danger); background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(11,20,55,0.6) 100%);">
+            <div class="arcade-icon" style="filter: drop-shadow(0 0 10px var(--danger)); text-shadow:none;">🚀</div>
+            <h3 style="color: var(--danger); margin-bottom: 5px; font-family:'Space Grotesk'; font-weight:800;">GEP ROKETİ</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Uçuş rotasını izle, patlamadan önce kazancı al!</p>
+            <button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: var(--danger); color: var(--danger);" onclick="openGame('crash')">YÜKSELMEYE BAŞLA (100 GEP)</button>
         </div>
 
         <div class="glass-card arcade-card" style="border-color: #ef4444;"><div class="arcade-icon">🎲</div><h3 style="color: #ef4444; margin-bottom: 5px;">Zarzara</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Zar 4, 5 veya 6 gelirse bahsini ikiye katla!</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #ef4444; color: #ef4444;" onclick="openGame('zarzara')">ZAR AT (MİN 100 GEP)</button></div>
@@ -176,7 +190,7 @@
     
     <div id="modal-crash" class="game-modal">
         <div class="close-modal" onclick="closeGame('crash')">✖</div>
-        <h2 style="color: var(--danger); margin-bottom:5px; text-shadow: 0 0 15px rgba(239, 68, 68, 0.5);">GEP Roketi</h2>
+        <h2 style="color: var(--danger); margin-bottom:5px; text-shadow: 0 0 15px rgba(239, 68, 68, 0.5); font-family:'Space Grotesk'; font-weight:800;">GEP ROKETİ</h2>
         <p style="color: var(--text-dim); margin-bottom: 15px; font-size: 12px;">Uçuş rotasını izle, patlamadan önce kazancı al!</p>
         
         <div style="position: relative; width: 100%; max-width: 320px; height: 180px; background: rgba(0,0,0,0.6); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; overflow: hidden; margin-bottom: 15px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);">
@@ -184,9 +198,261 @@
             
             <canvas id="rocket-canvas" width="320" height="180" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 5;"></canvas>
             
-            <div id="rocket-icon" style="position: absolute; top: 160px; left: 10px; font-size: 28px; transform: translate(-50%, -50%); z-index: 10; filter: drop-shadow(0 0 8px #ef4444); transition: transform 0.1s linear;">🚀</div>
+            <div id="rocket-ship">
+                <div class="rocket-nose"></div>
+                <div class="rocket-body"><div class="rocket-window"></div><div class="rocket-fin-l"></div><div class="rocket-fin-r"></div></div>
+                <div id="rocket-fire"></div>
+            </div>
             
-            <div id="explosion-icon" style="position: absolute; display: none; font-size: 40px; transform: translate(-50%, -50%); z-index: 11; filter: drop-shadow(0 0 15px #ef4444);">💥</div>
+            <div id="explosion-icon" style="position: absolute; display: none; font-size: 50px; transform: translate(-50%, -50%); z-index: 11; filter: drop-shadow(0 0 15px #ef4444); text-shadow:none;">💥</div>
+
+            <div id="crash-display" style="position: absolute; top: 15px; left: 15px; font-size: 32px; font-family: 'Space Grotesk'; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.2); z-index: 12;">1.00x</div>
+        </div>
+
+        <h3 id="crash-result" style="color: #fff; height: 20px; margin-bottom: 15px; font-size: 14px;">Bahsini Gir ve Uç!</h3>
+        <div style="width: 100%; max-width: 300px;">
+            <input type="number" id="crash-bet" class="glass-input" placeholder="Miktar (Min 100 GEP)" style="border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">
+            <div style="display: flex; gap: 10px;">
+                <button id="btn-start-crash" class="game-btn" style="flex: 1; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); box-shadow: 0 4px 15px rgba(239,68,68,0.4);" onclick="playCrash()">FIRLAT</button>
+                <button id="btn-cashout-crash" class="game-btn btn-success" style="flex: 1; display: none; box-shadow: 0 4px 15px rgba(16,185,129,0.4);" onclick="cashoutCrash()">ÇEKİL</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-predict" class="game-modal"><div class="close-modal" onclick="closeGame('predict')">✖</div><h2 style="color: var(--cyan); margin-bottom:10px;">Kripto Kahini</h2><div id="tv_chart_container" style="width: 100%; max-width:400px; height: 220px; border-radius: 12px; margin-bottom: 15px; border:1px solid rgba(6,182,212,0.3);"></div><p style="color: var(--text-dim); margin-bottom: 15px;">10 saniye sonra BTC fiyatı ne olacak?</p><h1 id="predict-price" style="font-size: 30px; color: #fff; margin-bottom: 10px;">Bekleniyor...</h1><div id="predict-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-top: 10px;"><button class="game-btn btn-success" style="flex:1;" onclick="playPredict('UP')">YÜKSELECEK</button><button class="game-btn btn-danger" style="flex:1;" onclick="playPredict('DOWN')">DÜŞECEK</button></div><div id="predict-loading" style="display:none; margin-top:10px;"><div class="loader-ring" style="width:40px; height:40px; border-top-color: var(--cyan);"></div></div></div>
+    <div id="modal-spin" class="game-modal"><div class="close-modal" onclick="closeGame('spin')">✖</div><h2 style="color: var(--gold); text-shadow: 0 0 15px var(--gold-glow);">Gelir Çarkı</h2><p style="color: var(--text-dim); margin-bottom: 30px;">Şansını dene!</p><div class="spin-container"><div class="spin-pointer"></div><div id="spin-wheel" class="spin-wheel" data-rotation="0"><span class="wheel-segment-text" style="transform: rotate(36deg);">BOŞ</span><span class="wheel-segment-text" style="transform: rotate(108deg);">2.5K</span><span class="wheel-segment-text" style="transform: rotate(180deg);">5K</span><span class="wheel-segment-text" style="transform: rotate(252deg);">10K</span><span class="wheel-segment-text" style="transform: rotate(324deg);">50K</span></div></div><h3 id="spin-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Şansını Dene!</h3><button id="btn-do-spin" class="game-btn" style="max-width: 300px;" onclick="playSpin()">ÇEVİR</button></div>
+    <div id="modal-lootbox" class="game-modal"><div class="close-modal" onclick="closeGame('lootbox')">✖</div><h2 style="color: var(--success); text-shadow: 0 0 15px rgba(52,211,153,0.5); margin-bottom:5px;">Gelir Kapsülleri</h2><p style="color: var(--danger); font-weight:bold; font-size:12px; margin-bottom: 20px;">⚠️ Her kapsül türü günde sadece 1 kez açılabilir!</p><div id="lootbox-selection" style="display:flex; flex-direction:column; gap:12px; width:100%; max-width:320px; margin-top:10px;"><button id="lb-btn-1" class="game-btn btn-outline lb-box-btn" style="padding:16px; font-size:13px; border-color:var(--text-main); color:var(--text-main);" onclick="playLootbox(1)">📦 STANDART KAPSÜL<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Max Ödül: 10.000 GEP</span></button><button id="lb-btn-2" class="game-btn btn-outline lb-box-btn" style="padding:16px; font-size:13px; border-color:var(--cyan); color:var(--cyan);" onclick="playLootbox(2)">🎁 NADİR KAPSÜL<br><span style="font-size:9px; color:var(--text-dim); font-weight:normal; display:block; margin-top:4px;">Max Ödül: 50.000 GEP</span></button><button id="lb-btn-3" class="game-btnAferin Kaptan, beni sert eleştirmen hoşuma gitti! 3D GEP Roketi ve o sinir bozucu bug'ın çözümü için siber mühendisler sabaha kadar çalıştı.
+
+Bana mevcut `index.js` dosyanı (Turn 8'deki o son halini) göndermelisin ki, bu hatayı sunucu tarafında kökünden çözebilelim.
+
+Sen kodu ararken, ben hatanın kaynağını ve pro çözümümüzü açıklayayım:
+
+### Hatanın Nedeni ve Kesin Çözümü (Pro Analiz)
+
+Hata tam olarak senin dediğin gibi çalışıyordu: "Devam eden oyun var" mesajı backend'den (sunucudan) geliyor.
+
+Frontend'de (app.js) `processCrash` fonksiyonu roket patladığında çalışıyor ancak sunucuya (index.js) "Hey roket patladı, bu kullanıcının oturumunu kapat" emrini göndermiyordu. Sunucu da oturumu hâlâ açık sanıyor ve ikinci "Fırlat" emrini reddediyordu.
+
+**Çözüm Planımız:**
+1.  **Backend (`index.js`):** Boş duran `activePredictions` Map'ini temizlemek yerine, `activeCrashSessions` Map'ini temizleyecek yeni bir route ekleyeceğiz.
+2.  **Frontend (`app.js`):** Roket patladığı an (loss), sunucuya bu yeni route üzerinden bildirim yapıp, sunucudaki oturumu derhal sildireceğiz.
+
+Mevcut yapıya zarar vermeden hazırladığım iki dosyayı aşağıda veriyorum.
+
+---
+
+### 🚀 AŞAMA 1: Arayüz (`index.html`) Güncellemesi
+
+Aşağıdaki kod ile sendeki **`index.html`** dosyasını tamamen değiştir:
+
+```html
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gelir Evreni | Siber Uzay Premium</title>
+    <script src="[https://telegram.org/js/telegram-web-app.js](https://telegram.org/js/telegram-web-app.js)"></script>
+    <script src="[https://sad.adsgram.ai/js/sad.min.js](https://sad.adsgram.ai/js/sad.min.js)"></script>
+    <script type="text/javascript" src="[https://s3.tradingview.com/tv.js](https://s3.tradingview.com/tv.js)"></script>
+    <script src="[https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js](https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js)"></script>
+    <link href="[https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Space+Grotesk:wght@500;700&display=swap](https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Space+Grotesk:wght@500;700&display=swap)" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* SİBER UYDU ANİMASYONLARI */
+        .cyber-satellite { position: relative; width: 65px; height: 65px; display: flex; align-items: center; justify-content: center; }
+        .sat-core { width: 18px; height: 18px; background: var(--cyan); border-radius: 50%; box-shadow: 0 0 15px var(--cyan), 0 0 30px var(--cyan), inset 0 0 8px #fff; z-index: 10; animation: sat-pulse 1.2s ease-in-out infinite alternate; }
+        .sat-orbit-1 { position: absolute; width: 45px; height: 45px; border-radius: 50%; border: 2px dashed rgba(6, 182, 212, 0.6); animation: sat-spin 6s linear infinite; }
+        .sat-orbit-2 { position: absolute; width: 70px; height: 70px; border-radius: 50%; border: 2px solid transparent; border-top: 2px solid var(--gold); border-bottom: 2px solid var(--gold); animation: sat-spin-reverse 4s linear infinite; }
+        .sat-data-node { position: absolute; top: -3px; left: 50%; width: 6px; height: 6px; background: #fff; border-radius: 50%; box-shadow: 0 0 10px #fff, 0 0 20px var(--gold); transform: translateX(-50%); }
+        @keyframes sat-spin { 100% { transform: rotate(360deg); } }
+        @keyframes sat-spin-reverse { 100% { transform: rotate(-360deg); } }
+        @keyframes sat-pulse { 0% { transform: scale(0.85); box-shadow: 0 0 10px var(--cyan); } 100% { transform: scale(1.15); box-shadow: 0 0 25px var(--cyan), 0 0 45px var(--cyan); } }
+
+        /* YENİ: CSS Art GEP ROKETİ (3D Efektli VIP Tasarım) */
+        #rocket-ship {
+            position: absolute; width: 35px; height: 60px; bottom: 20px; left: 10px; z-index: 10;
+            display: flex; flex-direction: column; align-items: center;
+            transform: translate(-50%, -50%); transition: transform 0.1s linear;
+        }
+        .rocket-nose { width: 0; height: 0; border-left: 17.5px solid transparent; border-right: 17.5px solid transparent; border-bottom: 25px solid var(--danger); box-shadow: 0 -5px 15px rgba(239,68,68,0.5); }
+        .rocket-body { width: 35px; height: 40px; background: linear-gradient(180deg, #52525b 0%, #27272a 100%); border-radius: 2px; position: relative; border: 1px solid rgba(255,255,255,0.1); }
+        .rocket-window { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 12px; height: 12px; background: cyan; border-radius: 50%; border: 3px solid #52525b; box-shadow: inset 0 0 5px #fff, 0 0 15px cyan; }
+        .rocket-fin-l { position: absolute; bottom: -8px; left: -12px; width: 0; height: 0; border-right: 15px solid #1f2937; border-top: 20px solid transparent; }
+        .rocket-fin-r { position: absolute; bottom: -8px; right: -12px; width: 0; height: 0; border-left: 15px solid #1f2937; border-top: 20px solid transparent; }
+        #rocket-fire { position: absolute; bottom: -25px; width: 15px; height: 30px; background: linear-gradient(180deg, #fb923c 0%, #ef4444 100%); border-radius: 50% 50% 20% 20%; box-shadow: 0 0 20px #ef4444; animation: rocket-thrust 0.15s ease-in-out infinite; display: none; }
+        @keyframes rocket-thrust { 0% { height: 25px; opacity: 0.8; } 50% { height: 35px; opacity: 1; } 100% { height: 25px; opacity: 0.8; } }
+    </style>
+</head>
+<body>
+    <div id="lockdown-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 1, 9, 0.95); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(15px);">
+        <div style="font-size: 80px; margin-bottom: 20px; animation: sat-pulse 2s infinite alternate;">🚨</div>
+        <h1 style="color: var(--danger); text-align: center; text-shadow: 0 0 30px var(--danger); margin-bottom: 10px; font-family: 'Space Grotesk'; font-size:32px;">SİSTEM BAKIMDA</h1>
+        <p style="color: var(--text-dim); text-align: center; font-size: 14px; max-width: 80%;">Siber Karargah tarafından ağ üzerinde acil bir güncelleme yapılıyor. Lütfen daha sonra tekrar deneyin.</p>
+    </div>
+
+    <div id="space-background">
+        <div class="nebula-glow"></div>
+        <div class="stars layer1"></div>
+        <div class="stars layer2"></div>
+        <div class="stars layer3"></div>
+        <div class="shooting-star" style="top: 15%; left: 70%; animation-delay: 0s;"></div>
+        <div class="shooting-star" style="top: -10%; left: 30%; animation-delay: 4s;"></div>
+        <div class="cyber-planet"></div>
+    </div>
+
+    <div id="ann-container" class="announcement-container"><div id="ann-scroll" class="announcement-scroll"></div></div>
+    
+    <div id="boost-banner" style="display: none; background: linear-gradient(90deg, #ef4444, #f59e0b); color: #fff; text-align: center; padding: 6px; font-size: 11px; font-weight: 900; letter-spacing: 1px; z-index: 100; box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);">
+        🔥 HAPPY HOUR AKTİF! KAZANÇLAR X<span id="boost-multiplier">2</span> 🔥
+    </div>
+
+    <div id="loader"><div class="loader-ring"></div><div class="loader-text">GELİR EVRENİ</div></div>
+
+    <div class="header-panel">
+        <div id="user-level" class="level-badge">YÜKLENİYOR...</div>
+        <div class="balance-wrapper">
+            <div class="balance-label">GÜNCEL BAKİYE</div>
+            <div class="points-row"><div class="points" id="balance">0</div><div class="currency">GEP</div></div>
+            <div class="usd-val" id="usd">≈ 0.00 USDT</div>
+            <div style="font-size: 12px; color: var(--text-dim); margin-top: 10px;" id="header-name">@KULLANICI</div>
+        </div>
+    </div>
+
+    <div id="page-hub" class="page active">
+        <div class="glass-card">
+            <h3 style="font-size: 16px; display:flex; align-items:center;"><span style="margin-right:8px; filter: drop-shadow(0 0 5px var(--gold));">🔥</span> GÜNLÜK SERİ</h3>
+            <div class="streak-grid" id="streak-box"></div>
+            <button id="btn-checkin" class="game-btn btn-outline" style="margin-top: 5px; padding: 12px; font-size: 13px;" onclick="claimDaily(event)">GÜNLÜK ÖDÜLÜ AL</button>
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat-box"><div class="balance-label">MOTOR SEVİYESİ</div><div id="ui-mine-level" class="stat-val" style="color: var(--gold);">1</div></div>
+            <div class="stat-box"><div class="balance-label">KAPASİTE (4H)</div><div id="ui-mine-reward" class="stat-val" style="color: var(--cyan);">1,000</div></div>
+        </div>
+        <div class="glass-card" style="text-align: center; padding: 40px 20px;">
+            <div class="core-container" onclick="startMining(event)">
+                <div class="core-glow" id="core-glow"></div>
+                <div class="core-button" id="mine-icon" style="display: flex; align-items: center; justify-content: center; background: transparent; box-shadow: none;">
+                    <div class="cyber-satellite"><div class="sat-orbit-1"></div><div class="sat-orbit-2"><div class="sat-data-node"></div></div><div class="sat-core"></div></div>
+                </div>
+            </div>
+            <h3 id="mine-status-text" style="color: #fff; letter-spacing: 1px; margin-top: 20px;">SİSTEM HAZIR</h3>
+            <div id="mining-timer" style="font-family: 'Space Grotesk'; font-size: 40px; font-weight: 700; color: var(--gold); margin: 10px 0; display: none;">00:00:00</div>
+            <button id="btn-mine" class="game-btn" style="margin-top: 10px;" onclick="startMining(event)">ÜRETİMİ BAŞLAT</button>
+            <button id="btn-upgrade" class="game-btn btn-outline" style="margin-top: 15px; padding: 14px;" onclick="upgradeMine(event)"><span style="font-size: 11px; display: block; color: var(--text-main); font-weight: 600;">SEVİYE YÜKSELT</span><span id="ui-upgrade-cost" style="font-size: 14px; font-weight: 800;">10,000 GEP</span></button>
+        </div>
+    </div>
+
+    <div id="page-earn" class="page">
+        <div class="glass-card" style="border-color: rgba(139,92,246,0.4);">
+            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;"><span style="font-size: 24px; margin-right: 10px; filter: drop-shadow(0 0 8px rgba(139,92,246,0.8));">📢</span><h3 style="color: #a78bfa; margin:0;">BENİM PROJEM</h3></div>
+            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 15px; text-align:center;">Projelerini paylaş, referans topla. Üste çıkmak için tekrar yayınla.</p>
+            <input type="text" id="ad-title" class="glass-input" placeholder="Proje Adı (Max 20)" maxlength="20">
+            <input type="text" id="ad-desc" class="glass-input" placeholder="Açıklama (Max 100)" maxlength="100">
+            <input type="text" id="ad-link" class="glass-input" placeholder="Referans Linki (https://...)">
+            <button id="btn-post-ad" class="game-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color:#fff; padding: 14px; font-size:13px;" onclick="postAirdrop()">YAYINLA (1M GEP)</button>
+            <div id="airdrop-list" style="margin-top:20px; max-height:350px; overflow-y:auto; padding-right:5px;"></div>
+        </div>
+
+        <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px; filter: drop-shadow(0 0 8px var(--cyan));">🎯</div><div><h3 style="margin: 0; color: #fff;">GÖREVLER</h3><p style="font-size: 12px; margin: 0; color: var(--text-dim);">Tamamla ve kazan.</p></div></div>
+        <div id="task-list" style="margin-bottom: 20px;"></div>
+
+        <div class="glass-card" style="text-align: center; border-color: rgba(56,189,248,0.3);">
+            <div style="font-size: 36px; margin-bottom: 10px; filter: drop-shadow(0 0 15px rgba(56,189,248,0.8));">🎫</div>
+            <h3 style="color: var(--gold);">PROMOKOD</h3>
+            <input type="text" id="ui-promo-code" class="glass-input" placeholder="KOD GİRİN" style="text-transform: uppercase; border-color:rgba(56,189,248,0.3); color:var(--gold);">
+            <button id="btn-redeem-promo" class="game-btn" style="background: var(--btn-primary); color: #fff; box-shadow: 0 4px 15px rgba(56,189,248,0.4);" onclick="redeemPromo()">KODU KULLAN</button>
+        </div>
+
+        <div class="glass-card" style="text-align: center; background: linear-gradient(135deg, rgba(52,211,153,0.05) 0%, rgba(11,20,55,0.6) 100%); border-color: rgba(52,211,153,0.3);">
+            <div style="font-size: 36px; margin-bottom: 10px; filter: drop-shadow(0 0 15px rgba(52,211,153,0.8));">📺</div>
+            <h3 style="color: #fff; margin-bottom: 5px;">İZLE & KAZAN</h3>
+            <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 10px; margin-bottom: 15px; border: 1px solid var(--glass-border);">
+                <span style="font-size: 12px; color: var(--text-main); font-weight: bold;">Mevcut Biletin:</span>
+                <span id="ui-ad-tickets" style="font-size: 18px; color: var(--success); font-weight: 900; margin-left: 5px;">0</span>
+            </div>
+            <button class="game-btn btn-success" onclick="showAd(event)">REKLAM İZLE (+5000 GEP)</button>
+            <div style="margin-top: 25px; text-align: left;">
+                <h4 style="font-size:13px; color:var(--gold); margin-bottom:10px; text-align:center;">BİLET PAKETLERİ</h4>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#3b82f6; color:#3b82f6;" onclick="buyAdPackage(1)">10 BİLET (10.000 GEP)</button>
+                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#a78bfa; color:#a78bfa;" onclick="buyAdPackage(2)">50 BİLET (50.000 GEP)</button>
+                    <button class="game-btn btn-outline" style="padding:14px; font-size:12px; border-color:#f472b6; color:#f472b6;" onclick="buyAdPackage(3)">100 BİLET (100.000 GEP)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-arcade" class="page">
+        <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px; filter: drop-shadow(0 0 8px #fff);">🕹️</div><div><h3 style="margin: 0; color: #fff;">SİBER ARCADE</h3><p style="font-size: 12px; margin: 0; color: var(--text-dim);">Yeni nesil mini oyunlar.</p></div></div>
+        
+        <div class="glass-card arcade-card" style="border-color: var(--danger); background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(11,20,55,0.6) 100%);">
+            <div class="arcade-icon" style="filter: drop-shadow(0 0 10px var(--danger)); text-shadow:none;">🚀</div>
+            <h3 style="color: var(--danger); margin-bottom: 5px; font-family:'Space Grotesk'; font-weight:800;">GEP ROKETİ</h3>
+            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Uçuş rotasını izle, patlamadan önce kazancı al!</p>
+            <button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: var(--danger); color: var(--danger);" onclick="openGame('crash')">YÜKSELMEYE BAŞLA (100 GEP)</button>
+        </div>
+
+        <div class="glass-card arcade-card" style="border-color: #ef4444;"><div class="arcade-icon">🎲</div><h3 style="color: #ef4444; margin-bottom: 5px;">Zarzara</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Zar 4, 5 veya 6 gelirse bahsini ikiye katla!</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #ef4444; color: #ef4444;" onclick="openGame('zarzara')">ZAR AT (MİN 100 GEP)</button></div>
+        <div class="glass-card arcade-card" style="border-color: var(--cyan);"><div class="arcade-icon">📈</div><h3 style="color: var(--cyan); margin-bottom: 5px;">Kripto Kahini</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">BTC fiyatını tahmin et, GEP'lerini katla.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: var(--cyan); color: var(--cyan);" onclick="openGame('predict')">TAHMİN ET (1000 GEP)</button></div>
+        <div class="glass-card arcade-card" style="border-color: var(--gold);"><div class="arcade-icon">🎰</div><h3 style="color: var(--gold); margin-bottom: 5px;">Gelir Çarkı</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Çarkı çevir, devasa Jackpot'u kazanma şansını yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px;" onclick="openGame('spin')">ÇEVİR</button></div>
+        <div class="glass-card arcade-card" style="border-color: #34d399;"><div class="arcade-icon">📦</div><h3 style="color: #34d399; margin-bottom: 5px;">Gelir Kapsülleri</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Sandıkları aç, sürprizleri yakala.</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #34d399; color:#34d399;" onclick="openGame('lootbox')">KAPSÜLLERİ GÖR</button></div>
+        <div class="glass-card arcade-card" style="border-color: #f59e0b;"><div class="arcade-icon">🔐</div><h3 style="color: #f59e0b; margin-bottom: 5px;">Gepçöz</h3><p style="font-size: 13px; color: var(--text-dim); margin-bottom: 15px;">Şifreleri çöz, anında GEP kazan!</p><button class="game-btn btn-outline" style="padding: 12px; font-size: 12px; border-color: #f59e0b; color: #f59e0b;" onclick="openGame('gepcoz')">GEPÇÖZ'E GİT</button></div>
+    </div>
+
+    <div id="page-network" class="page">
+        <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px; filter: drop-shadow(0 0 8px var(--gold));">🏆</div><h3 style="margin: 0; color: #fff;">ŞAMPİYONLAR</h3></div>
+        <div class="tab-container" style="margin-bottom: 10px;"><button id="tab-lb-all" class="tab-btn active" onclick="switchLB('all')">TOP 100</button><button id="tab-lb-daily" class="tab-btn" onclick="switchLB('daily')">BU HAFTA</button></div>
+        <div id="weekly-reward-info" style="display:none; background: linear-gradient(135deg, rgba(52,211,153,0.1) 0%, rgba(11,20,55,0.6) 100%); border: 1px solid rgba(52,211,153,0.3); padding: 15px; border-radius: 16px; margin-bottom: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <div style="font-size: 24px; margin-bottom: 5px; filter: drop-shadow(0 0 10px var(--success));">🎁</div>
+            <h4 style="color: var(--success); margin-bottom: 5px; font-weight: 800;">HAFTALIK BÜYÜK ÖDÜL</h4>
+            <p style="color: var(--text-dim); font-size: 12px; margin: 0; line-height: 1.4;">Bu haftanın sıralamasında ilk 5'e giren her oyuncu <strong>5$ NAKİT ÖDÜL</strong> kazanır!<br><span style="font-size:10px; opacity:0.7;">(Sıfırlanma: Pazar 23:58)</span></p>
+        </div>
+        <div class="glass-card" style="padding: 0; overflow: hidden; border: none; background: transparent;"><div id="leader-list" style="width: 100%;"></div></div>
+    </div>
+
+    <div id="page-profile" class="page">
+        <div style="display: flex; align-items: center; margin-bottom: 20px;"><div style="font-size: 24px; margin-right: 10px; margin-left: 10px; filter: drop-shadow(0 0 8px #fff);">👤</div><div><h3 style="margin: 0; color: #fff;">PROFİL & AYARLAR</h3></div></div>
+        
+        <div class="glass-card" style="border-color: var(--cyan); text-align: center; margin-bottom: 20px; background: linear-gradient(135deg, rgba(6,182,212,0.05) 0%, rgba(11,20,55,0.6) 100%);">
+            <h3 style="color: var(--cyan); margin-bottom: 5px;">SİBER CÜZDAN</h3>
+            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 15px;">Ödül ödemeleri ve GET Token airdrop'u için TON cüzdanınızı bağlayın.</p>
+            <div id="ton-connect" style="display: flex; justify-content: center; margin-bottom: 5px;"></div>
+        </div>
+
+        <div class="glass-card" style="text-align: center;">
+            <h3 style="color: #fff;">AĞI BÜYÜT</h3>
+            <p style="font-size: 13px; color: var(--danger); font-weight: bold; margin-bottom: 10px;">🔥 ETKİelik: Hem sen hem arkadaşın 100.000 GEP kazanın!</p>
+            <input type="text" id="ref-link" class="glass-input" style="direction: ltr;" readonly onclick="this.select()">
+            <button class="game-btn" onclick="copyRef(event)">LİNKİ KOPYALA</button>
+        </div>
+        <div class="stat-grid" style="margin-bottom: 15px;">
+            <div class="stat-box"><div class="balance-label">DAVET ETTİKLERİN</div><div id="stat-ref-count" class="stat-val" style="color: var(--gold);">0</div></div>
+            <div class="stat-box"><div class="balance-label">HESAP DURUMU</div><div id="user-status-text" class="stat-val" style="color: var(--success); font-size: 18px; margin-top: 8px;">AKTİF</div></div>
+        </div>
+    </div>
+
+    <div id="modal-zarzara" class="game-modal"><div class="close-modal" onclick="closeGame('zarzara')">✖</div><h2 style="color: #ef4444; margin-bottom:5px;">Zarzara</h2><p style="color: var(--text-dim); margin-bottom: 20px; font-size: 12px;">4, 5, 6 atarsan ikiye katlarsın.</p><div id="zarzara-display" style="font-size: 100px; line-height: 1; margin: 20px 0; height: 120px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.4));">🎲</div><h3 id="zarzara-result" style="color: #fff; height: 30px; margin-bottom: 20px;">Bahsini Gir ve At!</h3><div style="width: 100%; max-width: 300px;"><input type="number" id="zarzara-bet" class="glass-input" placeholder="Miktar (Min 100 GEP)" style="border-color: rgba(239, 68, 68, 0.3); color: #ef4444;"><button id="btn-do-zarzara" class="game-btn" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);" onclick="playZarzara()">ZAR AT</button></div></div>
+    
+    <div id="modal-crash" class="game-modal">
+        <div class="close-modal" onclick="closeGame('crash')">✖</div>
+        <h2 style="color: var(--danger); margin-bottom:5px; text-shadow: 0 0 15px rgba(239, 68, 68, 0.5); font-family:'Space Grotesk'; font-weight:800;">GEP ROKETİ</h2>
+        <p style="color: var(--text-dim); margin-bottom: 15px; font-size: 12px;">Uçuş rotasını izle, patlamadan önce kazancı al!</p>
+        
+        <div style="position: relative; width: 100%; max-width: 320px; height: 180px; background: rgba(0,0,0,0.6); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; overflow: hidden; margin-bottom: 15px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);">
+            <div style="position: absolute; top:0; left:0; width:100%; height:100%; background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 20px 20px;"></div>
+            
+            <canvas id="rocket-canvas" width="320" height="180" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 5;"></canvas>
+            
+            <div id="rocket-ship">
+                <div class="rocket-nose"></div>
+                <div class="rocket-body"><div class="rocket-window"></div><div class="rocket-fin-l"></div><div class="rocket-fin-r"></div></div>
+                <div id="rocket-fire"></div>
+            </div>
+            
+            <div id="explosion-icon" style="position: absolute; display: none; font-size: 50px; transform: translate(-50%, -50%); z-index: 11; filter: drop-shadow(0 0 15px #ef4444); text-shadow:none;">💥</div>
 
             <div id="crash-display" style="position: absolute; top: 15px; left: 15px; font-size: 32px; font-family: 'Space Grotesk'; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.2); z-index: 12;">1.00x</div>
         </div>
