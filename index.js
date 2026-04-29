@@ -43,7 +43,7 @@ const gameConfigSchema = new mongoose.Schema({
 const GameConfig = mongoose.models.GameConfig || mongoose.model('GameConfig', gameConfigSchema);
 
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v10.1 - Cüzdan Entegrasyonlu Master Aktif"))
+    .then(() => console.log("✅ Gelir Evreni v10.2 - CRASH MOTORU AKTİF"))
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -54,6 +54,7 @@ app.post('/webhook', (req, res) => {
 // ORTAK FONKSİYONLAR VE RADAR SİSTEMİ
 const sharedState = { activeDrop: null };
 const activePredictions = new Map();
+const activeCrashSessions = new Map(); // YENİ: CRASH OYUNU İÇİN OTURUM YÖNETİMİ
 
 const radarLogs = [];
 function addRadarLog(action) {
@@ -364,7 +365,6 @@ const secureRoute = async (req, res, next) => {
     next();
 };
 
-// --- CÜZDAN KAYDETME ROTASI EKLENDİ ---
 app.post('/api/user/save-wallet', secureRoute, async (req, res) => {
     try {
         const { walletAddress } = req.body;
@@ -616,6 +616,58 @@ app.post('/api/tasks/complete', secureRoute, async (req, res) => {
     addPoints(user, finalReward); await user.save(); 
     addRadarLog(`🎯 @${user.username} Görev tamamladı: ${task.title}`);
     res.json({ success: true, points: user.points }); 
+});
+
+// --- YENİ: SİBER ÇÖKÜŞ (CRASH) ROTASI ---
+app.post('/api/arcade/crash/start', secureRoute, async (req, res) => {
+    const { bet } = req.body; 
+    const amount = parseInt(bet);
+    if (!amount || isNaN(amount) || amount < 100) return res.json({ success: false, message: "Minimum bahis 100 GEP." });
+    
+    if (activeCrashSessions.has(req.realTelegramId)) {
+        return res.json({ success: false, message: "Devam eden oyununuz var!" });
+    }
+
+    const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: amount } }, { $inc: { points: -amount } }, { new: true });
+    if (!user) return res.json({ success: false, message: "Yetersiz GEP bakiye!" }); 
+    
+    let cPoint = 1.00;
+    const rand = Math.random();
+    
+    // %5 İhtimalle anında patlar (Kasa kârı)
+    if (rand < 0.05) {
+        cPoint = 1.00;
+    } else {
+        // Crash Matematiği
+        cPoint = (1.00 / (1.00 - (Math.random() * 0.99))).toFixed(2);
+        // Çok uçuk değerleri tırpanla
+        if (cPoint > 50.00) cPoint = (15.00 + Math.random() * 20.00).toFixed(2); 
+    }
+
+    activeCrashSessions.set(req.realTelegramId, { bet: amount, crashPoint: parseFloat(cPoint) });
+    
+    addRadarLog(`🚀 @${user.username} Çöküş oyunu başlattı. (Bahis: ${amount})`);
+    res.json({ success: true, points: user.points, crashPoint: cPoint });
+});
+
+app.post('/api/arcade/crash/cashout', secureRoute, async (req, res) => {
+    const session = activeCrashSessions.get(req.realTelegramId);
+    if (!session) return res.json({ success: false, message: "Aktif oyun bulunamadı." });
+    
+    const requestedMult = parseFloat(req.body.multiplier);
+    activeCrashSessions.delete(req.realTelegramId);
+    
+    if (requestedMult <= session.crashPoint && requestedMult >= 1.00) {
+        const winAmount = Math.floor(session.bet * requestedMult);
+        const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId }, { $inc: { points: winAmount } }, { new: true });
+        
+        addRadarLog(`🪂 @${user.username} Çöküşten çekildi! Kazanç: ${winAmount} GEP (${requestedMult}x)`);
+        if (winAmount >= 50000) broadcastBigWin(user.username, user.firstName, "Siber Çöküş", winAmount);
+        
+        return res.json({ success: true, winAmount, points: user.points });
+    } else {
+        return res.json({ success: false, message: "Roket zaten patladı!" });
+    }
 });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
