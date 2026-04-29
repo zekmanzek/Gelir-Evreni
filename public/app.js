@@ -9,12 +9,12 @@ const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "28938" }) 
 let tvWidgetCreated = false;
 
 const hScript = document.createElement('script');
-hScript.src = 'https://js.hcaptcha.com/1/api.js?render=explicit';
+hScript.src = '[https://js.hcaptcha.com/1/api.js?render=explicit](https://js.hcaptcha.com/1/api.js?render=explicit)';
 hScript.async = true; hScript.defer = true; document.head.appendChild(hScript);
 
 let tonConnectUI;
 try {
-    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://gelir-evreni.onrender.com/tonconnect-manifest.json', buttonRootId: 'ton-connect' });
+    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: '[https://gelir-evreni.onrender.com/tonconnect-manifest.json](https://gelir-evreni.onrender.com/tonconnect-manifest.json)', buttonRootId: 'ton-connect' });
     tonConnectUI.onStatusChange(async (wallet) => {
         if (wallet) {
             const address = wallet.account.address;
@@ -84,32 +84,11 @@ async function joinProject(projectId, url) {
     }
 }
 
-async function loadAirdrops() {
-    try {
-        const res = await fetch(`${API}/api/airdrop/list`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return;
-        const listDiv = document.getElementById('airdrop-list');
-        if(data.success && data.links.length > 0) { listDiv.innerHTML = data.links.map(l => { let btnHtml = ''; if (l.isOwner) { btnHtml = `<button class="btn-join" style="background:#475569; cursor:not-allowed;" disabled>SENİN PROJEN</button>`; } else if (l.hasJoined) { btnHtml = `<button class="btn-join" style="background:#10b981; cursor:not-allowed; opacity:0.6;" disabled>✅ KATILINDI</button>`; } else { btnHtml = `<button class="btn-join" onclick="joinProject('${l._id}', '${l.url}')">🚀 KATIL (+10.000 GEP)</button>`; } return `<div class="airdrop-item" id="ad-${l._id}"><div style="flex:1;"><div class="ad-user">@${l.username}</div><div class="ad-title">${l.title}</div><div class="ad-desc">${l.description}</div>${btnHtml}</div></div>`; }).join(''); } else { listDiv.innerHTML = "<div style='text-align:center; color:var(--text-dim); font-size:12px; padding:10px;'>Henüz hiç proje eklenmemiş. İlk sen ol!</div>"; }
-    } catch(e) {}
-}
-
-async function postAirdrop() {
-    const btn = document.getElementById('btn-post-ad'); if(btn && btn.disabled) return;
-    triggerHaptic('medium'); const title = document.getElementById('ad-title').value.trim(); const desc = document.getElementById('ad-desc').value.trim(); const url = document.getElementById('ad-link').value.trim();
-    if(!title || !desc || !url) return tg.showAlert("Tüm alanları doldurmalısın.");
-    if(!url.startsWith("http://") && !url.startsWith("https://")) return tg.showAlert("Geçerli bir link (https:// veya http://) girmelisin.");
-    if(btn) { btn.disabled = true; btn.style.opacity = "0.5"; btn.innerText = "YÜKLENİYOR..."; }
-    try {
-        const res = await fetch(`${API}/api/airdrop/share`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ title, description: desc, url, initData: tg.initData }) });
-        const data = await res.json(); if (checkLockdown(data)) return;
-        if(data.success) { user.points = data.points; updateUI(); triggerHaptic('success'); tg.showAlert(data.message); document.getElementById('ad-title').value = ''; document.getElementById('ad-desc').value = ''; document.getElementById('ad-link').value = ''; loadAirdrops(); } else { triggerHaptic('error'); tg.showAlert(data.message || "Yetersiz GEP"); }
-    } catch(e) { tg.showAlert("Bağlantı hatası oluştu!"); } finally { if(btn) { btn.disabled = false; btn.style.opacity = "1"; btn.innerText = "YAYINLA"; } }
-}
-
+async function loadAirdrops() { try { const res = await fetch(`${API}/api/airdrop/list`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; const listDiv = document.getElementById('airdrop-list'); if(data.success && data.links.length > 0) { listDiv.innerHTML = data.links.map(l => { let btnHtml = ''; if (l.isOwner) { btnHtml = `<button class="btn-join" style="background:#475569; cursor:not-allowed;" disabled>SENİN PROJEN</button>`; } else if (l.hasJoined) { btnHtml = `<button class="btn-join" style="background:#10b981; cursor:not-allowed; opacity:0.6;" disabled>✅ KATILINDI</button>`; } else { btnHtml = `<button class="btn-join" onclick="joinProject('${l._id}', '${l.url}')">🚀 KATIL (+10.000 GEP)</button>`; } return `<div class="airdrop-item" id="ad-${l._id}"><div style="flex:1;"><div class="ad-user">@${l.username}</div><div class="ad-title">${l.title}</div><div class="ad-desc">${l.description}</div>${btnHtml}</div></div>`; }).join(''); } else { listDiv.innerHTML = "<div style='text-align:center; color:var(--text-dim); font-size:12px; padding:10px;'>Henüz hiç proje eklenmemiş. İlk sen ol!</div>"; } } catch(e) {} }
+async function postAirdrop() { const btn = document.getElementById('btn-post-ad'); if(btn && btn.disabled) return; triggerHaptic('medium'); const title = document.getElementById('ad-title').value.trim(); const desc = document.getElementById('ad-desc').value.trim(); const url = document.getElementById('ad-link').value.trim(); if(!title || !desc || !url) return tg.showAlert("Tüm alanları doldurmalısın."); if(!url.startsWith("http://") && !url.startsWith("https://")) return tg.showAlert("Geçerli bir link (https:// veya http://) girmelisin."); if(btn) { btn.disabled = true; btn.style.opacity = "0.5"; btn.innerText = "YÜKLENİYOR..."; } try { const res = await fetch(`${API}/api/airdrop/share`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ title, description: desc, url, initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; if(data.success) { user.points = data.points; updateUI(); triggerHaptic('success'); tg.showAlert(data.message); document.getElementById('ad-title').value = ''; document.getElementById('ad-desc').value = ''; document.getElementById('ad-link').value = ''; loadAirdrops(); } else { triggerHaptic('error'); tg.showAlert(data.message || "Yetersiz GEP"); } } catch(e) { tg.showAlert("Bağlantı hatası oluştu!"); } finally { if(btn) { btn.disabled = false; btn.style.opacity = "1"; btn.innerText = "YAYINLA"; } } }
 async function refreshTasks() { const tRes = await fetch(`${API}/api/tasks`); const tData = await tRes.json(); tasks = tData.tasks || []; renderTasks(); }
 function renderTasks() { const cont = document.getElementById('task-list'); if(!cont) return; cont.innerHTML = tasks.map(tData => { const isDone = user.completedTasks.includes(tData.taskId); return `<div class="task-card" style="${isDone ? 'opacity:0.5;' : ''}"><div><div style="font-weight: 800; font-size:14px; margin-bottom: 4px;">${tData.title}</div><div style="font-family: 'Space Grotesk'; color: ${isDone ? 'var(--text-dim)' : 'var(--gold)'}; font-weight: 700;">+${tData.reward} GEP</div></div><button id="task-btn-${tData.taskId}" class="game-btn ${isDone ? '' : 'btn-outline'}" style="${isDone ? 'background:#1e293b; color:#64748b; padding:10px 20px; width:auto; font-size:12px; box-shadow:none;' : 'padding:10px 20px; width:auto; font-size:12px;'}" ${isDone ? 'disabled' : ''} onclick="completeTask(event, '${tData.taskId}','${tData.target}')">${isDone ? '✅ BİTTİ' : '🚀 GİT'}</button></div>`; }).join(''); }
 async function completeTask(e, tid, link) { const btn = document.getElementById(`task-btn-${tid}`); if (!btn) return; if (btn.innerText.includes("GİT")) { triggerHaptic('light'); try { tg.openLink(link); } catch(err) { window.open(link, '_blank'); } btn.innerText = "🔄 KONTROL ET"; btn.style.background = "#f59e0b"; btn.style.color = "#fff"; btn.classList.remove('btn-outline'); } else if (btn.innerText.includes("KONTROL ET")) { triggerHaptic('medium'); btn.disabled = true; btn.innerText = "⏳ BEKLENİYOR..."; btn.style.opacity = "0.6"; btn.style.background = "#10b981"; setTimeout(async () => { try { const res = await fetch(`${API}/api/tasks/complete`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ taskId: tid, initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; if(data.success) { triggerHaptic('success'); spawnFloatingText(e, "GÖREV TAMAM!", "var(--success)"); init(); } else { btn.innerText = "🚀 GİT"; btn.disabled = false; btn.style.opacity = "1"; btn.style.background = "transparent"; btn.classList.add('btn-outline'); } } catch(err) { btn.innerText = "🔄 KONTROL ET"; btn.disabled = false; btn.style.opacity = "1"; btn.style.background = "#f59e0b"; } }, 2000); } }
-
-let isBuyingPkg = false;
 async function buyAdPackage(pid) { if (isBuyingPkg) return; triggerHaptic('light'); let cost = pid === 1 ? 10000 : (pid === 2 ? 50000 : 100000); if (user.points < cost) return tg.showAlert("Yetersiz GEP Bakiye!"); isBuyingPkg = true; try { const res = await fetch(`${API}/api/buy-ad-package`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ packageId: pid, initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; if(data.success) { user.points = data.points; user.adTickets = data.adTickets; updateUI(); triggerHaptic('success'); tg.showAlert("Bilet Paketi Satın Alındı!"); } else { triggerHaptic('error'); tg.showAlert(data.message); } } catch (e) { tg.showAlert("Bağlantı hatası!"); } finally { isBuyingPkg = false; } }
 async function redeemPromo() { const btn = document.getElementById('btn-redeem-promo'); if (btn && btn.disabled) return; triggerHaptic('medium'); const codeInput = document.getElementById('ui-promo-code'); const code = codeInput.value.trim(); if(!code) return tg.showAlert("Lütfen bir kod girin."); if(btn) { btn.disabled = true; btn.style.opacity = "0.5"; } try { const res = await fetch(`${API}/api/redeem-promo`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ code: code, initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; if(data.success) { user.points = data.points; updateUI(); codeInput.value = ''; triggerHaptic('success'); spawnFloatingText(null, `+${data.reward} GEP`, "var(--success)"); tg.showAlert(`Tebrikler! ${data.reward} GEP Kazandın!`); } else { triggerHaptic('error'); tg.showAlert(data.message); } } catch (e) { tg.showAlert("Bağlantı hatası!"); } finally { if(btn) { btn.disabled = false; btn.style.opacity = "1"; } } }
 
@@ -117,13 +96,13 @@ let hcaptchaWidgetId;
 
 function openGame(game) { 
     triggerHaptic('light'); document.getElementById(`modal-${game}`).style.display = 'flex'; 
-    if(game === 'predict') { if(!tvWidgetCreated) { new TradingView.widget({ "width": "100%", "height": 220, "symbol": "BINANCE:BTCUSDT", "interval": "1", "timezone": "Etc/UTC", "theme": "dark", "style": "2", "locale": "tr", "enable_publishing": false, "backgroundColor": "rgba(0, 1, 9, 0)", "gridColor": "rgba(255, 255, 255, 0.05)", "hide_top_toolbar": true, "hide_legend": true, "save_image": false, "container_id": "tv_chart_container" }); tvWidgetCreated = true; } document.getElementById('predict-price').innerHTML = '<div class="loader-ring" style="width:25px;height:25px;border-width:2px;display:inline-block;"></div> Çekiliyor...'; document.getElementById('predict-buttons').style.display = 'none'; fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT').then(r => r.json()).then(d => { document.getElementById('predict-price').innerText = `Anlık: $${parseFloat(d.price).toFixed(2)}`; document.getElementById('predict-buttons').style.display = 'flex'; }).catch(e => { document.getElementById('predict-price').innerText = "Bağlantı Hatası"; }); } 
+    if(game === 'predict') { if(!tvWidgetCreated) { new TradingView.widget({ "width": "100%", "height": 220, "symbol": "BINANCE:BTCUSDT", "interval": "1", "timezone": "Etc/UTC", "theme": "dark", "style": "2", "locale": "tr", "enable_publishing": false, "backgroundColor": "rgba(0, 1, 9, 0)", "gridColor": "rgba(255, 255, 255, 0.05)", "hide_top_toolbar": true, "hide_legend": true, "save_image": false, "container_id": "tv_chart_container" }); tvWidgetCreated = true; } document.getElementById('predict-price').innerHTML = '<div class="loader-ring" style="width:25px;height:25px;border-width:2px;display:inline-block;"></div> Çekiliyor...'; document.getElementById('predict-buttons').style.display = 'none'; fetch('[https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT](https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT)').then(r => r.json()).then(d => { document.getElementById('predict-price').innerText = `Anlık: $${parseFloat(d.price).toFixed(2)}`; document.getElementById('predict-buttons').style.display = 'flex'; }).catch(e => { document.getElementById('predict-price').innerText = "Bağlantı Hatası"; }); } 
     if(game === 'spin') { document.getElementById('spin-result').innerText = "Şansını Dene!"; } 
     if(game === 'lootbox') { resetLootbox(); } 
     if(game === 'zarzara') { document.getElementById('zarzara-result').innerText = "Bahsini Gir ve At!"; document.getElementById('zarzara-display').innerText = "🎲"; }
     if(game === 'gepcoz') { document.getElementById('gepcoz-result').innerText = "Terminal Hazır. Şifreyi Çöz."; document.getElementById('gepcoz-result').style.color = "#fff"; document.getElementById('hcaptcha-widget').innerHTML = ''; if(window.hcaptcha) { hcaptchaWidgetId = hcaptcha.render('hcaptcha-widget', { 'sitekey': '10b4d376-fcd6-43a0-a0ac-6388f0c418a4', 'theme': 'dark', 'callback': function(token) { verifyGepcoz(token); } }); } else { document.getElementById('gepcoz-result').innerText = "Güvenlik ağı yüklenemedi."; } }
     
-    // --- YENİ: GEP ROKETİ SIFIRLAMA ---
+    // --- GEP ROKETİ SIFIRLAMA VE GÖRSEL HAZIRLIK ---
     if(game === 'crash') {
         clearInterval(crashInterval);
         isCrashed = false;
@@ -138,20 +117,23 @@ function openGame(game) {
         document.getElementById('btn-start-crash').disabled = false;
         document.getElementById('btn-cashout-crash').style.display = 'none';
         
+        // Canvas Temizle
         let canvas = document.getElementById('rocket-canvas');
         if(canvas) { let ctx = canvas.getContext('2d'); ctx.clearRect(0,0, canvas.width, canvas.height); }
         
-        let rocket = document.getElementById('rocket-icon');
-        rocket.style.display = 'block';
+        // 3D Roketi Başlangıca Döndür
+        let rocket = document.getElementById('rocket-ship');
+        rocket.style.display = 'flex';
         rocket.style.left = '10px';
-        rocket.style.top = '160px'; // Alt köşeden başlar
+        rocket.style.top = '160px'; // Alt köşe
         rocket.style.transform = 'translate(-50%, -50%) rotate(0deg)';
+        document.getElementById('rocket-fire').style.display = 'none'; // Ateşi söndür
         
         document.getElementById('explosion-icon').style.display = 'none';
     }
 }
 
-// --- YENİ: GEP ROKETİ (CRASH) ANİMASYON MOTORU ---
+// --- YENİ: GEP ROKETİ (CRASH) ANİMASYON VE BUG FIX MOTORU ---
 let crashInterval;
 let currentCrashMultiplier = 1.00;
 let crashPoint = 1.00;
@@ -202,9 +184,12 @@ async function playCrash() {
         let canvas = document.getElementById('rocket-canvas');
         let ctx = canvas.getContext('2d');
         let cw = canvas.width; let ch = canvas.height;
-        let rocket = document.getElementById('rocket-icon');
+        let rocket = document.getElementById('rocket-ship');
         let explosion = document.getElementById('explosion-icon');
-        rocket.style.display = 'block'; explosion.style.display = 'none';
+        
+        rocket.style.display = 'flex'; // Roketi göster
+        explosion.style.display = 'none'; // Patlamayı gizle
+        document.getElementById('rocket-fire').style.display = 'block'; // Ateşi yak
         
         let tick = 0;
         clearInterval(crashInterval);
@@ -216,14 +201,14 @@ async function playCrash() {
             // Çarpan Eğrisi (Üstel Büyüme)
             currentCrashMultiplier = Math.exp(0.15 * tick);
             
-            // Roketin Konumunu Hesapla
+            // Roketin Konumunu Hesapla (Pro Çizim)
             let currentX = Math.min((tick / 20) * (cw * 0.8), cw * 0.9) + 10; 
             let progressY = 1 - (1 / currentCrashMultiplier); 
             let currentY = ch - (progressY * ch * 0.8) - 20; 
             
             crashPath.push({x: currentX, y: currentY});
             
-            // Grafik Çizgisi Oluştur
+            // Grafik Çizgisi Oluştur (Siber Kırmızı)
             ctx.clearRect(0, 0, cw, ch);
             ctx.beginPath();
             ctx.strokeStyle = "#ef4444";
@@ -235,10 +220,12 @@ async function playCrash() {
                 else ctx.lineTo(crashPath[i].x, crashPath[i].y);
             }
             ctx.stroke();
+            ctx.shadowBlur = 0; // Gölgeyi sıfırla
             
-            // Roketi Hareket Ettir ve Döndür
+            // 3D Roketi Hareket Ettir ve Döndür
             rocket.style.left = currentX + "px";
             rocket.style.top = currentY + "px";
+            // İlerlemeye göre açıyı ayarla (-45 dereceden -90 dereceye kadar dikleşir)
             let angle = -45 + (progressY * -45); 
             rocket.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
 
@@ -255,27 +242,37 @@ async function playCrash() {
     } catch (e) { resText.innerText = "Bağlantı Hatası!"; btnStart.disabled = false; }
 }
 
-function processCrash(x, y) {
+async function processCrash(x, y) {
     isCrashed = true;
     clearInterval(crashInterval);
     triggerHaptic('heavy');
     
+    // 🔥 BUG FIX AŞAMASI: Sunucuya patlamayı bildir ve oturumu sildir 🔥
+    try {
+        await fetch(`${API}/api/arcade/crash/notify-loss`, { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({ initData: tg.initData }) 
+        });
+        // Yanıtı beklemiyoruz, sadece bildirip oturumu temizlemesini sağlıyoruz.
+    } catch (e) { console.error("Sunucuya bildirim hatası"); }
+
     let display = document.getElementById('crash-display');
     display.innerText = crashPoint.toFixed(2) + "x";
     display.style.color = "var(--danger)";
     
     let resText = document.getElementById('crash-result');
-    resText.innerText = "💥 ROKET PATLADI!";
+    resText.innerText = "💥 GEP ROKETİ PATLADI!";
     resText.style.color = "var(--danger)";
     
     // Görsel Patlama Değişimi
-    let rocket = document.getElementById('rocket-icon');
+    let rocket = document.getElementById('rocket-ship');
     let explosion = document.getElementById('explosion-icon');
     
-    rocket.style.display = 'none';
-    explosion.style.left = rocket.style.left;
+    rocket.style.display = 'none'; // Roketi gizle
+    explosion.style.left = rocket.style.left; // Patlamayı roketin olduğu yere koy
     explosion.style.top = rocket.style.top;
-    explosion.style.display = 'block';
+    explosion.style.display = 'block'; // Patlamayı göster
     
     document.getElementById('btn-cashout-crash').style.display = 'none';
     const btnStart = document.getElementById('btn-start-crash');
@@ -311,16 +308,16 @@ async function cashoutCrash() {
             document.getElementById('crash-result').innerText = `✅ ÇEKİLDİN! +${data.winAmount} GEP`;
             document.getElementById('crash-result').style.color = "var(--success)";
             spawnFloatingText(null, `+${data.winAmount} GEP`, "var(--success)");
+            // Ateşi söndür
+            document.getElementById('rocket-fire').style.display = 'none';
         } else {
-            // Sunucu çoktan patlamış dediyse
+            // Sunucu çoktan patlamış dediyse (Senkronizasyon farkı)
             processCrash(0, 0); 
             document.getElementById('crash-result').innerText = "💥 ZATEN PATLAMIŞTI!";
             display.style.color = "var(--danger)";
             return;
         }
-    } catch (e) {
-        document.getElementById('crash-result').innerText = "Bağlantı Hatası!";
-    }
+    } catch (e) { document.getElementById('crash-result').innerText = "Bağlantı Hatası!"; }
     
     document.getElementById('btn-cashout-crash').style.display = 'none';
     const btnStart = document.getElementById('btn-start-crash');
