@@ -9,12 +9,12 @@ const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "28938" }) 
 let tvWidgetCreated = false;
 
 const hScript = document.createElement('script');
-hScript.src = '[https://js.hcaptcha.com/1/api.js?render=explicit](https://js.hcaptcha.com/1/api.js?render=explicit)';
+hScript.src = 'https://js.hcaptcha.com/1/api.js?render=explicit';
 hScript.async = true; hScript.defer = true; document.head.appendChild(hScript);
 
 let tonConnectUI;
 try {
-    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: '[https://gelir-evreni.onrender.com/tonconnect-manifest.json](https://gelir-evreni.onrender.com/tonconnect-manifest.json)', buttonRootId: 'ton-connect' });
+    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://gelir-evreni.onrender.com/tonconnect-manifest.json', buttonRootId: 'ton-connect' });
     tonConnectUI.onStatusChange(async (wallet) => {
         if (wallet) {
             const address = wallet.account.address;
@@ -30,6 +30,34 @@ try {
 function triggerHaptic(type = 'light') { if(tg.HapticFeedback) { if(type === 'success') tg.HapticFeedback.notificationOccurred('success'); else if(type === 'error') tg.HapticFeedback.notificationOccurred('error'); else tg.HapticFeedback.impactOccurred(type); } }
 function spawnFloatingText(e, text, color) { let x = window.innerWidth / 2; let y = window.innerHeight / 2; if(e && e.touches && e.touches.length > 0) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else if (e && e.clientX) { x = e.clientX; y = e.clientY; } const el = document.createElement("div"); el.className = "floating-text"; el.innerText = text; el.style.left = (x - 40) + "px"; el.style.top = (y - 20) + "px"; el.style.color = color || "var(--gold)"; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 function checkLockdown(data) { if (data && data.isLocked) { document.getElementById('lockdown-screen').style.display = 'flex'; triggerHaptic('error'); return true; } return false; }
+
+// --- YENİ: ROKET İÇİN GÖRSEL TEPKİ (REAKSİYON) MOTORU ---
+function showCrashReaction(text, color, left, top) {
+    let el = document.createElement("div");
+    el.innerText = text;
+    el.style.position = "absolute";
+    el.style.left = left;
+    el.style.top = top;
+    el.style.color = color;
+    el.style.fontWeight = "900";
+    el.style.fontSize = "26px";
+    el.style.fontFamily = "'Space Grotesk'";
+    el.style.textShadow = `0 0 15px ${color}`;
+    el.style.transform = "translate(-50%, -50%)";
+    el.style.zIndex = "30";
+    el.style.pointerEvents = "none";
+    el.style.transition = "all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275)"; // Zıplama efekti
+    
+    document.getElementById('rocket-ship').parentElement.appendChild(el);
+    
+    // Animasyonu Tetikle
+    setTimeout(() => {
+        el.style.transform = "translate(-50%, -150%) scale(1.2)";
+        el.style.opacity = "0";
+    }, 50);
+    
+    setTimeout(() => el.remove(), 1000);
+}
 
 async function init() {
     try {
@@ -96,7 +124,7 @@ let hcaptchaWidgetId;
 
 function openGame(game) { 
     triggerHaptic('light'); document.getElementById(`modal-${game}`).style.display = 'flex'; 
-    if(game === 'predict') { if(!tvWidgetCreated) { new TradingView.widget({ "width": "100%", "height": 220, "symbol": "BINANCE:BTCUSDT", "interval": "1", "timezone": "Etc/UTC", "theme": "dark", "style": "2", "locale": "tr", "enable_publishing": false, "backgroundColor": "rgba(0, 1, 9, 0)", "gridColor": "rgba(255, 255, 255, 0.05)", "hide_top_toolbar": true, "hide_legend": true, "save_image": false, "container_id": "tv_chart_container" }); tvWidgetCreated = true; } document.getElementById('predict-price').innerHTML = '<div class="loader-ring" style="width:25px;height:25px;border-width:2px;display:inline-block;"></div> Çekiliyor...'; document.getElementById('predict-buttons').style.display = 'none'; fetch('[https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT](https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT)').then(r => r.json()).then(d => { document.getElementById('predict-price').innerText = `Anlık: $${parseFloat(d.price).toFixed(2)}`; document.getElementById('predict-buttons').style.display = 'flex'; }).catch(e => { document.getElementById('predict-price').innerText = "Bağlantı Hatası"; }); } 
+    if(game === 'predict') { if(!tvWidgetCreated) { new TradingView.widget({ "width": "100%", "height": 220, "symbol": "BINANCE:BTCUSDT", "interval": "1", "timezone": "Etc/UTC", "theme": "dark", "style": "2", "locale": "tr", "enable_publishing": false, "backgroundColor": "rgba(0, 1, 9, 0)", "gridColor": "rgba(255, 255, 255, 0.05)", "hide_top_toolbar": true, "hide_legend": true, "save_image": false, "container_id": "tv_chart_container" }); tvWidgetCreated = true; } document.getElementById('predict-price').innerHTML = '<div class="loader-ring" style="width:25px;height:25px;border-width:2px;display:inline-block;"></div> Çekiliyor...'; document.getElementById('predict-buttons').style.display = 'none'; fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT').then(r => r.json()).then(d => { document.getElementById('predict-price').innerText = `Anlık: $${parseFloat(d.price).toFixed(2)}`; document.getElementById('predict-buttons').style.display = 'flex'; }).catch(e => { document.getElementById('predict-price').innerText = "Bağlantı Hatası"; }); } 
     if(game === 'spin') { document.getElementById('spin-result').innerText = "Şansını Dene!"; } 
     if(game === 'lootbox') { resetLootbox(); } 
     if(game === 'zarzara') { document.getElementById('zarzara-result').innerText = "Bahsini Gir ve At!"; document.getElementById('zarzara-display').innerText = "🎲"; }
@@ -108,7 +136,6 @@ function openGame(game) {
         isCrashed = false;
         crashPath = [];
         
-        // Görselleri Sıfırla
         document.getElementById('crash-display').innerText = "1.00x";
         document.getElementById('crash-display').style.color = "#fff";
         document.getElementById('crash-result').innerText = "Bahsini Gir ve Uç!";
@@ -117,23 +144,21 @@ function openGame(game) {
         document.getElementById('btn-start-crash').disabled = false;
         document.getElementById('btn-cashout-crash').style.display = 'none';
         
-        // Canvas Temizle
         let canvas = document.getElementById('rocket-canvas');
         if(canvas) { let ctx = canvas.getContext('2d'); ctx.clearRect(0,0, canvas.width, canvas.height); }
         
-        // 3D Roketi Başlangıca Döndür
         let rocket = document.getElementById('rocket-ship');
         rocket.style.display = 'flex';
         rocket.style.left = '10px';
-        rocket.style.top = '160px'; // Alt köşe
-        rocket.style.transform = 'translate(-50%, -50%) rotate(0deg)';
-        document.getElementById('rocket-fire').style.display = 'none'; // Ateşi söndür
+        rocket.style.top = '160px'; 
+        rocket.style.transform = 'translate(-50%, -50%) rotate(45deg)'; // ROKET YÖNÜ DÜZELTİLDİ (Yukarı/Sağa)
+        document.getElementById('rocket-fire').style.display = 'none'; 
         
         document.getElementById('explosion-icon').style.display = 'none';
     }
 }
 
-// --- YENİ: GEP ROKETİ (CRASH) ANİMASYON VE BUG FIX MOTORU ---
+// --- YENİ: GEP ROKETİ (CRASH) ANİMASYON ---
 let crashInterval;
 let currentCrashMultiplier = 1.00;
 let crashPoint = 1.00;
@@ -180,16 +205,15 @@ async function playCrash() {
         resText.innerText = "Uçuş başladı!";
         display.style.color = "var(--success)";
         
-        // Canvas Kurulumu
         let canvas = document.getElementById('rocket-canvas');
         let ctx = canvas.getContext('2d');
         let cw = canvas.width; let ch = canvas.height;
         let rocket = document.getElementById('rocket-ship');
         let explosion = document.getElementById('explosion-icon');
         
-        rocket.style.display = 'flex'; // Roketi göster
-        explosion.style.display = 'none'; // Patlamayı gizle
-        document.getElementById('rocket-fire').style.display = 'block'; // Ateşi yak
+        rocket.style.display = 'flex'; 
+        explosion.style.display = 'none'; 
+        document.getElementById('rocket-fire').style.display = 'block'; 
         
         let tick = 0;
         clearInterval(crashInterval);
@@ -198,17 +222,14 @@ async function playCrash() {
             if (isCrashed) return;
             tick += 0.05;
             
-            // Çarpan Eğrisi (Üstel Büyüme)
             currentCrashMultiplier = Math.exp(0.15 * tick);
             
-            // Roketin Konumunu Hesapla (Pro Çizim)
             let currentX = Math.min((tick / 20) * (cw * 0.8), cw * 0.9) + 10; 
             let progressY = 1 - (1 / currentCrashMultiplier); 
             let currentY = ch - (progressY * ch * 0.8) - 20; 
             
             crashPath.push({x: currentX, y: currentY});
             
-            // Grafik Çizgisi Oluştur (Siber Kırmızı)
             ctx.clearRect(0, 0, cw, ch);
             ctx.beginPath();
             ctx.strokeStyle = "#ef4444";
@@ -220,19 +241,18 @@ async function playCrash() {
                 else ctx.lineTo(crashPath[i].x, crashPath[i].y);
             }
             ctx.stroke();
-            ctx.shadowBlur = 0; // Gölgeyi sıfırla
+            ctx.shadowBlur = 0; 
             
-            // 3D Roketi Hareket Ettir ve Döndür
             rocket.style.left = currentX + "px";
             rocket.style.top = currentY + "px";
-            // İlerlemeye göre açıyı ayarla (-45 dereceden -90 dereceye kadar dikleşir)
-            let angle = -45 + (progressY * -45); 
+            
+            // 🔥 ROKET YÖNÜ DÜZELTİLDİ: 60 Dereceden (sağ) başlayıp 15 Dereceye (Yukarı) dikleşir
+            let angle = 60 - (progressY * 45); 
             rocket.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
 
-            // Patlama Anı Geldi mi?
             if (currentCrashMultiplier >= crashPoint) {
                 currentCrashMultiplier = crashPoint;
-                processCrash(currentX, currentY);
+                processCrash();
             } else {
                 display.innerText = currentCrashMultiplier.toFixed(2) + "x";
                 btnCashout.innerText = `ÇEKİL (${Math.floor(crashBet * currentCrashMultiplier)} GEP)`;
@@ -242,20 +262,14 @@ async function playCrash() {
     } catch (e) { resText.innerText = "Bağlantı Hatası!"; btnStart.disabled = false; }
 }
 
-async function processCrash(x, y) {
+async function processCrash() {
     isCrashed = true;
     clearInterval(crashInterval);
     triggerHaptic('heavy');
     
-    // 🔥 BUG FIX AŞAMASI: Sunucuya patlamayı bildir ve oturumu sildir 🔥
     try {
-        await fetch(`${API}/api/arcade/crash/notify-loss`, { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ initData: tg.initData }) 
-        });
-        // Yanıtı beklemiyoruz, sadece bildirip oturumu temizlemesini sağlıyoruz.
-    } catch (e) { console.error("Sunucuya bildirim hatası"); }
+        await fetch(`${API}/api/arcade/crash/notify-loss`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) });
+    } catch (e) { }
 
     let display = document.getElementById('crash-display');
     display.innerText = crashPoint.toFixed(2) + "x";
@@ -265,14 +279,16 @@ async function processCrash(x, y) {
     resText.innerText = "💥 GEP ROKETİ PATLADI!";
     resText.style.color = "var(--danger)";
     
-    // Görsel Patlama Değişimi
     let rocket = document.getElementById('rocket-ship');
     let explosion = document.getElementById('explosion-icon');
     
-    rocket.style.display = 'none'; // Roketi gizle
-    explosion.style.left = rocket.style.left; // Patlamayı roketin olduğu yere koy
+    rocket.style.display = 'none'; 
+    explosion.style.left = rocket.style.left; 
     explosion.style.top = rocket.style.top;
-    explosion.style.display = 'block'; // Patlamayı göster
+    explosion.style.display = 'block'; 
+
+    // 🔥 YENİ: KAYBETME REAKSİYONU 🔥
+    showCrashReaction(`-${crashBet} GEP`, "var(--danger)", explosion.style.left, explosion.style.top);
     
     document.getElementById('btn-cashout-crash').style.display = 'none';
     const btnStart = document.getElementById('btn-start-crash');
@@ -307,12 +323,14 @@ async function cashoutCrash() {
             updateUI();
             document.getElementById('crash-result').innerText = `✅ ÇEKİLDİN! +${data.winAmount} GEP`;
             document.getElementById('crash-result').style.color = "var(--success)";
-            spawnFloatingText(null, `+${data.winAmount} GEP`, "var(--success)");
-            // Ateşi söndür
+            
+            // 🔥 YENİ: KAZANMA REAKSİYONU 🔥
+            let rocket = document.getElementById('rocket-ship');
+            showCrashReaction(`+${data.winAmount} GEP`, "var(--success)", rocket.style.left, rocket.style.top);
+            
             document.getElementById('rocket-fire').style.display = 'none';
         } else {
-            // Sunucu çoktan patlamış dediyse (Senkronizasyon farkı)
-            processCrash(0, 0); 
+            processCrash(); 
             document.getElementById('crash-result').innerText = "💥 ZATEN PATLAMIŞTI!";
             display.style.color = "var(--danger)";
             return;
