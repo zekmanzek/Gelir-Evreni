@@ -486,14 +486,5 @@ app.post('/api/tasks/complete', secureRoute, async (req, res) => {
     addPoints(user, task.reward); await user.save(); res.json({ success: true, points: user.points }); 
 });
 
-const adminCheck = (req, res, next) => { if (req.realTelegramId !== ADMIN_ID) return res.status(403).send("Yetkisiz"); next(); };
-app.post('/api/admin/stats', secureRoute, adminCheck, async (req, res) => { const settings = await Settings.findOne() || { announcements: [] }; res.json({ totalUsers: await User.countDocuments(), totalPoints: (await User.aggregate([{$group: {_id:null, total:{$sum:"$points"}}}]))[0]?.total || 0, announcements: settings.announcements, tasks: await Task.find() }); });
-app.post('/api/admin/add-task', secureRoute, adminCheck, async (req, res) => { await Task.create({ taskId: Date.now().toString(), title: req.body.title, reward: req.body.reward, target: req.body.target }); res.json({ success: true }); });
-app.post('/api/admin/delete-task', secureRoute, adminCheck, async (req, res) => { await Task.deleteOne({ taskId: req.body.taskId }); res.json({ success: true }); });
-app.post('/api/admin/create-promo', secureRoute, adminCheck, async (req, res) => { const { code, reward, maxUsage } = req.body; try { await PromoCode.create({ code: code.toUpperCase(), reward, maxUsage }); res.json({ success: true }); } catch(e) { res.json({ success: false }); } });
-app.post('/api/admin/announcement', secureRoute, adminCheck, async (req, res) => { const s = await Settings.findOne() || await Settings.create({}); if(req.body.action === 'add') s.announcements.push(req.body.text); else s.announcements.splice(req.body.index, 1); await s.save(); res.json({ success: true }); });
-app.post('/api/admin/user-manage', secureRoute, adminCheck, async (req, res) => { const { targetId, action, amount } = req.body; const user = await User.findOne({ $or: [{ telegramId: targetId }, { username: targetId }] }); if (!user) return res.json({ success: false }); if (action === 'add') addPoints(user, Number(amount)); if (action === 'set') user.points = Number(amount); if (action === 'ban') user.isBanned = true; if (action === 'unban') user.isBanned = false; await user.save(); res.json({ success: true }); });
-app.post('/api/admin/delete-airdrop', secureRoute, adminCheck, async (req, res) => { await AirdropLink.findByIdAndDelete(req.body.id); res.json({ success: true }); });
-
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Sunucu aktif.`));
