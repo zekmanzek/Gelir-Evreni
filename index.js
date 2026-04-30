@@ -198,7 +198,25 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
         await user.save(); let settings = await Settings.findOne() || await Settings.create({});
         
         const isBoostActive = config.boostEndTime && config.boostEndTime > new Date();
-        res.json({ success: true, user, botUsername: settings.botUsername, isAdmin: String(telegramId) === String(ADMIN_ID), announcements: settings.announcements, isBoostActive, boostMultiplier: config.boostMultiplier });
+        
+        // 🔥 GÜNCELLENEN KISIM: Dinamik fiyatlar ön yüze gönderiliyor 🔥
+        res.json({ 
+            success: true, 
+            user, 
+            botUsername: settings.botUsername, 
+            isAdmin: String(telegramId) === String(ADMIN_ID), 
+            announcements: settings.announcements, 
+            isBoostActive, 
+            boostMultiplier: config.boostMultiplier,
+            costs: {
+                spin: config.spinCost,
+                predict: config.predictCost,
+                airdrop: config.airdropCost,
+                lb1: config.lootbox1Cost,
+                lb2: config.lootbox2Cost,
+                lb3: config.lootbox3Cost
+            }
+        });
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
