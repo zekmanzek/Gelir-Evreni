@@ -72,6 +72,17 @@ async function init() {
 
         if (data.success) {
             user = data.user;
+            
+            // 🔥 DİNAMİK FİYAT GÜNCELLEME MOTORU 🔥
+            if(data.costs) {
+                if(document.getElementById('ui-cost-spin')) document.getElementById('ui-cost-spin').innerText = data.costs.spin.toLocaleString();
+                if(document.getElementById('ui-cost-predict')) document.getElementById('ui-cost-predict').innerText = data.costs.predict.toLocaleString();
+                if(document.getElementById('ui-cost-airdrop')) document.getElementById('ui-cost-airdrop').innerText = data.costs.airdrop >= 1000000 ? (data.costs.airdrop/1000000)+'M' : data.costs.airdrop.toLocaleString();
+                if(document.getElementById('ui-cost-lb1')) document.getElementById('ui-cost-lb1').innerText = data.costs.lb1.toLocaleString();
+                if(document.getElementById('ui-cost-lb2')) document.getElementById('ui-cost-lb2').innerText = data.costs.lb2.toLocaleString();
+                if(document.getElementById('ui-cost-lb3')) document.getElementById('ui-cost-lb3').innerText = data.costs.lb3.toLocaleString();
+            }
+
             if(user.isBanned) { document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--danger); font-family:Outfit;'><h2 style='text-align:center;'>🚫 HESAP YASAKLANDI</h2></div>"; return; }
             document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
             document.getElementById('header-name').innerText = (user.username ? '@'+user.username : user.firstName).toUpperCase();
