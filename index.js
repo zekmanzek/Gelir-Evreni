@@ -108,14 +108,23 @@ function addPoints(user, amount) {
     user.lastPointDate = new Date();
 }
 
+// 🔥 VURGUN DUYURUSU GÜÇLENDİRİLDİ (HATA KAYITLI) 🔥
 async function broadcastBigWin(username, firstName, gameName, prize) {
     try {
         const s = await Settings.findOne();
-        if (!s || !s.mainGroupId) return;
+        if (!s || !s.mainGroupId) {
+            console.log("⚠️ Vurgun Duyurusu İptal: Grup ID bulunamadı (/grububagla yapılmamış).");
+            return;
+        }
         const displayName = username ? `@${username}` : firstName;
         const msg = `🎉 **BÜYÜK VURGUN!**\n\n${displayName}, **${gameName}** oyunundan tam **${prize.toLocaleString()} GEP** kazandı! 🤑`;
-        bot.sendMessage(s.mainGroupId, msg, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: "🚀 Sen De Kazan", web_app: { url: WEBHOOK_URL } }]] } });
-    } catch (err) {}
+        
+        bot.sendMessage(s.mainGroupId, msg, { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: "🚀 Sen De Kazan", web_app: { url: WEBHOOK_URL } }]] } })
+            .then(() => console.log(`📢 Vurgun duyurusu gruba atıldı: ${gameName} - ${prize} GEP`))
+            .catch(err => console.error("❌ Telegram Duyuru Hatası:", err.message));
+    } catch (err) { 
+        console.error("❌ Duyuru Fonksiyonu Çöktü:", err); 
+    }
 }
 
 const botConfig = { ADMIN_ID, WEBHOOK_URL };
@@ -155,7 +164,7 @@ function getTelegramUserFromInitData(telegramInitData) {
 }
 
 // -----------------------------------------
-// TÜM OYUN VE SİSTEM ROTASI (RESTORE EDİLDİ)
+// TÜM OYUN VE SİSTEM ROTASI
 // -----------------------------------------
 
 app.post('/api/user/save-wallet', secureRoute, async (req, res) => {
@@ -247,7 +256,9 @@ app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     else if (rand <= config.spinProbEmpty + config.spinProbLow + config.spinProbCost) { prize = config.spinCost; msg = "Amorti!"; } 
     else if (rand <= config.spinProbEmpty + config.spinProbLow + config.spinProbCost + config.spinProbMid) { prize = config.spinMid; msg = "İKİYE KATLADIN!"; } 
     else { prize = config.spinJackpot; msg = "💥 JACKPOT! 💥"; }
+    
     if (prize > 0) { addPoints(user, prize); await user.save(); }
+    
     if (prize === config.spinJackpot) broadcastBigWin(user.username, user.firstName, "Çark", prize);
     res.json({ success: true, prize, msg, points: user.points });
 });
@@ -297,6 +308,13 @@ app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
     else prize = rand > 95 ? config.lootBig : 15000;
     
     addPoints(updatedUser, prize); await updatedUser.save();
+
+    // 🔥 KAPSÜL VURGUN DUYURUSU EKLENDİ 🔥
+    if ((boxType === 1 && prize === config.lootSmall) || (boxType === 2 && prize === config.lootMid) || (boxType === 3 && prize === config.lootBig)) {
+        let boxName = boxType === 1 ? "Standart Kapsül" : (boxType === 2 ? "Nadir Kapsül" : "Efsanevi Kapsül");
+        broadcastBigWin(updatedUser.username, updatedUser.firstName, boxName, prize);
+    }
+
     res.json({ success: true, prize, points: updatedUser.points });
 });
 
@@ -390,6 +408,12 @@ app.post('/api/arcade/crash/cashout', secureRoute, async (req, res) => {
     if (mult <= session.crashPoint && mult >= 1.00) {
         const win = Math.floor(session.bet * mult);
         const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId }, { $inc: { points: win } }, { new: true });
+        
+        // 🔥 ROKET VURGUN DUYURUSU EKLENDİ (50,000 GEP ve üzeri için) 🔥
+        if (win >= 50000) {
+            broadcastBigWin(user.username, user.firstName, "GEP Roketi", win);
+        }
+
         return res.json({ success: true, winAmount: win, points: user.points });
     }
     res.json({ success: false, message: "Roket zaten patladı!" });
