@@ -53,6 +53,13 @@ const gameConfigSchema = new mongoose.Schema({
     lootSmall: { type: Number, default: 10000 },
     predictReward: { type: Number, default: 2000 },
 
+    // 🔥 YENİ: Çark İhtimalleri (Yüzde Olarak) 🔥
+    spinProbEmpty: { type: Number, default: 40 },
+    spinProbLow: { type: Number, default: 35 },
+    spinProbCost: { type: Number, default: 17 },
+    spinProbMid: { type: Number, default: 7 },
+    spinProbJackpot: { type: Number, default: 1 },
+
     // Sistem Durumu
     isLocked: { type: Boolean, default: false }, 
     boostMultiplier: { type: Number, default: 1 }, 
@@ -199,7 +206,7 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
         
         const isBoostActive = config.boostEndTime && config.boostEndTime > new Date();
         
-        // 🔥 GÜNCELLENEN KISIM: Dinamik fiyatlar ön yüze gönderiliyor 🔥
+        // 🔥 GÜNCELLENEN KISIM: Dinamik fiyatlar ve ÖDÜLLER ön yüze gönderiliyor 🔥
         res.json({ 
             success: true, 
             user, 
@@ -215,6 +222,11 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
                 lb1: config.lootbox1Cost,
                 lb2: config.lootbox2Cost,
                 lb3: config.lootbox3Cost
+            },
+            rewards: {
+                spinLow: config.spinLow,
+                spinMid: config.spinMid,
+                spinJackpot: config.spinJackpot
             }
         });
     } catch (error) { res.status(500).json({ success: false }); }
@@ -306,12 +318,21 @@ app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     const cost = config.spinCost;
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP!" }); 
-    const rand = Math.random() * 100; let prize = 0; let msg = "BOŞ";
     
-    if (rand <= 40) { prize = 0; msg = "Şansını Dene"; } 
-    else if (rand <= 75) { prize = config.spinLow; msg = "Yarım Teselli"; } 
-    else if (rand <= 92) { prize = config.spinCost; msg = "Amorti!"; } 
-    else if (rand <= 99) { prize = config.spinMid; msg = "İKİYE KATLADIN!"; } 
+    // 🔥 DİNAMİK İHTİMAL HESAPLAYICI 🔥
+    const pEmpty = config.spinProbEmpty || 40;
+    const pLow = config.spinProbLow || 35;
+    const pCost = config.spinProbCost || 17;
+    const pMid = config.spinProbMid || 7;
+    // pJackpot geri kalan ihtimaldir (Örn: 1)
+
+    const rand = Math.random() * 100; 
+    let prize = 0; let msg = "BOŞ";
+    
+    if (rand <= pEmpty) { prize = 0; msg = "Şansını Dene"; } 
+    else if (rand <= pEmpty + pLow) { prize = config.spinLow; msg = "Yarım Teselli"; } 
+    else if (rand <= pEmpty + pLow + pCost) { prize = config.spinCost; msg = "Amorti!"; } 
+    else if (rand <= pEmpty + pLow + pCost + pMid) { prize = config.spinMid; msg = "İKİYE KATLADIN!"; } 
     else { prize = config.spinJackpot; msg = "💥 JACKPOT! 💥"; }
     
     addRadarLog(`🎰 @${user.username} Çark çevirdi. Ödül: ${prize}`);
