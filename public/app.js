@@ -7,7 +7,9 @@ let lbAllTime = [], lbDaily = [];
 let currentLbTab = 'all'; 
 const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "28938" }) : null; 
 let tvWidgetCreated = false;
-let isBuyingPkg = false; // 🔥 BUTONU KİLİTLEYEN EKSİK DEĞİŞKEN EKLENDİ 🔥
+let isBuyingPkg = false;
+// 🔥 YENİ: Çark animasyonu için dinamik ödül hafızası 🔥
+let currentSpinRewards = { cost: 5000, low: 2500, mid: 10000, jackpot: 50000 }; 
 
 const hScript = document.createElement('script');
 hScript.src = 'https://js.hcaptcha.com/1/api.js?render=explicit';
@@ -32,7 +34,6 @@ function triggerHaptic(type = 'light') { if(tg.HapticFeedback) { if(type === 'su
 function spawnFloatingText(e, text, color) { let x = window.innerWidth / 2; let y = window.innerHeight / 2; if(e && e.touches && e.touches.length > 0) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else if (e && e.clientX) { x = e.clientX; y = e.clientY; } const el = document.createElement("div"); el.className = "floating-text"; el.innerText = text; el.style.left = (x - 40) + "px"; el.style.top = (y - 20) + "px"; el.style.color = color || "var(--gold)"; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 function checkLockdown(data) { if (data && data.isLocked) { document.getElementById('lockdown-screen').style.display = 'flex'; triggerHaptic('error'); return true; } return false; }
 
-// 🔥 YENİ: GENEL OYUN TEPKİ (REAKSİYON) MOTORU 🔥
 function showGameReaction(text, color, parentId) {
     let parent = document.getElementById(parentId);
     if(!parent) return;
@@ -72,11 +73,8 @@ async function init() {
 
         if (data.success) {
             user = data.user;
-            
-            // Kısaltıcı Motor (Örn: 50000 -> 50K)
             const formatK = (n) => n >= 1000 ? (n/1000) + 'K' : n;
 
-            // 🔥 DİNAMİK FİYAT VE ÇARK GÜNCELLEME MOTORU 🔥
             if(data.costs) {
                 if(document.getElementById('ui-cost-spin')) document.getElementById('ui-cost-spin').innerText = data.costs.spin.toLocaleString();
                 if(document.getElementById('ui-cost-predict')) document.getElementById('ui-cost-predict').innerText = data.costs.predict.toLocaleString();
@@ -84,14 +82,20 @@ async function init() {
                 if(document.getElementById('ui-cost-lb1')) document.getElementById('ui-cost-lb1').innerText = data.costs.lb1.toLocaleString();
                 if(document.getElementById('ui-cost-lb2')) document.getElementById('ui-cost-lb2').innerText = data.costs.lb2.toLocaleString();
                 if(document.getElementById('ui-cost-lb3')) document.getElementById('ui-cost-lb3').innerText = data.costs.lb3.toLocaleString();
-                
-                // Çark Amorti Dilimi
                 if(document.getElementById('ui-wheel-cost')) document.getElementById('ui-wheel-cost').innerText = formatK(data.costs.spin);
+                
+                // Animasyon için hafızaya al
+                currentSpinRewards.cost = data.costs.spin;
             }
             if(data.rewards) {
                 if(document.getElementById('ui-wheel-low')) document.getElementById('ui-wheel-low').innerText = formatK(data.rewards.spinLow);
                 if(document.getElementById('ui-wheel-mid')) document.getElementById('ui-wheel-mid').innerText = formatK(data.rewards.spinMid);
                 if(document.getElementById('ui-wheel-jackpot')) document.getElementById('ui-wheel-jackpot').innerText = formatK(data.rewards.spinJackpot);
+                
+                // Animasyon için hafızaya al
+                currentSpinRewards.low = data.rewards.spinLow;
+                currentSpinRewards.mid = data.rewards.spinMid;
+                currentSpinRewards.jackpot = data.rewards.spinJackpot;
             }
 
             if(user.isBanned) { document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--danger); font-family:Outfit;'><h2 style='text-align:center;'>🚫 HESAP YASAKLANDI</h2></div>"; return; }
@@ -294,7 +298,62 @@ async function cashoutCrash() {
 
 async function playZarzara() { const amount = parseInt(document.getElementById('zarzara-bet').value); if (!amount || isNaN(amount) || amount < 100) return tg.showAlert("Min bahis 100 GEP."); const btn = document.getElementById('btn-do-zarzara'); const display = document.getElementById('zarzara-display'); const resultText = document.getElementById('zarzara-result'); btn.disabled = true; resultText.innerText = "Zar atılıyor..."; resultText.style.color = "#fff"; display.classList.add('shake-box'); triggerHaptic('heavy'); try { const res = await fetch(`${API}/api/arcade/zarzara`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ bet: amount, initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; if (!data.success) { display.classList.remove('shake-box'); resultText.innerText = "Hata!"; tg.showAlert(data.message); btn.disabled = false; return; } setTimeout(() => { display.classList.remove('shake-box'); user.points = data.points; updateUI(); const diceEmojis = { 1: "⚀", 2: "⚁", 3: "⚂", 4: "⚃", 5: "⚄", 6: "⚅" }; display.innerText = diceEmojis[data.diceValue] || "🎲"; if (data.winAmount > 0) { resultText.innerText = `KAZANDIN! (+${data.winAmount} GEP)`; resultText.style.color = "var(--success)"; triggerHaptic('success'); showGameReaction(`+${data.winAmount} GEP`, "var(--success)", "modal-zarzara"); } else { resultText.innerText = "KAYBETTİN!"; resultText.style.color = "var(--danger)"; triggerHaptic('error'); showGameReaction(`-${amount} GEP`, "var(--danger)", "modal-zarzara"); } btn.disabled = false; }, 1500); } catch(e) { display.classList.remove('shake-box'); resultText.innerText = "Bağlantı Hatası!"; btn.disabled = false; } }
 
-async function playSpin() { const btn = document.getElementById('btn-do-spin'); const wheel = document.getElementById('spin-wheel'); const resText = document.getElementById('spin-result'); btn.disabled = true; resText.style.color = "#fff"; resText.innerText = "Dönüyor..."; triggerHaptic('heavy'); wheel.style.transition = 'none'; let currentRotation = parseFloat(wheel.getAttribute('data-rotation') || 0); let normalized = currentRotation % 360; wheel.style.transform = `rotate(${normalized}deg)`; void wheel.offsetWidth; wheel.style.transition = 'transform 4s cubic-bezier(0.15, 0.9, 0.15, 1)'; try { const res = await fetch(`${API}/api/arcade/spin`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; if(!data.success) { resText.innerText = "Hata oluştu."; tg.showAlert(data.message); btn.disabled = false; return; } const prizeAngles = { 0: 36, 2500: 108, 5000: 180, 10000: 252, 50000: 324 }; const targetAngle = prizeAngles[data.prize]; const offset = 360 - targetAngle; const jitter = Math.floor(Math.random() * 40) - 20; const newRotation = currentRotation + (360 * 5) + offset + jitter - normalized; wheel.style.transform = `rotate(${newRotation}deg)`; wheel.setAttribute('data-rotation', newRotation); setTimeout(() => { user.points = data.points; updateUI(); resText.innerText = data.msg; if(data.prize > 0) { resText.style.color = "var(--success)"; triggerHaptic('success'); showGameReaction(`+${data.prize} GEP`, "var(--success)", "modal-spin"); } else { resText.style.color = "var(--danger)"; triggerHaptic('error'); showGameReaction(`BOŞ!`, "var(--danger)", "modal-spin"); } btn.disabled = false; }, 4000); } catch(e) { resText.innerText = "Bağlantı Hatası!"; btn.disabled = false; } }
+async function playSpin() { 
+    const btn = document.getElementById('btn-do-spin'); 
+    const wheel = document.getElementById('spin-wheel'); 
+    const resText = document.getElementById('spin-result'); 
+    btn.disabled = true; 
+    resText.style.color = "#fff"; 
+    resText.innerText = "Dönüyor..."; 
+    triggerHaptic('heavy'); 
+    wheel.style.transition = 'none'; 
+    let currentRotation = parseFloat(wheel.getAttribute('data-rotation') || 0); 
+    let normalized = currentRotation % 360; 
+    wheel.style.transform = `rotate(${normalized}deg)`; 
+    void wheel.offsetWidth; 
+    wheel.style.transition = 'transform 4s cubic-bezier(0.15, 0.9, 0.15, 1)'; 
+    try { 
+        const res = await fetch(`${API}/api/arcade/spin`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); 
+        const data = await res.json(); 
+        if (checkLockdown(data)) return; 
+        if(!data.success) { resText.innerText = "Hata oluştu."; tg.showAlert(data.message); btn.disabled = false; return; } 
+        
+        // 🔥 YENİ: DİNAMİK AÇI HESAPLAYICI 🔥
+        const prizeAngles = { 
+            0: 36, 
+            [currentSpinRewards.low]: 108, 
+            [currentSpinRewards.cost]: 180, 
+            [currentSpinRewards.mid]: 252, 
+            [currentSpinRewards.jackpot]: 324 
+        }; 
+        
+        const targetAngle = prizeAngles[data.prize]; 
+        const offset = 360 - targetAngle; 
+        const jitter = Math.floor(Math.random() * 40) - 20; 
+        const newRotation = currentRotation + (360 * 5) + offset + jitter - normalized; 
+        wheel.style.transform = `rotate(${newRotation}deg)`; 
+        wheel.setAttribute('data-rotation', newRotation); 
+        
+        setTimeout(() => { 
+            user.points = data.points; 
+            updateUI(); 
+            resText.innerText = data.msg; 
+            if(data.prize > 0) { 
+                resText.style.color = "var(--success)"; 
+                triggerHaptic('success'); 
+                showGameReaction(`+${data.prize} GEP`, "var(--success)", "modal-spin"); 
+            } else { 
+                resText.style.color = "var(--danger)"; 
+                triggerHaptic('error'); 
+                showGameReaction(`BOŞ!`, "var(--danger)", "modal-spin"); 
+            } 
+            btn.disabled = false; 
+        }, 4000); 
+    } catch(e) { 
+        resText.innerText = "Bağlantı Hatası!"; 
+        btn.disabled = false; 
+    } 
+}
 
 function resetLootbox() { document.getElementById('lootbox-selection').style.display = 'flex'; document.getElementById('lootbox-animation').style.display = 'none'; document.getElementById('btn-back-lootbox').style.display = 'none'; updateUI(); }
 async function playLootbox(boxType) { const icons = { 1: "📦", 2: "🎁", 3: "💎" }; const colors = { 1: "var(--text-main)", 2: "#3b82f6", 3: "#f59e0b" }; document.getElementById('lootbox-selection').style.display = 'none'; const animDiv = document.getElementById('lootbox-animation'); const boxIcon = document.getElementById('lootbox-icon'); const resText = document.getElementById('lootbox-result'); const backBtn = document.getElementById('btn-back-lootbox'); animDiv.style.display = 'flex'; boxIcon.innerText = icons[boxType]; boxIcon.style.filter = `drop-shadow(0 0 20px ${colors[boxType]})`; resText.style.color = colors[boxType]; resText.innerText = "Kilit Çözülüyor..."; boxIcon.classList.add('shake-box'); triggerHaptic('heavy'); const res = await fetch(`${API}/api/arcade/lootbox`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ boxType, initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; setTimeout(() => { boxIcon.classList.remove('shake-box'); if(data.success) { user.points = data.points; if(data.lastLootbox1) user.lastLootbox1 = data.lastLootbox1; if(data.lastLootbox2) user.lastLootbox2 = data.lastLootbox2; if(data.lastLootbox3) user.lastLootbox3 = data.lastLootbox3; updateUI(); resText.innerText = `KAZANDIN: +${data.prize}`; boxIcon.innerText = "✨"; if(data.prize > 0) { resText.style.color = "var(--success)"; triggerHaptic('success'); showGameReaction(`+${data.prize} GEP`, "var(--success)", "modal-lootbox"); } else { resText.style.color = "var(--danger)"; boxIcon.innerText = "🗑️"; triggerHaptic('error'); } } else { resText.innerText = "KİLİTLİ!"; tg.showAlert(data.message); } backBtn.style.display = 'block'; }, 1500); }
