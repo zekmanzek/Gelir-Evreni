@@ -7,8 +7,7 @@ let lbAllTime = [], lbDaily = [];
 let currentLbTab = 'all'; 
 const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "28938" }) : null; 
 let tvWidgetCreated = false;
-let isBuyingPkg = false;
-// 🔥 YENİ: Çark animasyonu için dinamik ödül hafızası 🔥
+let isBuyingPkg = false; 
 let currentSpinRewards = { cost: 5000, low: 2500, mid: 10000, jackpot: 50000 }; 
 
 const hScript = document.createElement('script');
@@ -51,14 +50,11 @@ function showGameReaction(text, color, parentId) {
     el.style.zIndex = "100";
     el.style.pointerEvents = "none";
     el.style.transition = "all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275)"; 
-    
     parent.appendChild(el);
-    
     setTimeout(() => {
         el.style.transform = "translate(-50%, -150%) scale(1.3)";
         el.style.opacity = "0";
     }, 50);
-    
     setTimeout(() => el.remove(), 1000);
 }
 
@@ -70,11 +66,9 @@ async function init() {
         const res = await fetch(`${API}/api/user/auth`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ username: tgUser.username || "", firstName: tgUser.first_name || "Kullanıcı", referrerId: refId, initData: tg.initData }) });
         const data = await res.json();
         if (checkLockdown(data)) return;
-
         if (data.success) {
             user = data.user;
             const formatK = (n) => n >= 1000 ? (n/1000) + 'K' : n;
-
             if(data.costs) {
                 if(document.getElementById('ui-cost-spin')) document.getElementById('ui-cost-spin').innerText = data.costs.spin.toLocaleString();
                 if(document.getElementById('ui-cost-predict')) document.getElementById('ui-cost-predict').innerText = data.costs.predict.toLocaleString();
@@ -83,26 +77,20 @@ async function init() {
                 if(document.getElementById('ui-cost-lb2')) document.getElementById('ui-cost-lb2').innerText = data.costs.lb2.toLocaleString();
                 if(document.getElementById('ui-cost-lb3')) document.getElementById('ui-cost-lb3').innerText = data.costs.lb3.toLocaleString();
                 if(document.getElementById('ui-wheel-cost')) document.getElementById('ui-wheel-cost').innerText = formatK(data.costs.spin);
-                
-                // Animasyon için hafızaya al
                 currentSpinRewards.cost = data.costs.spin;
             }
             if(data.rewards) {
                 if(document.getElementById('ui-wheel-low')) document.getElementById('ui-wheel-low').innerText = formatK(data.rewards.spinLow);
                 if(document.getElementById('ui-wheel-mid')) document.getElementById('ui-wheel-mid').innerText = formatK(data.rewards.spinMid);
                 if(document.getElementById('ui-wheel-jackpot')) document.getElementById('ui-wheel-jackpot').innerText = formatK(data.rewards.spinJackpot);
-                
-                // Animasyon için hafızaya al
                 currentSpinRewards.low = data.rewards.spinLow;
                 currentSpinRewards.mid = data.rewards.spinMid;
                 currentSpinRewards.jackpot = data.rewards.spinJackpot;
             }
-
             if(user.isBanned) { document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--danger); font-family:Outfit;'><h2 style='text-align:center;'>🚫 HESAP YASAKLANDI</h2></div>"; return; }
             document.getElementById('ref-link').value = `https://t.me/${data.botUsername}?start=${user.telegramId}`;
             document.getElementById('header-name').innerText = (user.username ? '@'+user.username : user.firstName).toUpperCase();
             if (data.isBoostActive) { document.getElementById('boost-banner').style.display = 'block'; document.getElementById('boost-multiplier').innerText = data.boostMultiplier; } else { document.getElementById('boost-banner').style.display = 'none'; }
-
             await refreshTasks(); updateUI(); checkMiningTimer(); renderStreak(); loadAirdrops(); 
             if (data.announcements) renderAnnouncements(data.announcements);
         } else tg.showAlert(data.message);
@@ -149,7 +137,6 @@ async function buyAdPackage(pid) { if (isBuyingPkg) return; triggerHaptic('light
 async function redeemPromo() { const btn = document.getElementById('btn-redeem-promo'); if (btn && btn.disabled) return; triggerHaptic('medium'); const codeInput = document.getElementById('ui-promo-code'); const code = codeInput.value.trim(); if(!code) return tg.showAlert("Lütfen bir kod girin."); if(btn) { btn.disabled = true; btn.style.opacity = "0.5"; } try { const res = await fetch(`${API}/api/redeem-promo`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ code: code, initData: tg.initData }) }); const data = await res.json(); if (checkLockdown(data)) return; if(data.success) { user.points = data.points; updateUI(); codeInput.value = ''; triggerHaptic('success'); spawnFloatingText(null, `+${data.reward} GEP`, "var(--success)"); tg.showAlert(`Tebrikler! ${data.reward} GEP Kazandın!`); } else { triggerHaptic('error'); tg.showAlert(data.message); } } catch (e) { tg.showAlert("Bağlantı hatası!"); } finally { if(btn) { btn.disabled = false; btn.style.opacity = "1"; } } }
 
 let hcaptchaWidgetId;
-
 function closeGame(game) { 
     triggerHaptic('light'); 
     document.getElementById(`modal-${game}`).style.display = 'none'; 
@@ -179,10 +166,8 @@ function openGame(game) {
         document.getElementById('btn-start-crash').style.display = 'block';
         document.getElementById('btn-start-crash').disabled = false;
         document.getElementById('btn-cashout-crash').style.display = 'none';
-        
         let canvas = document.getElementById('rocket-canvas');
         if(canvas) { let ctx = canvas.getContext('2d'); ctx.clearRect(0,0, canvas.width, canvas.height); }
-        
         let rocket = document.getElementById('rocket-ship');
         rocket.style.display = 'flex';
         rocket.style.left = '30px'; 
@@ -193,7 +178,6 @@ function openGame(game) {
     }
 }
 
-// --- YATAY GEP ROKETİ (CRASH) MOTORU ---
 let crashInterval;
 let currentCrashMultiplier = 1.00;
 let crashPoint = 1.00;
@@ -206,53 +190,39 @@ async function playCrash() {
     crashBet = parseInt(betInput);
     if (!crashBet || isNaN(crashBet) || crashBet < 100) return tg.showAlert("Min bahis 100 GEP.");
     if (user.points < crashBet) return tg.showAlert("Yetersiz GEP bakiye!");
-
     const btnStart = document.getElementById('btn-start-crash');
     const btnCashout = document.getElementById('btn-cashout-crash');
     const display = document.getElementById('crash-display');
     const resText = document.getElementById('crash-result');
-
     btnStart.disabled = true;
     resText.innerText = "Roket Hazırlanıyor...";
     resText.style.color = "#fff";
-    
     try {
         const res = await fetch(`${API}/api/arcade/crash/start`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ bet: crashBet, initData: tg.initData }) });
         const data = await res.json();
         if (checkLockdown(data)) return;
-        
         if (!data.success) { resText.innerText = "Hata!"; tg.showAlert(data.message); btnStart.disabled = false; return; }
-
         user.points = data.points; updateUI();
         crashPoint = parseFloat(data.crashPoint); currentCrashMultiplier = 1.00; isCrashed = false; crashPath = [];
-        
         btnStart.style.display = 'none'; btnCashout.style.display = 'block'; btnCashout.disabled = false; btnCashout.innerText = `ÇEKİL (${crashBet} GEP)`;
         resText.innerText = "Uçuş başladı!"; display.style.color = "var(--success)";
-        
         let canvas = document.getElementById('rocket-canvas'); let ctx = canvas.getContext('2d'); let cw = canvas.width; let ch = canvas.height;
         let rocket = document.getElementById('rocket-ship'); let explosion = document.getElementById('explosion-icon');
         rocket.style.display = 'flex'; explosion.style.display = 'none'; document.getElementById('rocket-fire').style.display = 'block'; 
-        
         let tick = 0; clearInterval(crashInterval);
-        
         crashInterval = setInterval(() => {
             if (isCrashed) return;
             tick += 0.05;
             currentCrashMultiplier = Math.exp(0.15 * tick);
-            
             let currentX = Math.min((tick / 20) * (cw * 0.9), cw * 0.9) + 20; 
             let progressY = 1 - (1 / currentCrashMultiplier); 
             let currentY = ch - (progressY * ch * 0.7) - 20; 
-            
             crashPath.push({x: currentX, y: currentY});
-            
             ctx.clearRect(0, 0, cw, ch); ctx.beginPath(); ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 3; ctx.shadowBlur = 10; ctx.shadowColor = "#ef4444";
             for(let i=0; i<crashPath.length; i++) { if(i===0) ctx.moveTo(crashPath[i].x, crashPath[i].y); else ctx.lineTo(crashPath[i].x, crashPath[i].y); }
             ctx.stroke(); ctx.shadowBlur = 0; 
-            
             rocket.style.left = currentX + "px"; rocket.style.top = currentY + "px";
             let angle = (progressY * -30); rocket.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
-
             if (currentCrashMultiplier >= crashPoint) {
                 currentCrashMultiplier = crashPoint; processCrash(currentX, currentY);
             } else { display.innerText = currentCrashMultiplier.toFixed(2) + "x"; btnCashout.innerText = `ÇEKİL (${Math.floor(crashBet * currentCrashMultiplier)} GEP)`; }
@@ -263,16 +233,12 @@ async function playCrash() {
 async function processCrash(x, y) {
     isCrashed = true; clearInterval(crashInterval); triggerHaptic('heavy');
     try { await fetch(`${API}/api/arcade/crash/notify-loss`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ initData: tg.initData }) }); } catch (e) { }
-
     let display = document.getElementById('crash-display'); display.innerText = crashPoint.toFixed(2) + "x"; display.style.color = "var(--danger)";
     let resText = document.getElementById('crash-result'); resText.innerText = "💥 GEP ROKETİ PATLADI!"; resText.style.color = "var(--danger)";
-    
     let rocket = document.getElementById('rocket-ship'); let explosion = document.getElementById('explosion-icon');
     rocket.style.display = 'none'; explosion.style.left = rocket.style.left; explosion.style.top = rocket.style.top; explosion.style.display = 'block'; 
-
     showGameReaction(`-${crashBet} GEP`, "var(--danger)", "modal-crash");
     crashBet = 0; 
-    
     document.getElementById('btn-cashout-crash').style.display = 'none'; const btnStart = document.getElementById('btn-start-crash'); btnStart.style.display = 'block'; btnStart.disabled = false;
 }
 
@@ -281,18 +247,15 @@ async function cashoutCrash() {
     isCrashed = true; clearInterval(crashInterval); triggerHaptic('success');
     const btnCashout = document.getElementById('btn-cashout-crash'); btnCashout.disabled = true; btnCashout.innerText = "BEKLENİYOR...";
     const display = document.getElementById('crash-display'); display.style.color = "var(--gold)";
-    
     try {
         const res = await fetch(`${API}/api/arcade/crash/cashout`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ multiplier: currentCrashMultiplier.toFixed(2), initData: tg.initData }) });
         const data = await res.json(); if (checkLockdown(data)) return;
-        
         if (data.success) {
             user.points = data.points; updateUI(); document.getElementById('crash-result').innerText = `✅ ÇEKİLDİN! +${data.winAmount} GEP`; document.getElementById('crash-result').style.color = "var(--success)";
             showGameReaction(`+${data.winAmount} GEP`, "var(--success)", "modal-crash");
             document.getElementById('rocket-fire').style.display = 'none'; crashBet = 0;
         } else { processCrash(0, 0); document.getElementById('crash-result').innerText = "💥 ZATEN PATLAMIŞTI!"; display.style.color = "var(--danger)"; return; }
     } catch (e) { document.getElementById('crash-result').innerText = "Bağlantı Hatası!"; }
-    
     document.getElementById('btn-cashout-crash').style.display = 'none'; const btnStart = document.getElementById('btn-start-crash'); btnStart.style.display = 'block'; btnStart.disabled = false;
 }
 
@@ -317,23 +280,19 @@ async function playSpin() {
         const data = await res.json(); 
         if (checkLockdown(data)) return; 
         if(!data.success) { resText.innerText = "Hata oluştu."; tg.showAlert(data.message); btn.disabled = false; return; } 
-        
-        // 🔥 YENİ: DİNAMİK AÇI HESAPLAYICI 🔥
         const prizeAngles = { 
-            0: 36, 
-            [currentSpinRewards.low]: 108, 
-            [currentSpinRewards.cost]: 180, 
-            [currentSpinRewards.mid]: 252, 
-            [currentSpinRewards.jackpot]: 324 
+            "Şansını Dene": 36, 
+            "Yarım Teselli": 108, 
+            "Amorti!": 180, 
+            "İKİYE KATLADIN!": 252, 
+            "💥 JACKPOT! 💥": 324 
         }; 
-        
-        const targetAngle = prizeAngles[data.prize]; 
+        const targetAngle = prizeAngles[data.msg]; 
         const offset = 360 - targetAngle; 
         const jitter = Math.floor(Math.random() * 40) - 20; 
         const newRotation = currentRotation + (360 * 5) + offset + jitter - normalized; 
         wheel.style.transform = `rotate(${newRotation}deg)`; 
         wheel.setAttribute('data-rotation', newRotation); 
-        
         setTimeout(() => { 
             user.points = data.points; 
             updateUI(); 
