@@ -96,6 +96,11 @@ const activePredictions = new Map();
 const activeCrashSessions = new Map();
 const radarLogs = [];
 
+// 🔥 YENİ: ANTI-SPAM HAFIZASI VE OTOMATİK ÇÖPÇÜ 🔥
+const apiCooldowns = new Map();
+// Hafıza şişmesin diye her saat başı Spam listesini sıfırlarız
+setInterval(() => { apiCooldowns.clear(); console.log("🧹 Anti-Spam hafızası temizlendi."); }, 60 * 60 * 1000);
+
 function addRadarLog(action) {
     const time = new Date().toLocaleTimeString('tr-TR', { hour12: false, timeZone: 'Europe/Istanbul' });
     radarLogs.unshift(`[${time}] ${action}`);
@@ -137,6 +142,20 @@ const secureRoute = async (req, res, next) => {
         const initData = req.body.initData || req.query.initData;
         const realId = getTelegramUserFromInitData(initData);
         if (!realId) return res.status(403).json({ success: false, message: "⚠️ Güvenlik Hatası!" });
+        
+        // 🔥 ANTI-SPAM KONTROL NOKTASI 🔥
+        // Roket oyununda nakit çıkışını engellememek için o rotayı serbest bırakıyoruz
+        if (!req.path.includes('/crash/cashout')) {
+            const now = Date.now();
+            const lastReq = apiCooldowns.get(realId);
+            
+            // Eğer aynı kişi 800 milisaniye (0.8 saniye) içinde ikinci bir istek atarsa reddet
+            if (lastReq && (now - lastReq) < 800) {
+                return res.json({ success: false, message: "⚠️ Çok hızlı tıklıyorsun! Sistem koruması devrede." });
+            }
+            // İstek başarılıysa son tıklama zamanını kaydet
+            apiCooldowns.set(realId, now);
+        }
         
         const config = cachedConfig || fallbackConfig; // Null olma şansı sıfır
         
