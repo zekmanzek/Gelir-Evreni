@@ -4,6 +4,7 @@ module.exports = function(context) {
     const { User, PromoCode, Task, Settings, YesterdayWinner } = models;
 
     const adminCommands = [
+        { command: 'rehber', description: '📖 Tüm admin komutları (Cheat Sheet)' },
         { command: 'ekonomi', description: '💰 Güncel maliyet ve ödül raporu' },
         { command: 'ayar', description: '⚙️ Değer bükücü (Örn: /ayar cark_maliyet 15000)' },
         { command: 'oyun', description: '🎮 Oyun şalterleri (Örn: /oyun cark kapat)' },
@@ -34,6 +35,38 @@ module.exports = function(context) {
 
         try {
             switch (cmd) {
+                // --- 📖 YENİ SİBER REHBER KOMUTU ---
+                case '/rehber':
+                    const rehberMetni = `📖 **SİBER KARARGAH KONTROL REHBERİ** 📖\n\n` +
+                    `⚙️ **EKONOMİ & SİSTEM**\n` +
+                    `\`/ekonomi\` ➔ Mevcut maliyet/ödül durumunu gösterir.\n` +
+                    `\`/ayar [kod] [değer]\` ➔ Ekonomi değerlerini bük (Örn: \`/ayar cark_maliyet 15000\`).\n` +
+                    `\`/oyun [cark/roket] [ac/kapat]\` ➔ Oyunların şalterini indir veya kaldır.\n` +
+                    `\`/kilit [aktif/kapat]\` ➔ Güvenlik duvarını açar, kimse uygulamaya giremez.\n` +
+                    `\`/rapor\` ➔ Toplam oyuncu ve piyasadaki toplam GEP miktarını gösterir.\n` +
+                    `\`/radar\` ➔ Son 20 kritik oyuncu hareketini listeler.\n\n` +
+
+                    `👤 **KULLANICI MÜDAHALESİ**\n` +
+                    `\`/bilgi @kullaniciadi\` ➔ Cüzdanı ve mevcut bakiyesini gösterir.\n` +
+                    `\`/canta @kullaniciadi\` ➔ Oyuncunun röntgenini çeker (Giriş serisi, son maden vb.).\n` +
+                    `\`/bakiye @kullaniciadi [miktar]\` ➔ Hesaba GEP ekler veya - miktar girerek siler.\n` +
+                    `\`/ceza @kullaniciadi\` ➔ Bakiyesini ve serisini tamamen SIFIRLAR.\n` +
+                    `\`/ban @kullaniciadi\` ➔ Kullanıcıyı siber ağdan kalıcı yasaklar.\n` +
+                    `\`/unban @kullaniciadi\` ➔ Yasaklı birinin affını verir.\n\n` +
+
+                    `📢 **İLETİŞİM & ETKİNLİK**\n` +
+                    `\`/yayin [mesajınız]\` ➔ Bota kayıtlı tüm oyunculara PM (Özel Mesaj) atar.\n` +
+                    `\`/promo [KOD] [Ödül] [Limit]\` ➔ Promokod üretir (Örn: \`/promo UCMUYORUZ 50000 100\`).\n\n` +
+                    
+                    `🛡️ **GRUP YÖNETİMİ (botCommands'da yer alır)**\n` +
+                    `\`/grububagla\` ➔ Botun büyük vurgunları atacağı grubu belirler (Grubun içine yazılır).\n` +
+                    `\`/grupdurumu\` ➔ Karşılama ve sohbet-kazanç gibi grup özelliklerinin durumunu gösterir.\n` +
+                    `\`/otocevapekle "kelime" "cevap"\` ➔ Bota otomatik cevap öğretir.\n\n` +
+                    `*NOT: Tüm yetkiler sadece sana (Admin) aittir.*`;
+                    
+                    return sendMsg(rehberMetni);
+
+                // --- MEVCUT KOMUTLAR ---
                 case '/ekonomi':
                     const cfg = await GameConfig.findOne() || await GameConfig.create({});
                     return sendMsg(`💰 **SİBER EKONOMİ DURUMU**\n\n` +
