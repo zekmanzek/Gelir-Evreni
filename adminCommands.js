@@ -2,7 +2,7 @@
 // SİBER KARARGAH - YÖNETİCİ KOMUT MERKEZİ (TAM EKONOMİ KONTROLLÜ)
 
 module.exports = function(context) {
-    const { bot, models, GameConfig, ADMIN_ID, WEBHOOK_URL, radarLogs, addPoints, addRadarLog } = context;
+    const { bot, models, GameConfig, ADMIN_ID, WEBHOOK_URL, radarLogs, addPoints, addRadarLog, refreshConfigCache } = context;
     const { User, PromoCode, Task, YesterdayWinner, Settings, AirdropLink } = models;
 
     const adminCommands = [
@@ -72,16 +72,12 @@ module.exports = function(context) {
                     let config = await GameConfig.findOne() || await GameConfig.create({});
                     
                     const map = {
-                        // Maliyetler
                         'cark_maliyet': 'spinCost', 'tahmin_maliyet': 'predictCost', 'pano_maliyet': 'airdropCost',
                         'kapsul1_maliyet': 'lootbox1Cost', 'kapsul2_maliyet': 'lootbox2Cost', 'kapsul3_maliyet': 'lootbox3Cost',
-                        // Temeller
                         'maden_bas': 'mineBaseReward', 'maden_artis': 'mineLevelStep', 'reklam_odul': 'adReward',
                         'ref_odul': 'refReward', 'gepcoz_odul': 'gepcozReward', 'gunluk_bas': 'dailyBaseReward',
-                        // Oyun Ödülleri
                         'cark_jackpot': 'spinJackpot', 'cark_orta': 'spinMid', 'cark_dusuk': 'spinLow',
                         'kapsul_efsanevi': 'lootBig', 'kapsul_nadir': 'lootMid', 'kapsul_standart': 'lootSmall', 'tahmin_odul': 'predictReward',
-                        // 🔥 YENİ: Çark İhtimalleri
                         'sans_bos': 'spinProbEmpty', 'sans_dusuk': 'spinProbLow', 'sans_amorti': 'spinProbCost',
                         'sans_orta': 'spinProbMid', 'sans_jackpot': 'spinProbJackpot'
                     };
@@ -90,23 +86,34 @@ module.exports = function(context) {
                     
                     config[map[code]] = val;
                     await config.save();
+                    
+                    // 🔥 RAM ÖNBELLEĞİNİ TAZELE 🔥
+                    await refreshConfigCache();
+                    
                     addRadarLog(`⚙️ EKONOMİ: ${code.toUpperCase()} değeri ${val} olarak güncellendi.`);
                     return sendMsg(`✅ **BAŞARILI!** \n${code.toUpperCase()} artık \`${val.toLocaleString()}\` olarak ayarlandı.`);
 
-                // ==========================================
-                // DİĞER STANDART KOMUTLAR
-                // ==========================================
                 case '/kilit':
                     if (!args[1] || !['aktif', 'kapat'].includes(args[1])) return sendMsg("❌ **Hatalı Kullanım!**\n💡 *Örnek:* `/kilit aktif` veya `/kilit kapat`");
                     let c = await GameConfig.findOne() || await GameConfig.create({});
-                    c.isLocked = (args[1] === 'aktif'); await c.save();
+                    c.isLocked = (args[1] === 'aktif'); 
+                    await c.save();
+                    
+                    // 🔥 RAM ÖNBELLEĞİNİ TAZELE 🔥
+                    await refreshConfigCache();
+                    
                     return sendMsg(c.isLocked ? "🚨 SİSTEM KİLİTLENDİ. Kimse giriş yapamaz." : "✅ SİSTEM AÇILDI. Ağ normale döndü.");
 
                 case '/boost':
                     const mult = parseFloat(args[1]); const mins = parseInt(args[2]);
                     if (!mult || isNaN(mins)) return sendMsg("❌ **Hatalı Kullanım!**\nFormat: `/boost [Çarpan] [Dakika]`\n\n💡 *Örnek:* `/boost 2 60` (Kazançları 60 dakikalığına 2'ye katlar)");
                     let bCfg = await GameConfig.findOne() || await GameConfig.create({});
-                    bCfg.boostMultiplier = mult; bCfg.boostEndTime = new Date(Date.now() + mins * 60000); await bCfg.save();
+                    bCfg.boostMultiplier = mult; bCfg.boostEndTime = new Date(Date.now() + mins * 60000); 
+                    await bCfg.save();
+                    
+                    // 🔥 RAM ÖNBELLEĞİNİ TAZELE 🔥
+                    await refreshConfigCache();
+                    
                     sendMsg(`🔥 **HAPPY HOUR AKTİF!** Çarpan: ${mult}x | Süre: ${mins} Dk`);
                     const allU = await User.find({ telegramId: { $exists: true } });
                     allU.forEach(u => { bot.sendMessage(u.telegramId, `🔥 **SİBER ETKİNLİK!**\n\n${mins} dakika boyunca kazançlar ${mult} KATINA çıkarıldı! 👇`, { reply_markup: { inline_keyboard: [[{ text: "🚀 KAZAN", web_app: { url: WEBHOOK_URL } }]] } }).catch(()=>{}); });
@@ -159,11 +166,14 @@ module.exports = function(context) {
                     await PromoCode.create({ code: pCode.toUpperCase(), reward: pRew, maxUsage: pMax }); return sendMsg(`✅ Kod Üretildi: ${pCode.toUpperCase()}\nÖdül: ${pRew} GEP | Sınır: ${pMax} Kişi`);
 
                 case '/duyuru':
-                    const dAct = args[1]; const dText = msg.text.replace(`/duyuru ${dAct} `, ''); const s = await Settings.findOne() || await Settings.create({});
+                    const dAct = args[1]; const s = await Settings.findOne() || await Settings.create({});
                     if (!dAct || !['ekle', 'liste', 'sil'].includes(dAct)) return sendMsg("❌ **Hatalı Kullanım!**\n\n💡 *Örnekler:*\n`/duyuru ekle Yeni etkinlik başladı!`\n`/duyuru liste`\n`/duyuru sil 1`");
                     
-                    if (dAct === 'ekle') { s.announcements.push(dText); await s.save(); return sendMsg("✅ Kayan yazıya duyuru eklendi."); }
-                    if (dAct === 'liste') { return sendMsg(`📢 Kayan Yazı Duyuruları:\n` + s.announcements.map((a,i) => `${i+1}. ${a}`).join('\n') || "Duyuru yok."); }
+                    if (dAct === 'ekle') { 
+                        const dText = msg.text.replace(`/duyuru ekle `, '');
+                        s.announcements.push(dText); await s.save(); return sendMsg("✅ Kayan yazıya duyuru eklendi."); 
+                    }
+                    if (dAct === 'liste') { return sendMsg(`📢 Kayan Yazı Duyuruları:\n` + (s.announcements.map((a,i) => `${i+1}. ${a}`).join('\n') || "Duyuru yok.")); }
                     if (dAct === 'sil') { 
                         if(isNaN(args[2])) return sendMsg("❌ Silmek istediğiniz duyurunun numarasını yazın.");
                         s.announcements.splice(parseInt(args[2])-1, 1); await s.save(); return sendMsg("✅ Duyuru silindi."); 
@@ -174,7 +184,7 @@ module.exports = function(context) {
                     const gAct = args[1];
                     if (!gAct || !['ekle', 'liste', 'sil'].includes(gAct)) return sendMsg("❌ **Hatalı Kullanım!**\n\n💡 *Örnekler:*\n`/gorev ekle Youtube_Abone_Ol 25000 https://youtube.com/...`\n`/gorev liste`\n`/gorev sil [Görev_ID]`");
                     
-                    if (gAct === 'liste') { const tasks = await Task.find(); return sendMsg(`🎯 Aktif Görevler:\n\n` + tasks.map(t => `ID: \`${t.taskId}\` | ${t.title} | ${t.reward} GEP`).join('\n') || "Görev Yok."); }
+                    if (gAct === 'liste') { const tasks = await Task.find(); return sendMsg(`🎯 Aktif Görevler:\n\n` + (tasks.map(t => `ID: \`${t.taskId}\` | ${t.title} | ${t.reward} GEP`).join('\n') || "Görev Yok.")); }
                     if (gAct === 'ekle') { await Task.create({ taskId: Date.now().toString(), title: args[2].replace(/_/g, ' '), reward: parseInt(args[3]), target: args[4] }); return sendMsg("✅ Görev Başarıyla Eklendi."); }
                     if (gAct === 'sil') { await Task.deleteOne({ taskId: args[2] }); return sendMsg("✅ Görev Silindi."); }
                     break;
