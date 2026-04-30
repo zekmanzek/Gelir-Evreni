@@ -61,19 +61,30 @@ const gameConfigSchema = new mongoose.Schema({
 });
 const GameConfig = mongoose.models.GameConfig || mongoose.model('GameConfig', gameConfigSchema);
 
-// 🔥 SİBER ÖNBELLEK (CACHE) 🔥
-let cachedConfig = null;
+// 🔥 SİBER KALKAN (YEDEK HAFIZA) 🔥
+const fallbackConfig = {
+    spinCost: 5000, predictCost: 1000, lootbox1Cost: 1000, lootbox2Cost: 5000, lootbox3Cost: 25000, airdropCost: 1000000,
+    gepcozReward: 25000, refReward: 10000, mineBaseReward: 1000, mineLevelStep: 500, adReward: 5000, dailyBaseReward: 1000,
+    spinJackpot: 50000, spinMid: 10000, spinLow: 2500, lootBig: 250000, lootMid: 50000, lootSmall: 10000, predictReward: 2000,
+    spinProbEmpty: 40, spinProbLow: 35, spinProbCost: 17, spinProbMid: 7, spinProbJackpot: 1,
+    isLocked: false, boostMultiplier: 1, boostEndTime: null, miningDuration: 240, announcementSpeed: 15,
+    isSpinActive: true, isCrashActive: true
+};
+
+let cachedConfig = fallbackConfig; // Asla null olamaz!
 
 async function refreshConfigCache() {
     try {
-        cachedConfig = await GameConfig.findOne() || await GameConfig.create({});
+        const dbCfg = await GameConfig.findOne();
+        if (dbCfg) cachedConfig = dbCfg;
+        else await GameConfig.create({});
         console.log("♻️ Ekonomi RAM'e Alındı.");
-    } catch (err) { console.error("❌ RAM Hatası:", err); }
+    } catch (err) { console.error("❌ RAM Hatası (Yedek Hafıza Devrede):", err); }
 }
 
 mongoose.connect(MONGODB_URI)
     .then(async () => {
-        console.log("✅ Gelir Evreni v10.8 - SİBER ŞALTERLER AKTİF");
+        console.log("✅ Gelir Evreni v10.9 - SİBER KALKAN AKTİF");
         await refreshConfigCache();
     })
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
@@ -113,18 +124,19 @@ require('./adminCommands')(adminContext);
 require('./botCommands')(bot, models, botConfig, addPoints, sharedState);
 
 const secureRoute = async (req, res, next) => {
-    const initData = req.body.initData || req.query.initData;
-    const realId = getTelegramUserFromInitData(initData);
-    if (!realId) return res.status(403).json({ success: false, message: "⚠️ Güvenlik Hatası!" });
-    
-    if (!cachedConfig) await refreshConfigCache();
-    const config = cachedConfig; 
-    
-    if (config.isLocked && realId !== ADMIN_ID) return res.json({ success: false, isLocked: true, message: "BAKIM" });
-    
-    req.boostMult = (config.boostEndTime && config.boostEndTime > new Date()) ? config.boostMultiplier : 1;
-    req.realTelegramId = realId; 
-    next();
+    try {
+        const initData = req.body.initData || req.query.initData;
+        const realId = getTelegramUserFromInitData(initData);
+        if (!realId) return res.status(403).json({ success: false, message: "⚠️ Güvenlik Hatası!" });
+        
+        const config = cachedConfig || fallbackConfig; // Null olma şansı sıfır
+        
+        if (config.isLocked && realId !== ADMIN_ID) return res.json({ success: false, isLocked: true, message: "BAKIM" });
+        
+        req.boostMult = (config.boostEndTime && config.boostEndTime > new Date()) ? config.boostMultiplier : 1;
+        req.realTelegramId = realId; 
+        next();
+    } catch(e) { res.status(500).json({ success: false }); }
 };
 
 function getTelegramUserFromInitData(telegramInitData) {
@@ -142,6 +154,10 @@ function getTelegramUserFromInitData(telegramInitData) {
     } catch (error) { return null; }
 }
 
+// -----------------------------------------
+// TÜM OYUN VE SİSTEM ROTASI (RESTORE EDİLDİ)
+// -----------------------------------------
+
 app.post('/api/user/save-wallet', secureRoute, async (req, res) => {
     try {
         const { walletAddress } = req.body;
@@ -152,10 +168,11 @@ app.post('/api/user/save-wallet', secureRoute, async (req, res) => {
 });
 
 app.post('/api/user/auth', secureRoute, async (req, res) => {
-    const { username, firstName, referrerId } = req.body;
-    const telegramId = req.realTelegramId;
-    const config = cachedConfig;
     try {
+        const { username, firstName, referrerId } = req.body;
+        const telegramId = req.realTelegramId;
+        const config = cachedConfig || fallbackConfig;
+        
         let user = await User.findOne({ telegramId });
         if (!user) {
             user = new User({ telegramId, username: (username || '').toLowerCase(), firstName, points: 1000 });
@@ -168,10 +185,11 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
             }
         } else { if (username) user.username = username.toLowerCase(); if (firstName) user.firstName = firstName; }
         await user.save(); 
+        
         let settings = await Settings.findOne() || await Settings.create({});
         res.json({ 
             success: true, user, botUsername: settings.botUsername, isAdmin: String(telegramId) === String(ADMIN_ID), 
-            announcements: settings.announcements, isBoostActive: (config.boostEndTime && config.boostEndTime > new Date()), 
+            announcements: settings.announcements, isBoostActive: (config.boostEndTime && new Date() < config.boostEndTime), 
             boostMultiplier: config.boostMultiplier, miningDuration: config.miningDuration, announcementSpeed: config.announcementSpeed,
             isSpinActive: config.isSpinActive, isCrashActive: config.isCrashActive,
             costs: { spin: config.spinCost, predict: config.predictCost, airdrop: config.airdropCost, lb1: config.lootbox1Cost, lb2: config.lootbox2Cost, lb3: config.lootbox3Cost },
@@ -183,7 +201,7 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
 app.post('/api/daily-reward', secureRoute, async (req, res) => {
     const user = await User.findOne({ telegramId: req.realTelegramId });
     if (!user) return res.json({ success: false });
-    const config = cachedConfig;
+    const config = cachedConfig || fallbackConfig;
     const now = new Date();
     const diffHours = (now - new Date(user.lastCheckin)) / (1000 * 60 * 60);
     if (diffHours < 24) return res.json({ success: false, message: "24 saat bekleyin." });
@@ -196,7 +214,7 @@ app.post('/api/daily-reward', secureRoute, async (req, res) => {
 
 app.post('/api/mine', secureRoute, async (req, res) => {
     const user = await User.findOne({ telegramId: req.realTelegramId });
-    const config = cachedConfig;
+    const config = cachedConfig || fallbackConfig;
     const now = new Date();
     if (user && (now - new Date(user.lastMining)) > config.miningDuration * 60 * 1000) {
         const reward = (config.mineBaseReward + ((user.miningLevel - 1) * config.mineLevelStep)) * req.boostMult;
@@ -207,9 +225,19 @@ app.post('/api/mine', secureRoute, async (req, res) => {
     res.json({ success: false });
 });
 
+app.post('/api/upgrade-mine', secureRoute, async (req, res) => {
+    const user = await User.findOne({ telegramId: req.realTelegramId }); if (!user) return res.json({ success: false });
+    const upgradeCost = user.miningLevel * 10000;
+    const updatedUser = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: upgradeCost } }, { $inc: { points: -upgradeCost, miningLevel: 1 } }, { new: true });
+    if (updatedUser) { 
+        addRadarLog(`⚙️ @${updatedUser.username} Motorunu Seviye ${updatedUser.miningLevel} yaptı.`);
+        res.json({ success: true, points: updatedUser.points, newLevel: updatedUser.miningLevel }); 
+    } else { res.json({ success: false }); }
+});
+
 app.post('/api/arcade/spin', secureRoute, async (req, res) => {
-    if (!cachedConfig.isSpinActive) return res.json({ success: false, message: "KAPALI" });
-    const config = cachedConfig;
+    const config = cachedConfig || fallbackConfig;
+    if (!config.isSpinActive) return res.json({ success: false, message: "⚠️ Çark sistemi geçici olarak kapalıdır." });
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: config.spinCost } }, { $inc: { points: -config.spinCost } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP!" }); 
     const rand = Math.random() * 100; 
@@ -224,10 +252,129 @@ app.post('/api/arcade/spin', secureRoute, async (req, res) => {
     res.json({ success: true, prize, msg, points: user.points });
 });
 
+app.post('/api/arcade/zarzara', secureRoute, async (req, res) => {
+    const { bet } = req.body; const amount = parseInt(bet);
+    if (!amount || isNaN(amount) || amount < 100) return res.json({ success: false, message: "Minimum bahis 100 GEP." });
+    const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: amount } }, { $inc: { points: -amount } }, { new: true });
+    if (!user) return res.json({ success: false, message: "Yetersiz GEP bakiye!" }); 
+    const diceValue = Math.floor(Math.random() * 6) + 1; let winAmount = 0;
+    if (diceValue >= 4) { winAmount = amount * 2; addPoints(user, winAmount); await user.save(); }
+    res.json({ success: true, diceValue, winAmount, points: user.points });
+});
+
+app.post('/api/arcade/gepcoz', secureRoute, async (req, res) => {
+    const { token } = req.body; const secret = process.env.HCAPTCHA_SECRET;
+    if (!token || !secret) return res.json({ success: false, message: "Yapılandırma hatası." });
+    try {
+        const params = new URLSearchParams(); params.append('secret', secret); params.append('response', token);
+        const verifyRes = await fetch('https://hcaptcha.com/siteverify', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params });
+        const data = await verifyRes.json();
+        if (data.success) {
+            const config = cachedConfig || fallbackConfig;
+            const user = await User.findOne({ telegramId: req.realTelegramId });
+            const finalReward = config.gepcozReward * req.boostMult;
+            addPoints(user, finalReward); await user.save();
+            res.json({ success: true, points: user.points, reward: finalReward });
+        } else { res.json({ success: false, message: "Doğrulama başarısız." }); }
+    } catch (e) { res.json({ success: false, message: "Sistem hatası." }); }
+});
+
+app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
+    const config = cachedConfig || fallbackConfig;
+    const { boxType } = req.body; const user = await User.findOne({ telegramId: req.realTelegramId }); if (!user) return res.json({ success: false });
+    const now = new Date(); let lastOpenDate;
+    if (boxType === 1) lastOpenDate = user.lastLootbox1; else if (boxType === 2) lastOpenDate = user.lastLootbox2; else if (boxType === 3) lastOpenDate = user.lastLootbox3;
+    if ((now - new Date(lastOpenDate || 0)) < 24 * 60 * 60 * 1000) return res.json({ success: false });
+    
+    let cost = boxType === 1 ? config.lootbox1Cost : (boxType === 2 ? config.lootbox2Cost : config.lootbox3Cost);
+    const updatedUser = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
+    if (!updatedUser) return res.json({ success: false });
+    if (boxType === 1) updatedUser.lastLootbox1 = now; else if (boxType === 2) updatedUser.lastLootbox2 = now; else updatedUser.lastLootbox3 = now;
+    
+    let prize = 0; const rand = Math.random() * 100;
+    if (boxType === 1) prize = rand > 90 ? config.lootSmall : 500; 
+    else if (boxType === 2) prize = rand > 90 ? config.lootMid : 3000; 
+    else prize = rand > 95 ? config.lootBig : 15000;
+    
+    addPoints(updatedUser, prize); await updatedUser.save();
+    res.json({ success: true, prize, points: updatedUser.points });
+});
+
+app.post('/api/buy-ad-package', secureRoute, async (req, res) => {
+    const { packageId } = req.body; let cost = packageId === 1 ? 10000 : (packageId === 2 ? 50000 : 100000); 
+    const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost, adTickets: (packageId === 1 ? 10 : (packageId === 2 ? 50 : 100)) } }, { new: true });
+    if (!user) return res.json({ success: false, message: "Yetersiz GEP!" });
+    res.json({ success: true, points: user.points, adTickets: user.adTickets });
+});
+
+app.post('/api/adsgram-reward', secureRoute, async (req, res) => {
+    const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, adTickets: { $gt: 0 } }, { $inc: { adTickets: -1 } }, { new: true });
+    if (!user) return res.json({ success: false });
+    const config = cachedConfig || fallbackConfig;
+    const finalReward = config.adReward * req.boostMult; 
+    addPoints(user, finalReward); await user.save();
+    res.json({ success: true, points: user.points, adTickets: user.adTickets, reward: finalReward });
+});
+
+app.post('/api/redeem-promo', secureRoute, async (req, res) => {
+    const { code } = req.body; const user = await User.findOne({ telegramId: req.realTelegramId }); if (!user || !code) return res.json({ success: false });
+    const promo = await PromoCode.findOne({ code: code.toUpperCase(), isActive: true }); if (!promo) return res.json({ success: false, message: "Geçersiz!" });
+    if (promo.usedBy.includes(req.realTelegramId)) return res.json({ success: false, message: "Zaten kullandın!" });
+    if (promo.usedBy.length >= promo.maxUsage) { promo.isActive = false; await promo.save(); return res.json({ success: false, message: "Sınır doldu!" }); }
+    promo.usedBy.push(req.realTelegramId); if (promo.usedBy.length >= promo.maxUsage) promo.isActive = false; await promo.save();
+    addPoints(user, promo.reward); await user.save(); 
+    res.json({ success: true, reward: promo.reward, points: user.points });
+});
+
+app.post('/api/airdrop/list', secureRoute, async (req, res) => {
+    const links = await AirdropLink.find().sort({ updatedAt: -1 }).limit(30);
+    res.json({ success: true, links: links.map(l => ({ _id: l._id, username: l.username, title: l.title, description: l.description, url: l.url, hasJoined: l.joinedUsers.includes(req.realTelegramId), isOwner: l.telegramId === req.realTelegramId })) });
+});
+
+app.post('/api/airdrop/share', secureRoute, async (req, res) => {
+    const config = cachedConfig || fallbackConfig;
+    const { title, description, url } = req.body;
+    const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: config.airdropCost } }, { $inc: { points: -config.airdropCost } }, { new: true });
+    if(!user) return res.json({success: false, message: "Yetersiz GEP!"});
+    let existing = await AirdropLink.findOne({ telegramId: req.realTelegramId });
+    if (existing) { existing.title = title; existing.description = description; existing.url = url; existing.updatedAt = new Date(); await existing.save(); } 
+    else { await AirdropLink.create({ telegramId: req.realTelegramId, username: user.username || user.firstName, title, description, url }); }
+    res.json({success: true, points: user.points, message: "Pano güncellendi!"});
+});
+
+app.post('/api/airdrop/join', secureRoute, async (req, res) => {
+    const { projectId } = req.body;
+    try {
+        const project = await AirdropLink.findOneAndUpdate({ _id: projectId, joinedUsers: { $ne: req.realTelegramId }, telegramId: { $ne: req.realTelegramId } }, { $addToSet: { joinedUsers: req.realTelegramId } }, { new: true });
+        if (!project) return res.json({ success: false });
+        const user = await User.findOne({ telegramId: req.realTelegramId });
+        if (user) { addPoints(user, 10000); await user.save(); return res.json({ success: true, points: user.points }); }
+        res.json({ success: false });
+    } catch (e) { res.json({ success: false }); }
+});
+
+app.get('/api/tasks', async (req, res) => { res.json({ tasks: await Task.find({ isActive: true }) }); });
+app.get('/api/leaderboard', async (req, res) => { 
+    const allTime = await User.find().sort({ points: -1 }).limit(100); 
+    const weekly = await User.find({ dailyPoints: { $gt: 0 } }).sort({ dailyPoints: -1 }).limit(100); 
+    const lastWeek = await YesterdayWinner.find({ rank: { $gt: 0 } }).sort({ rank: 1 }); 
+    res.json({ success: true, leaderboard: allTime, dailyLeaderboard: weekly, yesterdayLeaderboard: lastWeek }); 
+});
+
+app.post('/api/tasks/complete', secureRoute, async (req, res) => { 
+    const { taskId } = req.body; const task = await Task.findOne({ taskId }); if (!task) return res.json({ success: false }); 
+    const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, completedTasks: { $ne: taskId } }, { $addToSet: { completedTasks: taskId } }, { new: true });
+    if (!user) return res.json({ success: false }); 
+    addPoints(user, task.reward * req.boostMult); await user.save(); 
+    res.json({ success: true, points: user.points }); 
+});
+
 app.post('/api/arcade/crash/start', secureRoute, async (req, res) => {
-    if (!cachedConfig.isCrashActive) return res.json({ success: false, message: "KAPALI" });
+    const config = cachedConfig || fallbackConfig;
+    if (!config.isCrashActive) return res.json({ success: false, message: "⚠️ Roket pisti bakımda." });
     const amount = parseInt(req.body.bet);
     if (!amount || amount < 100) return res.json({ success: false, message: "Min 100" });
+    if (activeCrashSessions.has(req.realTelegramId)) return res.json({ success: false, message: "Devam eden oyununuz var!" });
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: amount } }, { $inc: { points: -amount } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz" });
     let cp = (Math.random() < 0.05) ? 1.00 : (1.00 / (1.00 - (Math.random() * 0.99))).toFixed(2);
@@ -240,12 +387,53 @@ app.post('/api/arcade/crash/cashout', secureRoute, async (req, res) => {
     if (!session) return res.json({ success: false });
     const mult = parseFloat(req.body.multiplier);
     activeCrashSessions.delete(req.realTelegramId);
-    if (mult <= session.crashPoint) {
+    if (mult <= session.crashPoint && mult >= 1.00) {
         const win = Math.floor(session.bet * mult);
         const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId }, { $inc: { points: win } }, { new: true });
         return res.json({ success: true, winAmount: win, points: user.points });
     }
-    res.json({ success: false });
+    res.json({ success: false, message: "Roket zaten patladı!" });
+});
+
+app.post('/api/arcade/crash/notify-loss', secureRoute, async (req, res) => {
+    if (activeCrashSessions.has(req.realTelegramId)) { activeCrashSessions.delete(req.realTelegramId); }
+    res.json({ success: true });
+});
+
+app.post('/api/arcade/predict/start', secureRoute, async (req, res) => {
+    const config = cachedConfig || fallbackConfig;
+    const { guess } = req.body; const cost = config.predictCost; 
+    if (activePredictions.has(req.realTelegramId)) return res.json({ success: false, message: "Zaten devam eden tahminin var!" });
+    const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
+    if (!user) return res.json({ success: false, message: "Yetersiz GEP!" });
+    try {
+        const r1 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); 
+        const d1 = await r1.json(); const p1 = parseFloat(d1.price);
+        activePredictions.set(req.realTelegramId, { guess, p1, startTime: Date.now() });
+        res.json({ success: true, price1: p1, points: user.points });
+    } catch (e) { 
+        await User.updateOne({ telegramId: req.realTelegramId }, { $inc: { points: cost } }); 
+        res.json({ success: false, message: "Fiyat alınamadı, iade edildi." }); 
+    }
+});
+
+app.post('/api/arcade/predict/result', secureRoute, async (req, res) => {
+    const config = cachedConfig || fallbackConfig;
+    const prediction = activePredictions.get(req.realTelegramId);
+    if (!prediction) return res.json({ success: false, message: "Aktif tahmin yok." });
+    if (Date.now() - prediction.startTime < 9000) return res.json({ success: false, message: "Süre dolmadı!" });
+    activePredictions.delete(req.realTelegramId);
+    try {
+        const r2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'); 
+        const d2 = await r2.json(); const p2 = parseFloat(d2.price);
+        let won = false; if ((prediction.guess === 'UP' && p2 > prediction.p1) || (prediction.guess === 'DOWN' && p2 < prediction.p1)) won = true;
+        let user = await User.findOne({ telegramId: req.realTelegramId });
+        if (won) { addPoints(user, config.predictReward); await user.save(); }
+        res.json({ success: true, won, price1: prediction.p1, price2: p2, points: user.points });
+    } catch (e) { 
+        let user = await User.findOneAndUpdate({ telegramId: req.realTelegramId }, { $inc: { points: config.predictCost } }, { new: true });
+        res.json({ success: false, message: "Bağlantı koptu, iade edildi.", points: user.points }); 
+    }
 });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
