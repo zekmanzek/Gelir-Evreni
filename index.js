@@ -28,23 +28,18 @@ bot.setWebHook(`${WEBHOOK_URL}/webhook`);
 
 // --- 🔥 %100 DİNAMİK EKONOMİ TABLOSU 🔥 ---
 const gameConfigSchema = new mongoose.Schema({
-    // Maliyetler
     spinCost: { type: Number, default: 5000 },
     predictCost: { type: Number, default: 1000 },
     lootbox1Cost: { type: Number, default: 1000 },
     lootbox2Cost: { type: Number, default: 5000 },
     lootbox3Cost: { type: Number, default: 25000 },
     airdropCost: { type: Number, default: 1000000 },
-    
-    // Temel Ödüller
     gepcozReward: { type: Number, default: 25000 },
     refReward: { type: Number, default: 10000 },
     mineBaseReward: { type: Number, default: 1000 },
     mineLevelStep: { type: Number, default: 500 },
     adReward: { type: Number, default: 5000 },
     dailyBaseReward: { type: Number, default: 1000 },
-    
-    // Oyun İçi Ödüller
     spinJackpot: { type: Number, default: 50000 },
     spinMid: { type: Number, default: 10000 },
     spinLow: { type: Number, default: 2500 },
@@ -52,23 +47,34 @@ const gameConfigSchema = new mongoose.Schema({
     lootMid: { type: Number, default: 50000 },  
     lootSmall: { type: Number, default: 10000 },
     predictReward: { type: Number, default: 2000 },
-
-    // 🔥 YENİ: Çark İhtimalleri (Yüzde Olarak) 🔥
     spinProbEmpty: { type: Number, default: 40 },
     spinProbLow: { type: Number, default: 35 },
     spinProbCost: { type: Number, default: 17 },
     spinProbMid: { type: Number, default: 7 },
     spinProbJackpot: { type: Number, default: 1 },
-
-    // Sistem Durumu
     isLocked: { type: Boolean, default: false }, 
     boostMultiplier: { type: Number, default: 1 }, 
     boostEndTime: { type: Date, default: null } 
 });
 const GameConfig = mongoose.models.GameConfig || mongoose.model('GameConfig', gameConfigSchema);
 
+// 🔥 SİBER ÖNBELLEK (CACHE) SİSTEMİ 🔥
+let cachedConfig = null;
+
+async function refreshConfigCache() {
+    try {
+        cachedConfig = await GameConfig.findOne() || await GameConfig.create({});
+        console.log("♻️ Ekonomi Önbelleği (RAM) Tazelendi.");
+    } catch (err) {
+        console.error("❌ Önbellek tazelenirken hata:", err);
+    }
+}
+
 mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Gelir Evreni v10.7 - %100 DİNAMİK EKONOMİ AKTİF"))
+    .then(async () => {
+        console.log("✅ Gelir Evreni v10.7 - %100 DİNAMİK EKONOMİ AKTİF");
+        await refreshConfigCache(); // Sistem açılırken RAM'e yükle
+    })
     .catch((err) => console.error("❌ MongoDB Hatası:", err));
 
 app.post('/webhook', (req, res) => {
@@ -109,7 +115,8 @@ async function broadcastBigWin(username, firstName, gameName, prize) {
 // 🛡️ SİBER KOMUTA MERKEZİ (MODÜLER) 🛡️
 // =====================================================================
 const botConfig = { ADMIN_ID, WEBHOOK_URL };
-const adminContext = { bot, models, GameConfig, ADMIN_ID, WEBHOOK_URL, radarLogs, addPoints, addRadarLog };
+// refreshConfigCache adminCommands'e aktarıldı, böylece /ayar komutu RAM'i güncelleyebilir.
+const adminContext = { bot, models, GameConfig, ADMIN_ID, WEBHOOK_URL, radarLogs, addPoints, addRadarLog, refreshConfigCache };
 require('./adminCommands')(adminContext);
 require('./botCommands')(bot, models, botConfig, addPoints, sharedState);
 // =====================================================================
@@ -161,7 +168,9 @@ const secureRoute = async (req, res, next) => {
     const realId = getTelegramUserFromInitData(initData);
     if (!realId) return res.status(403).json({ success: false, message: "⚠️ Güvenlik Hatası!" });
     
-    const config = await GameConfig.findOne() || await GameConfig.create({});
+    // 🔥 OPTİMİZASYON: Artık GameConfig.findOne() YOK, RAM'den (cachedConfig) OKUNUYOR 🔥
+    const config = cachedConfig; 
+    
     if (config.isLocked && realId !== ADMIN_ID) {
         return res.json({ success: false, isLocked: true, message: "SİSTEM BAKIMDA" });
     }
@@ -187,7 +196,7 @@ app.post('/api/user/save-wallet', secureRoute, async (req, res) => {
 app.post('/api/user/auth', secureRoute, async (req, res) => {
     const { username, firstName, referrerId } = req.body;
     const telegramId = req.realTelegramId;
-    const config = await GameConfig.findOne() || await GameConfig.create({});
+    const config = cachedConfig; // RAM'den al
     
     try {
         let user = await User.findOne({ telegramId });
@@ -206,7 +215,6 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
         
         const isBoostActive = config.boostEndTime && config.boostEndTime > new Date();
         
-        // 🔥 GÜNCELLENEN KISIM: Dinamik fiyatlar ve ÖDÜLLER ön yüze gönderiliyor 🔥
         res.json({ 
             success: true, 
             user, 
@@ -234,7 +242,7 @@ app.post('/api/user/auth', secureRoute, async (req, res) => {
 
 app.post('/api/daily-reward', secureRoute, async (req, res) => {
     const user = await User.findOne({ telegramId: req.realTelegramId }); if (!user) return res.json({ success: false });
-    const config = await GameConfig.findOne() || await GameConfig.create({});
+    const config = cachedConfig; // RAM'den al
     const now = new Date(); const diffHours = (now - new Date(user.lastCheckin)) / (1000 * 60 * 60);
     
     if (diffHours < 24) return res.json({ success: false, message: "24 saat bekleyin." });
@@ -259,7 +267,7 @@ app.post('/api/buy-ad-package', secureRoute, async (req, res) => {
 app.post('/api/adsgram-reward', secureRoute, async (req, res) => {
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, adTickets: { $gt: 0 } }, { $inc: { adTickets: -1 } }, { new: true });
     if (!user) return res.json({ success: false });
-    const config = await GameConfig.findOne() || await GameConfig.create({});
+    const config = cachedConfig; // RAM'den al
     
     const finalReward = config.adReward * req.boostMult; 
     addPoints(user, finalReward); await user.save();
@@ -269,7 +277,7 @@ app.post('/api/adsgram-reward', secureRoute, async (req, res) => {
 
 app.post('/api/mine', secureRoute, async (req, res) => {
     const user = await User.findOne({ telegramId: req.realTelegramId }); const now = new Date();
-    const config = await GameConfig.findOne() || await GameConfig.create({});
+    const config = cachedConfig; // RAM'den al
     
     if (user && (now - new Date(user.lastMining)) > 4 * 60 * 60 * 1000) {
         const baseReward = config.mineBaseReward + ((user.miningLevel - 1) * config.mineLevelStep); 
@@ -314,17 +322,15 @@ app.post('/api/arcade/zarzara', secureRoute, async (req, res) => {
 });
 
 app.post('/api/arcade/spin', secureRoute, async (req, res) => {
-    const config = await GameConfig.findOne() || await GameConfig.create({});
+    const config = cachedConfig; // RAM'den al
     const cost = config.spinCost;
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP!" }); 
     
-    // 🔥 DİNAMİK İHTİMAL HESAPLAYICI 🔥
     const pEmpty = config.spinProbEmpty || 40;
     const pLow = config.spinProbLow || 35;
     const pCost = config.spinProbCost || 17;
     const pMid = config.spinProbMid || 7;
-    // pJackpot geri kalan ihtimaldir (Örn: 1)
 
     const rand = Math.random() * 100; 
     let prize = 0; let msg = "BOŞ";
@@ -349,7 +355,7 @@ app.post('/api/arcade/gepcoz', secureRoute, async (req, res) => {
         const verifyRes = await fetch('https://hcaptcha.com/siteverify', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params });
         const data = await verifyRes.json();
         if (data.success) {
-            const config = await GameConfig.findOne() || await GameConfig.create({});
+            const config = cachedConfig; // RAM'den al
             const user = await User.findOne({ telegramId: req.realTelegramId });
             const finalReward = config.gepcozReward * req.boostMult;
             addPoints(user, finalReward); await user.save();
@@ -360,7 +366,7 @@ app.post('/api/arcade/gepcoz', secureRoute, async (req, res) => {
 });
 
 app.post('/api/arcade/predict/start', secureRoute, async (req, res) => {
-    const config = await GameConfig.findOne() || await GameConfig.create({});
+    const config = cachedConfig; // RAM'den al
     const { guess } = req.body; const cost = config.predictCost; 
     if (activePredictions.has(req.realTelegramId)) return res.json({ success: false, message: "Zaten devam eden tahminin var!" });
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
@@ -377,7 +383,7 @@ app.post('/api/arcade/predict/start', secureRoute, async (req, res) => {
 });
 
 app.post('/api/arcade/predict/result', secureRoute, async (req, res) => {
-    const config = await GameConfig.findOne() || await GameConfig.create({});
+    const config = cachedConfig; // RAM'den al
     const prediction = activePredictions.get(req.realTelegramId);
     if (!prediction) return res.json({ success: false, message: "Aktif tahmin yok." });
     if (Date.now() - prediction.startTime < 9000) return res.json({ success: false, message: "Süre dolmadı!" });
@@ -397,7 +403,7 @@ app.post('/api/arcade/predict/result', secureRoute, async (req, res) => {
 });
 
 app.post('/api/arcade/lootbox', secureRoute, async (req, res) => {
-    const config = await GameConfig.findOne() || await GameConfig.create({});
+    const config = cachedConfig; // RAM'den al
     const { boxType } = req.body; const user = await User.findOne({ telegramId: req.realTelegramId }); if (!user) return res.json({ success: false });
     const now = new Date(); let lastOpenDate;
     if (boxType === 1) lastOpenDate = user.lastLootbox1; else if (boxType === 2) lastOpenDate = user.lastLootbox2; else if (boxType === 3) lastOpenDate = user.lastLootbox3;
@@ -428,7 +434,7 @@ app.post('/api/airdrop/list', secureRoute, async (req, res) => {
 });
 
 app.post('/api/airdrop/share', secureRoute, async (req, res) => {
-    const config = await GameConfig.findOne() || await GameConfig.create({});
+    const config = cachedConfig; // RAM'den al
     const { title, description, url } = req.body;
     const cost = config.airdropCost; 
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: cost } }, { $inc: { points: -cost } }, { new: true });
@@ -473,22 +479,15 @@ app.post('/api/arcade/crash/start', secureRoute, async (req, res) => {
     const { bet } = req.body; 
     const amount = parseInt(bet);
     if (!amount || isNaN(amount) || amount < 100) return res.json({ success: false, message: "Minimum bahis 100 GEP." });
-    
-    if (activeCrashSessions.has(req.realTelegramId)) {
-        return res.json({ success: false, message: "Devam eden oyununuz var!" });
-    }
-
+    if (activeCrashSessions.has(req.realTelegramId)) return res.json({ success: false, message: "Devam eden oyununuz var!" });
     const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId, points: { $gte: amount } }, { $inc: { points: -amount } }, { new: true });
     if (!user) return res.json({ success: false, message: "Yetersiz GEP bakiye!" }); 
-    
     let cPoint = 1.00;
     const rand = Math.random();
-    
     if (rand < 0.05) { cPoint = 1.00; } else {
         cPoint = (1.00 / (1.00 - (Math.random() * 0.99))).toFixed(2);
         if (cPoint > 50.00) cPoint = (15.00 + Math.random() * 20.00).toFixed(2); 
     }
-
     activeCrashSessions.set(req.realTelegramId, { bet: amount, crashPoint: parseFloat(cPoint) });
     addRadarLog(`🚀 @${user.username} Çöküş oyunu başlattı. (Bahis: ${amount})`);
     res.json({ success: true, points: user.points, crashPoint: cPoint });
@@ -497,17 +496,13 @@ app.post('/api/arcade/crash/start', secureRoute, async (req, res) => {
 app.post('/api/arcade/crash/cashout', secureRoute, async (req, res) => {
     const session = activeCrashSessions.get(req.realTelegramId);
     if (!session) return res.json({ success: false, message: "Aktif oyun bulunamadı." });
-    
     const requestedMult = parseFloat(req.body.multiplier);
     activeCrashSessions.delete(req.realTelegramId);
-    
     if (requestedMult <= session.crashPoint && requestedMult >= 1.00) {
         const winAmount = Math.floor(session.bet * requestedMult);
         const user = await User.findOneAndUpdate({ telegramId: req.realTelegramId }, { $inc: { points: winAmount } }, { new: true });
-        
         addRadarLog(`🪂 @${user.username} Çöküşten çekildi! Kazanç: ${winAmount} GEP (${requestedMult}x)`);
         if (winAmount >= 50000) broadcastBigWin(user.username, user.firstName, "GEP Roketi", winAmount);
-        
         return res.json({ success: true, winAmount, points: user.points });
     } else {
         return res.json({ success: false, message: "Roket zaten patladı!" });
