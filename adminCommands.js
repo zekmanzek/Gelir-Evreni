@@ -56,11 +56,14 @@ module.exports = function(context) {
                     `• Çark Jackpot: \`${cfg.spinJackpot}\` | Çark Orta: \`${cfg.spinMid}\` | Çark Düşük: \`${cfg.spinLow}\`\n` +
                     `• Efsane Kapsül: \`${cfg.lootBig}\` | Nadir: \`${cfg.lootMid}\` | Standart: \`${cfg.lootSmall}\`\n` +
                     `• Tahmin Kazan: \`${cfg.predictReward}\`\n\n` +
+                    `*🎲 ÇARK ŞANS ORANLARI (%):* \n` +
+                    `• Boş: \`%${cfg.spinProbEmpty || 40}\` | Düşük: \`%${cfg.spinProbLow || 35}\` | Amorti: \`%${cfg.spinProbCost || 17}\`\n` +
+                    `• Orta: \`%${cfg.spinProbMid || 7}\` | Jackpot: \`%${cfg.spinProbJackpot || 1}\`\n\n` +
                     `⚙️ *Değiştirmek için:* \`/ayar [kod] [yeni_değer]\``;
                     return sendMsg(ekoText);
 
                 case '/ayar':
-                    if (args.length < 3) return sendMsg("❌ **Hatalı Kullanım!**\nFormat: `/ayar [kod] [yeni_değer]`\n\n💡 *Örnekler:*\n`/ayar cark_maliyet 15000`\n`/ayar maden_bas 5000`\n`/ayar reklam_odul 10000`\n\n🔍 *(Bilinmeyen kodlar için /ekonomi yazın)*");
+                    if (args.length < 3) return sendMsg("❌ **Hatalı Kullanım!**\nFormat: `/ayar [kod] [yeni_değer]`\n\n💡 *Örnekler:*\n`/ayar cark_maliyet 15000`\n`/ayar maden_bas 5000`\n`/ayar sans_jackpot 5`\n\n🔍 *(Bilinmeyen kodlar için /ekonomi yazın)*");
                     
                     const code = args[1].toLowerCase();
                     const val = parseInt(args[2]);
@@ -77,15 +80,18 @@ module.exports = function(context) {
                         'ref_odul': 'refReward', 'gepcoz_odul': 'gepcozReward', 'gunluk_bas': 'dailyBaseReward',
                         // Oyun Ödülleri
                         'cark_jackpot': 'spinJackpot', 'cark_orta': 'spinMid', 'cark_dusuk': 'spinLow',
-                        'kapsul_efsanevi': 'lootBig', 'kapsul_nadir': 'lootMid', 'kapsul_standart': 'lootSmall', 'tahmin_odul': 'predictReward'
+                        'kapsul_efsanevi': 'lootBig', 'kapsul_nadir': 'lootMid', 'kapsul_standart': 'lootSmall', 'tahmin_odul': 'predictReward',
+                        // 🔥 YENİ: Çark İhtimalleri
+                        'sans_bos': 'spinProbEmpty', 'sans_dusuk': 'spinProbLow', 'sans_amorti': 'spinProbCost',
+                        'sans_orta': 'spinProbMid', 'sans_jackpot': 'spinProbJackpot'
                     };
 
                     if (!map[code]) return sendMsg("❌ Hatalı kod! Hangi kodları kullanabileceğini görmek için `/ekonomi` yaz.");
                     
                     config[map[code]] = val;
                     await config.save();
-                    addRadarLog(`⚙️ EKONOMİ: ${code.toUpperCase()} değeri ${val} GEP olarak güncellendi.`);
-                    return sendMsg(`✅ **BAŞARILI!** \n${code.toUpperCase()} artık \`${val.toLocaleString()}\` GEP.`);
+                    addRadarLog(`⚙️ EKONOMİ: ${code.toUpperCase()} değeri ${val} olarak güncellendi.`);
+                    return sendMsg(`✅ **BAŞARILI!** \n${code.toUpperCase()} artık \`${val.toLocaleString()}\` olarak ayarlandı.`);
 
                 // ==========================================
                 // DİĞER STANDART KOMUTLAR
