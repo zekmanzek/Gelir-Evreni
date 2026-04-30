@@ -73,7 +73,10 @@ async function init() {
         if (data.success) {
             user = data.user;
             
-            // 🔥 DİNAMİK FİYAT GÜNCELLEME MOTORU 🔥
+            // Kısaltıcı Motor (Örn: 50000 -> 50K)
+            const formatK = (n) => n >= 1000 ? (n/1000) + 'K' : n;
+
+            // 🔥 DİNAMİK FİYAT VE ÇARK GÜNCELLEME MOTORU 🔥
             if(data.costs) {
                 if(document.getElementById('ui-cost-spin')) document.getElementById('ui-cost-spin').innerText = data.costs.spin.toLocaleString();
                 if(document.getElementById('ui-cost-predict')) document.getElementById('ui-cost-predict').innerText = data.costs.predict.toLocaleString();
@@ -81,6 +84,14 @@ async function init() {
                 if(document.getElementById('ui-cost-lb1')) document.getElementById('ui-cost-lb1').innerText = data.costs.lb1.toLocaleString();
                 if(document.getElementById('ui-cost-lb2')) document.getElementById('ui-cost-lb2').innerText = data.costs.lb2.toLocaleString();
                 if(document.getElementById('ui-cost-lb3')) document.getElementById('ui-cost-lb3').innerText = data.costs.lb3.toLocaleString();
+                
+                // Çark Amorti Dilimi
+                if(document.getElementById('ui-wheel-cost')) document.getElementById('ui-wheel-cost').innerText = formatK(data.costs.spin);
+            }
+            if(data.rewards) {
+                if(document.getElementById('ui-wheel-low')) document.getElementById('ui-wheel-low').innerText = formatK(data.rewards.spinLow);
+                if(document.getElementById('ui-wheel-mid')) document.getElementById('ui-wheel-mid').innerText = formatK(data.rewards.spinMid);
+                if(document.getElementById('ui-wheel-jackpot')) document.getElementById('ui-wheel-jackpot').innerText = formatK(data.rewards.spinJackpot);
             }
 
             if(user.isBanned) { document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; color:var(--danger); font-family:Outfit;'><h2 style='text-align:center;'>🚫 HESAP YASAKLANDI</h2></div>"; return; }
