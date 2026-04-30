@@ -1,4 +1,4 @@
-// adminCommands.js - TAM YETKİLİ SİBER KARARGAH VERSİYONU
+// adminCommands.js - TAM YETKİLİ SİBER KARARGAH VERSİYONU (YAYIN OPTİMİZASYONLU)
 module.exports = function(context) {
     const { bot, models, GameConfig, ADMIN_ID, WEBHOOK_URL, radarLogs, addPoints, addRadarLog, refreshConfigCache } = context;
     const { User, PromoCode, Task, Settings, YesterdayWinner } = models;
@@ -28,6 +28,9 @@ module.exports = function(context) {
     bot.setMyCommands(adminCommands, { scope: JSON.stringify({ type: 'chat', chat_id: ADMIN_ID }) });
     const sendMsg = (text) => bot.sendMessage(ADMIN_ID, text, { parse_mode: 'Markdown' });
 
+    // Siber Geciktirici Fonksiyon (Telegram banını engeller)
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
     bot.on('message', async (msg) => {
         if (!msg.text || msg.from.id.toString() !== ADMIN_ID) return;
         const args = msg.text.split(' ');
@@ -35,7 +38,6 @@ module.exports = function(context) {
 
         try {
             switch (cmd) {
-                // --- 📖 YENİ SİBER REHBER KOMUTU ---
                 case '/rehber':
                     const rehberMetni = `📖 **SİBER KARARGAH KONTROL REHBERİ** 📖\n\n` +
                     `⚙️ **EKONOMİ & SİSTEM**\n` +
@@ -55,7 +57,7 @@ module.exports = function(context) {
                     `\`/unban @kullaniciadi\` ➔ Yasaklı birinin affını verir.\n\n` +
 
                     `📢 **İLETİŞİM & ETKİNLİK**\n` +
-                    `\`/yayin [mesajınız]\` ➔ Bota kayıtlı tüm oyunculara PM (Özel Mesaj) atar.\n` +
+                    `\`/yayin [mesajınız]\` ➔ Bota kayıtlı tüm oyunculara Anti-Spam korumalı mesaj atar.\n` +
                     `\`/promo [KOD] [Ödül] [Limit]\` ➔ Promokod üretir (Örn: \`/promo UCMUYORUZ 50000 100\`).\n\n` +
                     
                     `🛡️ **GRUP YÖNETİMİ (botCommands'da yer alır)**\n` +
@@ -66,7 +68,6 @@ module.exports = function(context) {
                     
                     return sendMsg(rehberMetni);
 
-                // --- MEVCUT KOMUTLAR ---
                 case '/ekonomi':
                     const cfg = await GameConfig.findOne() || await GameConfig.create({});
                     return sendMsg(`💰 **SİBER EKONOMİ DURUMU**\n\n` +
@@ -138,16 +139,36 @@ module.exports = function(context) {
                     await PromoCode.create({ code: pCode, reward: pRew, maxUsage: pMax });
                     return sendMsg(`🎫 **KOD ÜRETİLDİ:** ${pCode}\n🎁 Ödül: ${pRew} | 👥 Limit: ${pMax}`);
 
+                // --- 🔥 ANTI-SPAM (RATE LIMIT) KORUMALI YAYIN KOMUTU 🔥 ---
                 case '/yayin':
                     const yText = msg.text.replace('/yayin ', '');
                     if (!yText || yText === '/yayin') return sendMsg("❌ Mesaj yazın.");
+                    
                     const allU = await User.find({ telegramId: { $exists: true } });
-                    allU.forEach(u => {
-                        bot.sendMessage(u.telegramId, `📢 **SİBER DUYURU**\n\n${yText}`, {
-                            reply_markup: { inline_keyboard: [[{ text: "🚀 OYUNA GİT", web_app: { url: WEBHOOK_URL } }]] }
-                        }).catch(() => {});
-                    });
-                    return sendMsg("✅ Yayın operasyonu tamamlandı.");
+                    if (allU.length === 0) return sendMsg("⚠️ Kayıtlı kullanıcı yok.");
+
+                    sendMsg(`⏳ **Yayın Başladı!**\n\nHedef: **${allU.length} kişi**.\nTelegram banından (Rate Limit) korunmak için mesajlar güvenli hızda gönderiliyor. Lütfen bekleyin...`);
+                    
+                    let basarili = 0;
+                    let basarisiz = 0;
+
+                    // forEach yerine kontrollü for...of döngüsü kullanıyoruz
+                    for (const u of allU) {
+                        try {
+                            await bot.sendMessage(u.telegramId, `📢 **SİBER DUYURU**\n\n${yText}`, {
+                                reply_markup: { inline_keyboard: [[{ text: "🚀 OYUNA GİT", web_app: { url: WEBHOOK_URL } }]] }
+                            });
+                            basarili++;
+                        } catch (err) {
+                            // Kullanıcı botu engellemiş veya silmiş olabilir
+                            basarisiz++;
+                        }
+                        
+                        // Her mesaj atışından sonra 50 milisaniye bekle (Saniyede 20 mesaj atar, Telegram'ın 30 sınırı altında kalarak banı engeller)
+                        await sleep(50);
+                    }
+
+                    return sendMsg(`✅ **YAYIN OPERASYONU TAMAMLANDI!**\n\n🟢 Başarılı İletim: **${basarili}**\n🔴 Başarısız (Botu Engelleyenler): **${basarisiz}**`);
 
                 case '/kilit':
                     let kCfg = await GameConfig.findOne();
